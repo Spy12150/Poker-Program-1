@@ -11,7 +11,13 @@ game_state = {}
 def start_game():
     global game_state
     game_state = start_new_game()
-    return jsonify(game_state)
+    # Only expose player and AI hands plus community cards to the client
+    response = {
+        "player_hand": game_state["players"][0]["hand"],
+        "ai_hand": game_state["players"][1]["hand"],
+        "community": game_state["community"],
+    }
+    return jsonify(response)
 
 @bp.route('/action', methods=['POST'])
 def player_action():
