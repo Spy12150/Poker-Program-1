@@ -1,5 +1,6 @@
 import random
 from .hand_eval_lib import evaluate_hand
+from .config import NUM_PLAYERS, STARTING_STACK, SMALL_BLIND, BIG_BLIND, ANTE
 
 """
 Poker Game Flow (Basic Logic)
@@ -49,32 +50,46 @@ def create_deck():
     ranks = ['2', '3', '4', '5', '6', '7', '8', '9', 'T', 'J', 'Q', 'K', 'A']
     return [r + s for r in ranks for s in suits]
 
-def deal_cards(deck, num_players=2):
-    return [ [deck.pop(), deck.pop()] for _ in range(num_players) ]
+def deal_cards(deck, num_players=NUM_PLAYERS):
+    return [[deck.pop(), deck.pop()] for _ in range(num_players)]
 
-def init_players(num_players=2, stack=1000):
+def init_players(num_players=NUM_PLAYERS, stack=STARTING_STACK):
     return [
         {"name": f"Player {i+1}", "hand": [], "stack": stack, "current_bet": 0, "status": "active"}
         for i in range(num_players)
     ]
 
-def start_new_game(num_players=2, stack=1000):
+def start_new_game():
     deck = create_deck()
     random.shuffle(deck)
-    players = init_players(num_players, stack)
-    hands = deal_cards(deck, num_players)
+    players = init_players()
+    hands = deal_cards(deck, NUM_PLAYERS)
     for i, hand in enumerate(hands):
         players[i]['hand'] = hand
 
-    return {
+    game_state = {
         "players": players,
         "deck": deck,
         "community": [],
         "pot": 0,
         "dealer_pos": 0,
-        "current_player": (0 + 1) % num_players,  # big blind goes first after preflop
-        "betting_round": "preflop"
+        "current_player": (0 + 1) % NUM_PLAYERS,
+        "betting_round": "preflop",
+        "current_bet": 0,
     }
+
+    apply_antes(game_state)
+    post_blinds(game_state)
+    return game_state
+
+def apply_antes(game_state):
+    if ANTE > 0:
+        for player in game_state['players']:
+            if player['status'] == "active" and player['stack'] >= ANTE:
+                player['stack'] -= ANTE
+                game_state['pot'] += ANTE
+            if player['stack'] == 0:
+                player['status'] = 'out'
 
 def deal_community_cards(game_state):
     # progress the game to the next betting round
@@ -190,5 +205,139 @@ def determine_winner(active_players, community):
     winners = [tup for tup in scores if tup[0] == best_score]
 
     return winners  # Each is (score, name, hand_class)
+
+# Duplicate functions removed - using the first definitions above
+
+def reset_bets(game_state):
+    for player in game_state['players']:
+        player['current_bet'] = 0
+    game_state['current_bet'] = 0
+
+def advance_round(game_state):
+    """
+    Progresses to next street: flop, turn, river, or showdown.
+    """
+    round = game_state['betting_round']
+    if round == 'preflop':
+        game_state['community'].extend([game_state['deck'].pop() for _ in range(3)])
+        game_state['betting_round'] = 'flop'
+    elif round == 'flop':
+        game_state['community'].append(game_state['deck'].pop())
+        game_state['betting_round'] = 'turn'
+    elif round == 'turn':
+        game_state['community'].append(game_state['deck'].pop())
+        game_state['betting_round'] = 'river'
+    elif round == 'river':
+        game_state['betting_round'] = 'showdown'
+    reset_bets(game_state)
+
+from .hand_eval_lib import evaluate_hand
+
+def award_pot(game_state):
+    """
+    At showdown or if only one remains, determine winner(s) and award pot.
+    """
+    community = game_state['community']
+    active_players = [p for p in game_state['players'] if p['status'] == 'active']
+    if len(active_players) == 1:
+        # Only one player left, auto-win
+        active_players[0]['stack'] += game_state['pot']
+        return [active_players[0]['name']]
+    else:
+        # Showdown: use treys to find the best hand(s)
+        scores = []
+        for player in active_players:
+            score, hand_class = evaluate_hand(player['hand'], community)
+            scores.append((score, player['name'], hand_class))
+        scores.sort()  # Lower is better
+        best_score = scores[0][0]
+        winners = [tup[1] for tup in scores if tup[0] == best_score]
+        pot_share = game_state['pot'] // len(winners)
+        for player in game_state['players']:
+            if player['name'] in winners:
+                player['stack'] += pot_share
+        return winners
+
+def prepare_next_hand(game_state):
+    num_players = len(game_state['players'])
+    game_state['dealer_pos'] = (game_state['dealer_pos'] + 1) % num_players
+    deck = create_deck()
+    random.shuffle(deck)
+    hands = deal_cards(deck, num_players)
+    for i, player in enumerate(game_state['players']):
+        player['hand'] = hands[i]
+        player['current_bet'] = 0
+        if player['stack'] > 0:
+            player['status'] = "active"
+        else:
+            player['status'] = "out"
+    game_state['deck'] = deck
+    game_state['community'] = []
+    game_state['pot'] = 0
+    game_state['betting_round'] = 'preflop'
+    game_state['current_bet'] = 0
+    # Post antes and blinds at the start of each new hand
+    apply_antes(game_state)
+    post_blinds(game_state)
+
+
+
+def showdown(game_state):
+    """
+    Evaluates all active players' hands, determines the winner(s), and awards the pot.
+    Returns a list of winner info and their hand classes.
+    """
+    community = game_state['community']
+    active_players = [p for p in game_state['players'] if p['status'] == 'active']
+
+    # If only one player is left (everyone else folded)
+    if len(active_players) == 1:
+        active_players[0]['stack'] += game_state['pot']
+        return [{
+            'name': active_players[0]['name'],
+            'hand': active_players[0]['hand'],
+            'hand_class': 'No Showdown (everyone else folded)'
+        }]
+
+    # Otherwise: classic showdown
+    scores = []
+    for player in active_players:
+        score, hand_class = evaluate_hand(player['hand'], community)
+        scores.append((score, player))
+
+    scores.sort(key=lambda tup: tup[0])  # Lowest score wins (treys logic)
+    best_score = scores[0][0]
+    winners = [player for (score, player) in scores if score == best_score]
+
+    # Split the pot among winners
+    pot_share = game_state['pot'] // len(winners)
+    for player in winners:
+        player['stack'] += pot_share
+
+    # Build info for frontend/UI/logging
+    winner_info = [{
+        'name': p['name'],
+        'hand': p['hand'],
+        'hand_class': evaluate_hand(p['hand'], community)[1]
+    } for p in winners]
+
+    return winner_info
+
+def post_blinds(game_state, small_blind=SMALL_BLIND, big_blind=BIG_BLIND):
+    num_players = len(game_state['players'])
+    sb_pos = (game_state['dealer_pos'] + 1) % num_players
+    bb_pos = (game_state['dealer_pos'] + 2) % num_players
+
+    for pos, blind, name in [(sb_pos, small_blind, 'small_blind'), (bb_pos, big_blind, 'big_blind')]:
+        player = game_state['players'][pos]
+        amount = min(player['stack'], blind)
+        player['stack'] -= amount
+        player['current_bet'] += amount
+        game_state['pot'] += amount
+        player['status'] = 'active' if player['stack'] > 0 else 'out'
+        # Optionally log: (player['name'], name, amount)
+    game_state['current_bet'] = big_blind
+    game_state['current_player'] = (bb_pos + 1) % num_players  # First to act after blinds
+
 
 # More functions needed for: betting logic, showdown, winner determination, etc.

@@ -1,36 +1,237 @@
 from flask import Blueprint, jsonify, request
-from app.game.poker import start_new_game
+from app.game.poker import (
+    start_new_game, apply_action, betting_round_over, advance_round, 
+    award_pot, next_player, showdown, prepare_next_hand
+)
 from app.game.ai import decide_action
+import uuid
 
 bp = Blueprint('api', __name__)
 
-# Game state (in-memory for now)
-game_state = {}
+# Game sessions (in-memory for now)
+game_sessions = {}
 
 @bp.route('/start-game', methods=['POST'])
 def start_game():
-    global game_state
+    """Start a new poker game and return initial state"""
+    game_id = str(uuid.uuid4())
     game_state = start_new_game()
-    # Only expose player and AI hands plus community cards to the client
-    response = {
-        "player_hand": game_state["players"][0]["hand"],
-        "ai_hand": game_state["players"][1]["hand"],
-        "community": game_state["community"],
-    }
-    return jsonify(response)
+    game_state['game_id'] = game_id
+    game_state['action_history'] = []
+    game_sessions[game_id] = game_state
+    
+    return jsonify({
+        'game_id': game_id,
+        'player_hand': game_state['players'][0]['hand'],
+        'community': game_state['community'],
+        'pot': game_state['pot'],
+        'players': [
+            {
+                'name': p['name'],
+                'stack': p['stack'], 
+                'current_bet': p['current_bet'],
+                'status': p['status']
+            } for p in game_state['players']
+        ],
+        'current_player': game_state['current_player'],
+        'betting_round': game_state['betting_round'],
+        'current_bet': game_state['current_bet'],
+        'action_history': []
+    })
 
-@bp.route('/action', methods=['POST'])
+@bp.route('/player-action', methods=['POST'])
 def player_action():
-    global game_state
+    """Handle player action and process game flow"""
     data = request.json
+    game_id = data.get('game_id')
     action = data.get('action')
+    amount = data.get('amount', 0)
+    
+    # Validation
+    if not game_id or game_id not in game_sessions:
+        return jsonify({'error': 'Invalid game session'}), 400
+    if not action or action not in ['fold', 'call', 'check', 'raise']:
+        return jsonify({'error': 'Invalid action'}), 400
+        
+    game_state = game_sessions[game_id]
+    
+    # Validate it's player's turn (assuming player 0 is human)
+    if game_state['current_player'] != 0:
+        return jsonify({'error': 'Not your turn'}), 400
+    
+    try:
+        # Apply player action
+        apply_action(game_state, action, amount)
+        log_action(game_state, 0, action, amount)
+        
+        # Process game flow after player action
+        result = process_game_flow(game_state)
+        
+        return jsonify(result)
+        
+    except ValueError as e:
+        return jsonify({'error': str(e)}), 400
+    except Exception as e:
+        return jsonify({'error': 'Internal server error'}), 500
 
-    # Simulate AI response (you'll later improve this)
-    ai_decision = decide_action(game_state)
+@bp.route('/game-state/<game_id>', methods=['GET'])
+def get_game_state(game_id):
+    """Get current game state"""
+    if game_id not in game_sessions:
+        return jsonify({'error': 'Game not found'}), 404
+    
+    game_state = game_sessions[game_id]
+    return jsonify(serialize_game_state(game_state))
 
-    # Update game state (basic logic for now)
-    game_state['last_player_action'] = action
-    game_state['ai_decision'] = ai_decision
+@bp.route('/new-hand', methods=['POST'])
+def new_hand():
+    """Start a new hand in existing game"""
+    data = request.json
+    game_id = data.get('game_id')
+    
+    if not game_id or game_id not in game_sessions:
+        return jsonify({'error': 'Invalid game session'}), 400
+    
+    game_state = game_sessions[game_id]
+    
+    # Check if both players have chips
+    active_players = [p for p in game_state['players'] if p['stack'] > 0]
+    if len(active_players) < 2:
+        return jsonify({'error': 'Game over - insufficient players with chips'}), 400
+    
+    # Prepare next hand
+    prepare_next_hand(game_state)
+    game_state['action_history'] = []
+    
+    return jsonify(serialize_game_state(game_state))
 
-    return jsonify(game_state)
+def process_game_flow(game_state):
+    """Process the game flow after an action"""
+    # Check if betting round is over
+    if betting_round_over(game_state):
+        # Check if game is over (only one active player)
+        active_players = [p for p in game_state['players'] if p['status'] == 'active']
+        
+        if len(active_players) <= 1:
+            # Someone folded, award pot
+            winners = award_pot(game_state)
+            return {
+                'game_state': serialize_game_state(game_state),
+                'winners': winners,
+                'hand_over': True,
+                'message': f"{winners[0]} wins the pot!"
+            }
+        
+        # If we're at river, go to showdown
+        if game_state['betting_round'] == 'river':
+            winners = showdown(game_state)
+            return {
+                'game_state': serialize_game_state(game_state),
+                'winners': winners,
+                'hand_over': True,
+                'showdown': True,
+                'message': f"Showdown! Winner(s): {', '.join([w['name'] for w in winners])}"
+            }
+        else:
+            # Advance to next street
+            advance_round(game_state)
+            # Set current player to first active player after dealer
+            set_first_to_act(game_state)
+    else:
+        # Move to next player
+        next_player(game_state)
+    
+    # AI turn if it's player 1's turn
+    if game_state['current_player'] == 1 and game_state['players'][1]['status'] == 'active':
+        ai_action, ai_amount = decide_action(game_state)
+        apply_action(game_state, ai_action, ai_amount)
+        log_action(game_state, 1, ai_action, ai_amount)
+        
+        # Check again after AI action
+        if betting_round_over(game_state):
+            active_players = [p for p in game_state['players'] if p['status'] == 'active']
+            
+            if len(active_players) <= 1:
+                winners = award_pot(game_state)
+                return {
+                    'game_state': serialize_game_state(game_state),
+                    'winners': winners,
+                    'hand_over': True,
+                    'message': f"{winners[0]} wins the pot!"
+                }
+            
+            if game_state['betting_round'] == 'river':
+                winners = showdown(game_state)
+                return {
+                    'game_state': serialize_game_state(game_state),
+                    'winners': winners,
+                    'hand_over': True,
+                    'showdown': True,
+                    'message': f"Showdown! Winner(s): {', '.join([w['name'] for w in winners])}"
+                }
+            else:
+                advance_round(game_state)
+                set_first_to_act(game_state)
+        else:
+            next_player(game_state)
+    
+    return {
+        'game_state': serialize_game_state(game_state),
+        'hand_over': False
+    }
+
+def set_first_to_act(game_state):
+    """Set the first active player to act for a new betting round"""
+    num_players = len(game_state['players'])
+    # Start with player after dealer
+    first_pos = (game_state['dealer_pos'] + 1) % num_players
+    
+    for i in range(num_players):
+        pos = (first_pos + i) % num_players
+        if game_state['players'][pos]['status'] == 'active' and game_state['players'][pos]['stack'] > 0:
+            game_state['current_player'] = pos
+            return
+    
+    # If no active players found, something is wrong
+    game_state['current_player'] = 0
+
+def log_action(game_state, player_idx, action, amount):
+    """Log player action for UI feedback"""
+    player = game_state['players'][player_idx]
+    entry = {
+        'player': player['name'],
+        'action': action,
+        'round': game_state['betting_round'],
+        'pot_after': game_state['pot']
+    }
+    
+    if action == 'raise':
+        entry['amount'] = amount
+    elif action == 'call':
+        to_call = game_state.get('current_bet', 0) - player['current_bet']
+        entry['amount'] = min(to_call, player['stack'] + player['current_bet'])
+    
+    game_state['action_history'].append(entry)
+
+def serialize_game_state(game_state):
+    """Convert game state to JSON-safe format for frontend"""
+    return {
+        'game_id': game_state.get('game_id'),
+        'player_hand': game_state['players'][0]['hand'],
+        'community': game_state['community'],
+        'pot': game_state['pot'],
+        'players': [
+            {
+                'name': p['name'],
+                'stack': p['stack'],
+                'current_bet': p['current_bet'], 
+                'status': p['status']
+            } for p in game_state['players']
+        ],
+        'current_player': game_state['current_player'],
+        'betting_round': game_state['betting_round'],
+        'current_bet': game_state['current_bet'],
+        'action_history': game_state.get('action_history', []),
+        'dealer_pos': game_state['dealer_pos']
+    }
 

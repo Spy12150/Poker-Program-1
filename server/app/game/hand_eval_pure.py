@@ -1,7 +1,7 @@
 from collections import Counter
 
 """
-Not used as logic for project, purely to demonstrate hand order logic in python
+Not used as logic for project, alternate approach
 """
 def hand_rank(cards):
     """
