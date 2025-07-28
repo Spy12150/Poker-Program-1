@@ -54,7 +54,7 @@ cd ..
 
 echo "✅ Both servers are starting up!"
 echo "🌐 Frontend: http://localhost:3000"
-echo "🔌 Backend API: http://localhost:5000"
+echo "🔌 Backend API: http://localhost:5001"
 echo "🎮 Ready to play poker!"
 echo ""
 echo "Press Ctrl+C to stop both servers"

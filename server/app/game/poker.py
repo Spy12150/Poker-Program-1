@@ -76,6 +76,7 @@ def start_new_game():
         "current_player": (0 + 1) % NUM_PLAYERS,
         "betting_round": "preflop",
         "current_bet": 0,
+        "action_history": [],
     }
 
     apply_antes(game_state)
@@ -137,15 +138,24 @@ def apply_action(game_state, action, amount=0):
         if player['stack'] == 0:
             player['status'] = 'all-in'
     elif action == 'raise':
+        # amount should be the total bet amount, not just the raise
         total_bet = amount
-        raise_amt = total_bet - player['current_bet']
-        if raise_amt < min_raise:
-            raise_amt = min_raise  # enforce min raise
-        to_pay = min(raise_amt, player['stack'])
-        player['stack'] -= to_pay
-        player['current_bet'] += to_pay
-        game_state['pot'] += to_pay
+        additional_bet = total_bet - player['current_bet']
+        
+        # Ensure minimum raise (at least double the current bet, or big blind minimum)
+        min_raise_total = max(game_state.get('current_bet', 0) * 2, BIG_BLIND * 2)
+        if total_bet < min_raise_total:
+            total_bet = min_raise_total
+            additional_bet = total_bet - player['current_bet']
+        
+        # Can't bet more than stack
+        additional_bet = min(additional_bet, player['stack'])
+        
+        player['stack'] -= additional_bet
+        player['current_bet'] += additional_bet
+        game_state['pot'] += additional_bet
         game_state['current_bet'] = player['current_bet']
+        
         if player['stack'] == 0:
             player['status'] = 'all-in'
     elif action == 'check':
@@ -161,14 +171,41 @@ def betting_round_over(game_state):
     Betting round is over if:
     - All players but one are folded
     - All active players have matched the current bet or are all-in
+    - AND it's not the first action of the round (in heads-up)
     """
     active = [p for p in game_state['players'] if p['status'] == 'active']
     if len(active) <= 1:
         return True
 
+    # All active players must have matched the current bet
+    current_bet = game_state.get('current_bet', 0)
+    
+    # Check if anyone still needs to call
     for player in active:
-        if player['stack'] > 0 and player['current_bet'] != game_state.get('current_bet', 0):
+        if player['stack'] > 0 and player['current_bet'] != current_bet:
             return False
+    
+    # In heads-up, make sure we don't end the round too early
+    if len(game_state['players']) == 2:
+        betting_round = game_state.get('betting_round', 'preflop')
+        current_player = game_state.get('current_player', 0)
+        
+        # For preflop: small blind acts first, big blind must get a chance to act
+        if betting_round == 'preflop':
+            # If it's still the small blind's first turn, round is not over
+            action_history = game_state.get('action_history', [])
+            if len(action_history) == 0:
+                return False
+        
+        # For post-flop: if no one has bet yet (current_bet == 0), 
+        # both players should get a chance to check
+        elif current_bet == 0:
+            action_history = game_state.get('action_history', [])
+            # Count actions in this betting round
+            round_actions = [a for a in action_history if a.get('round') == betting_round]
+            if len(round_actions) < 2:  # Both players need to act
+                return False
+    
     return True
 
 def reset_bets(game_state):
@@ -189,29 +226,15 @@ def run_betting_round(game_state, action_sequence):
     reset_bets(game_state)  # When moving to next street
 
 
-def determine_winner(active_players, community):
-    """
-    Evaluates all active players' hands at showdown and returns the winner(s).
-    Returns: a list of winning player(s) and their hand info.
-    """
-    scores = []
-    for player in active_players:
-        score, hand_class = evaluate_hand(player['hand'], community)
-        scores.append((score, player['name'], hand_class))
-    scores.sort()  # lowest score (best hand) first
-
-    # Find all players with the best score (tie = split pot)
-    best_score = scores[0][0]
-    winners = [tup for tup in scores if tup[0] == best_score]
-
-    return winners  # Each is (score, name, hand_class)
-
-# Duplicate functions removed - using the first definitions above
+# Note: determine_winner function removed as it's redundant with showdown()
 
 def reset_bets(game_state):
     for player in game_state['players']:
         player['current_bet'] = 0
     game_state['current_bet'] = 0
+    # Keep action_history but ensure it's initialized
+    if 'action_history' not in game_state:
+        game_state['action_history'] = []
 
 def advance_round(game_state):
     """
@@ -325,8 +348,17 @@ def showdown(game_state):
 
 def post_blinds(game_state, small_blind=SMALL_BLIND, big_blind=BIG_BLIND):
     num_players = len(game_state['players'])
-    sb_pos = (game_state['dealer_pos'] + 1) % num_players
-    bb_pos = (game_state['dealer_pos'] + 2) % num_players
+    
+    if num_players == 2:  # Heads-up poker rules
+        # In heads-up, dealer posts small blind and acts first preflop
+        sb_pos = game_state['dealer_pos']  # Dealer posts small blind
+        bb_pos = (game_state['dealer_pos'] + 1) % 2  # Other player posts big blind
+        first_to_act = sb_pos  # Small blind acts first in heads-up preflop
+    else:
+        # Standard multi-player rules
+        sb_pos = (game_state['dealer_pos'] + 1) % num_players
+        bb_pos = (game_state['dealer_pos'] + 2) % num_players
+        first_to_act = (bb_pos + 1) % num_players
 
     for pos, blind, name in [(sb_pos, small_blind, 'small_blind'), (bb_pos, big_blind, 'big_blind')]:
         player = game_state['players'][pos]
@@ -336,8 +368,9 @@ def post_blinds(game_state, small_blind=SMALL_BLIND, big_blind=BIG_BLIND):
         game_state['pot'] += amount
         player['status'] = 'active' if player['stack'] > 0 else 'out'
         # Optionally log: (player['name'], name, amount)
+    
     game_state['current_bet'] = big_blind
-    game_state['current_player'] = (bb_pos + 1) % num_players  # First to act after blinds
+    game_state['current_player'] = first_to_act  # Set correct first player
 
 
 # More functions needed for: betting logic, showdown, winner determination, etc.
