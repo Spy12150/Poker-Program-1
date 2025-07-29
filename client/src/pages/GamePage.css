@@ -67,12 +67,11 @@
 
 .message {
   position: fixed;
-  top: 10px;
-  left: 50%;
-  transform: translateX(-50%);
+  top: 30px;
+  left: 280px;
   background: rgba(52, 58, 64, 0.95);
   padding: 10px 20px;
-  border-radius: 20px;
+  border-radius: 10px;
   font-size: 14px;
   font-weight: bold;
   z-index: 1001;
@@ -941,4 +940,27 @@
   background: white;
   border: 2px solid #f8bbd9;
   color: black;
+}
+
+/* Hand Evaluation Display */
+.hand-evaluation {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 10px;
+  background: rgba(255, 255, 255, 0.95);
+  padding: 6px 10px;
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  backdrop-filter: blur(10px);
+  text-align: center;
+  max-width: 200px;
+  width: auto;
+  font-size: 12px;
+  font-weight: bold;
+  color: #495057;
+  z-index: 15;
+  white-space: normal;
+  word-wrap: break-word;
+  line-height: 1.3;
 }
