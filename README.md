@@ -102,36 +102,26 @@ server/               # Flask backend
 - Game statistics and hand history 
 
 Sturucture for now:
-Poker-Program-1/
-├── README.md                                 # Basic project description
-├── client/                                   # React/Vite frontend
-│   ├── package.json                          # Dependencies (React 19, Vite 6)
-│   ├── index.html                            # HTML entry point
-│   ├── vite.config.js                        # Vite configuration
-│   ├── eslint.config.js                      # ESLint config
-│   ├── public/
-│   │   ├── vite.svg
-│   │   └── cards/                            # Complete deck of card images
-│   │       ├── {rank}_of_{suit}.png          # Standard naming: 2-ace, clubs/diamonds/hearts/spades
-│   │       ├── {face}_of_{suit}2.png         # DUPLICATES for face cards
-│   │       ├── cardback.png                  # Hidden card back
-│   │       ├── background.png                # Table background
-│   │       └── {red/black}_joker.png         # Extra jokers
+/Users/ivorylove/Documents/Code/PERSONAL PROJECTS/Poker-Program-1/
+├── README.md
+├── start-dev.sh
+├── client/ (React + Vite frontend)
+│   ├── package.json, vite.config.js, eslint.config.js
+│   ├── index.html
+│   ├── public/cards/ (52 card images + background.png)
 │   └── src/
-│       ├── main.jsx                          # React entry point
-│       ├── App.jsx                           # Minimal app wrapper
-│       ├── index.css, App.css                # Styling
-│       ├── pages/
-│       │   └── GamePage.jsx                  # Main game UI (basic hand display)
-│       └── assets/react.svg
-├── server/                                    # Flask backend
-│   ├── run.py                                # Flask app entry point
-│   └── app/
-│       ├── __init__.py                       # Flask factory with CORS
-│       ├── routes.py                         # INCOMPLETE API routes
-│       └── game/
-│           ├── config.py                     # Game constants (2 players, $1000 stacks, $10/$20 blinds)
-│           ├── hand_eval_lib.py              # Working treys integration
-│           ├── hand_eval_pure.py             # Working on
-│           ├── ai.py                         # STUB random AI
-│           └── poker.py                      # CORE ENGINE with DUPLICATED functions
+│       ├── main.jsx, App.jsx, App.css, index.css
+│       ├── assets/react.svg
+│       └── pages/
+│           ├── GamePage.jsx (main poker interface)
+│           └── GamePage.css (styling)
+└── server/ (Python Flask backend)
+    ├── requirements.txt, run.py
+    └── app/
+        ├── __init__.py, routes.py
+        └── game/
+            ├── __init__.py, config.py
+            ├── poker.py (main game logic)
+            ├── ai.py (AI player logic)
+            ├── hand_eval_lib.py (hand evaluation)
+            └── hand_eval_pure.py (pure Python hand eval)

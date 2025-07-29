@@ -26,6 +26,14 @@ const GamePage = () => {
     return Math.max(0, currentBet - playerCurrentBet);
   };
 
+  const getActualCallAmount = () => {
+    if (!gameState || !gameState.players) return 0;
+    const player = gameState.players[0];
+    const callAmount = getCallAmount();
+    // Cap call amount at player's remaining stack (for all-in calls)
+    return Math.min(callAmount, player.stack);
+  };
+
   // Logarithmic slider conversion functions
   const betToSliderPosition = (betValue, minBet, maxBet) => {
     if (minBet >= maxBet || betValue <= minBet) return 0;
@@ -52,7 +60,9 @@ const GamePage = () => {
 
   const canCall = () => {
     const callAmount = getCallAmount();
-    return callAmount > 0 && gameState?.players[0]?.stack >= callAmount;
+    // You can always call if there's a bet to call and you have chips
+    // Even if the bet is larger than your stack (all-in call)
+    return callAmount > 0 && gameState?.players[0]?.stack > 0;
   };
 
   const canRaise = () => {
@@ -126,7 +136,7 @@ const GamePage = () => {
     if (!gameState?.action_history) return false;
     
     const playerName = gameState.players[playerIndex]?.name;
-    const currentRound = gameState.round || 'preflop';
+    const currentRound = gameState.betting_round || 'preflop';  // Fixed: was gameState.round
     
     // Look for the most recent check action by this player in the current round
     const recentActions = gameState.action_history.slice().reverse();
@@ -259,6 +269,42 @@ const GamePage = () => {
       if (data.game_state) {
         setGameState(data.game_state);
         updateBetLimits(data.game_state);
+      }
+
+      // Log console messages from backend to browser console
+      if (data.console_logs && Array.isArray(data.console_logs)) {
+        console.log('=== AI DECISION DEBUG ===');
+        data.console_logs.forEach(log => console.log(log));
+        console.log('=========================');
+      }
+
+      // Additional debug logging for action display
+      if (data.game_state) {
+        console.log('Game state after AI turn:', data.game_state);
+        console.log('Action history:', data.game_state.action_history);
+        console.log('AI current bet:', data.game_state.players[1]?.current_bet);
+        console.log('Current player after AI turn:', data.game_state.current_player);
+        console.log('Hand over after AI turn:', data.hand_over);
+        
+        // Check if AI has checked in current round using the new game state
+        const aiPlayerName = data.game_state.players[1]?.name;
+        const currentRound = data.game_state.betting_round || 'preflop';
+        const recentActions = data.game_state.action_history.slice().reverse();
+        let aiHasChecked = false;
+        for (const action of recentActions) {
+          if (action.player === aiPlayerName && action.round === currentRound) {
+            aiHasChecked = action.action === 'check';
+            break;
+          }
+        }
+        console.log(`AI has checked in ${currentRound}:`, aiHasChecked);
+        
+        // Log if it should be player's turn now
+        if (data.game_state.current_player === 0 && !data.hand_over) {
+          console.log('✅ It should be player\'s turn now - UI should show action panel');
+        } else if (data.game_state.current_player === 1) {
+          console.log('⚠️ Still AI\'s turn after AI action - this might be an issue');
+        }
       }
 
       if (data.hand_over) {
@@ -738,7 +784,7 @@ const GamePage = () => {
                   disabled={loading || (!canCheck() && !canCall())}
                   className="modern-action-button call-button"
                 >
-                  {canCheck() ? 'CHECK' : `CALL ${getCallAmount() > 0 ? '$' + getCallAmount() : ''}`}
+                  {canCheck() ? 'CHECK' : `CALL ${getActualCallAmount() > 0 ? '$' + getActualCallAmount() : ''}`}
                 </button>
                 
                 <button

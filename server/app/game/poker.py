@@ -67,13 +67,15 @@ def start_new_game():
     for i, hand in enumerate(hands):
         players[i]['hand'] = hand
 
+    dealer_pos = random.randint(0, NUM_PLAYERS - 1)  # Random starting dealer
+    
     game_state = {
         "players": players,
         "deck": deck,
         "community": [],
         "pot": 0,
-        "dealer_pos": 0,
-        "current_player": (0 + 1) % NUM_PLAYERS,
+        "dealer_pos": dealer_pos,
+        "current_player": dealer_pos,  # In heads-up, dealer (SB) acts first preflop
         "betting_round": "preflop",
         "current_bet": 0,
         "last_bet_amount": 0,  # Track the last bet/raise amount for minimum raise calculation
@@ -394,6 +396,11 @@ def prepare_next_hand(game_state):
     game_state['betting_round'] = 'preflop'
     game_state['current_bet'] = 0
     game_state['last_bet_amount'] = 0
+    game_state['action_history'] = []
+    
+    # In heads-up, dealer (SB) acts first preflop
+    game_state['current_player'] = game_state['dealer_pos']
+    
     # Post antes and blinds at the start of each new hand
     apply_antes(game_state)
     post_blinds(game_state)

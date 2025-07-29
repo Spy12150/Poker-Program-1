@@ -7,7 +7,13 @@ def create_app():
     # Configure CORS more explicitly
     CORS(app, resources={
         r"/*": {
-            "origins": ["http://localhost:3000", "http://127.0.0.1:3000"],
+            "origins": [
+                "http://localhost:3000", "http://127.0.0.1:3000",
+                "http://localhost:3001", "http://127.0.0.1:3001", 
+                "http://localhost:3002", "http://127.0.0.1:3002",
+                "http://localhost:3003", "http://127.0.0.1:3003",
+                "http://localhost:3004", "http://127.0.0.1:3004"
+            ],
             "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
             "allow_headers": ["Content-Type", "Authorization"]
         }

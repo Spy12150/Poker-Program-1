@@ -6,6 +6,8 @@ It's designed to be a consistent, challenging opponent with optimal play.
 """
 
 import random
+import json
+import os
 from .hand_eval_lib import evaluate_hand
 from .config import BIG_BLIND, SMALL_BLIND
 
@@ -16,6 +18,49 @@ class OptimizedHardcodedAI:
         self.bluff_frequency = 0.12
         self.value_bet_threshold = 0.65
         self.fold_threshold = 0.25
+        
+        # Load preflop charts
+        self.sb_rfi_chart = self.load_sb_rfi_chart()
+        
+    def load_sb_rfi_chart(self):
+        """Load the Small Blind Raise First In chart from JSON file"""
+        try:
+            current_dir = os.path.dirname(__file__)
+            chart_path = os.path.join(current_dir, 'poker_charts', 'headsup_SBRFI.json')
+            with open(chart_path, 'r') as f:
+                return json.load(f)
+        except Exception as e:
+            print(f"Warning: Could not load SB RFI chart: {e}")
+            return {}
+    
+    def hand_to_string(self, hand):
+        """Convert hand array to standard poker notation (e.g., ['As', 'Kd'] -> 'AKo')"""
+        card1, card2 = hand[0], hand[1]
+        rank1, rank2 = card1[0], card2[0]
+        suit1, suit2 = card1[1], card2[1]
+        
+        # Convert ranks to standard notation
+        rank_order = {'A': 14, 'K': 13, 'Q': 12, 'J': 11, 'T': 10, '9': 9, '8': 8, '7': 7, '6': 6, '5': 5, '4': 4, '3': 3, '2': 2}
+        val1, val2 = rank_order[rank1], rank_order[rank2]
+        
+        # Determine if suited
+        suited = suit1 == suit2
+        
+        # Handle pairs
+        if rank1 == rank2:
+            return rank1 + rank1
+        
+        # Order by rank (higher first)
+        if val1 > val2:
+            high_rank, low_rank = rank1, rank2
+        else:
+            high_rank, low_rank = rank2, rank1
+            
+        # Add suited/offsuit designation
+        if suited:
+            return high_rank + low_rank + 's'
+        else:
+            return high_rank + low_rank + 'o'
         
     def decide_action(self, game_state):
         """
@@ -35,12 +80,21 @@ class OptimizedHardcodedAI:
         if len(community) >= 3:
             return self.postflop_decision(hand, community, to_call, pot, ai_player, spr, betting_round)
         else:
-            return self.preflop_decision(hand, to_call, pot, ai_player, spr)
+            return self.preflop_decision(hand, to_call, pot, ai_player, spr, game_state)
     
-    def preflop_decision(self, hand, to_call, pot, ai_player, spr):
+    def preflop_decision(self, hand, to_call, pot, ai_player, spr, game_state):
         """
-        Game Theory Optimal preflop strategy
+        Game Theory Optimal preflop strategy with SB RFI chart integration
         """
+        # Check if this is SB first action (heads-up, no bet to call, preflop)
+        if (to_call == 0 and 
+            game_state['betting_round'] == 'preflop' and 
+            len(game_state.get('action_history', [])) == 0):
+            
+            # Use SB RFI chart
+            return self.sb_first_action(hand, ai_player)
+        
+        # Fall back to original preflop strategy for other situations
         hand_strength = self.evaluate_preflop_hand(hand)
         position_factor = 1.1  # AI is always in position in heads-up
         
@@ -49,6 +103,24 @@ class OptimizedHardcodedAI:
             return self.short_stack_preflop(hand_strength, to_call, ai_player, pot)
         else:  # Deep stack play
             return self.deep_stack_preflop(hand_strength, to_call, ai_player, pot)
+    
+    def sb_first_action(self, hand, ai_player):
+        """
+        Small Blind first action using loaded chart
+        """
+        hand_string = self.hand_to_string(hand)
+        
+        # Get frequency from chart (default to 0.0 if hand not found)
+        frequency = self.sb_rfi_chart.get(hand_string, 0.0)
+        
+        # Random decision based on frequency
+        if random.random() < frequency:
+            # Raise 2.3x BB, rounded up to nearest integer
+            raise_size = int(BIG_BLIND * 2.3 + 0.5)  # Round up
+            return ('raise', ai_player['current_bet'] + raise_size)
+        else:
+            # Fold (which becomes check in SB vs BB)
+            return ('check', 0)
     
     def evaluate_preflop_hand(self, hand):
         """

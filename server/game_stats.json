@@ -1,8 +1,8 @@
 {
-  "total_hands": 124,
-  "player_wins": 60,
-  "ai_wins": 64,
-  "showdowns": 35,
+  "total_hands": 221,
+  "player_wins": 127,
+  "ai_wins": 94,
+  "showdowns": 39,
   "player_stats": {
     "vpip": 0.0,
     "pfr": 0.0,
@@ -5474,6 +5474,2959 @@
       "actions": [
         {
           "player": "Player 2",
+          "action": "fold",
+          "round": "preflop",
+          "pot_after": 30
+        }
+      ]
+    },
+    {
+      "timestamp": "2025-07-29T19:25:41.299588",
+      "winner": "Player 2",
+      "pot_size": 40,
+      "showdown": false,
+      "player_hand": [
+        "2s",
+        "6d"
+      ],
+      "ai_hand": [
+        "Ts",
+        "7d"
+      ],
+      "community": [
+        "6h",
+        "3c",
+        "Qs"
+      ],
+      "actions": [
+        {
+          "player": "Player 1",
+          "action": "call",
+          "round": "preflop",
+          "pot_after": 40,
+          "amount": 0
+        },
+        {
+          "player": "Player 2",
+          "action": "check",
+          "round": "preflop",
+          "pot_after": 40
+        },
+        {
+          "player": "Player 1",
+          "action": "fold",
+          "round": "flop",
+          "pot_after": 40
+        }
+      ]
+    },
+    {
+      "timestamp": "2025-07-29T19:25:48.610801",
+      "winner": "Player 2",
+      "pot_size": 70,
+      "showdown": false,
+      "player_hand": [
+        "5s",
+        "2d"
+      ],
+      "ai_hand": [
+        "Qs",
+        "Ad"
+      ],
+      "community": [],
+      "actions": [
+        {
+          "player": "Player 2",
+          "action": "raise",
+          "round": "preflop",
+          "pot_after": 70,
+          "amount": 50
+        },
+        {
+          "player": "Player 1",
+          "action": "fold",
+          "round": "preflop",
+          "pot_after": 70
+        }
+      ]
+    },
+    {
+      "timestamp": "2025-07-29T19:25:51.072563",
+      "winner": "Player 2",
+      "pot_size": 30,
+      "showdown": false,
+      "player_hand": [
+        "9h",
+        "6d"
+      ],
+      "ai_hand": [
+        "Kd",
+        "Ac"
+      ],
+      "community": [],
+      "actions": [
+        {
+          "player": "Player 1",
+          "action": "fold",
+          "round": "preflop",
+          "pot_after": 30
+        }
+      ]
+    },
+    {
+      "timestamp": "2025-07-29T19:25:52.598363",
+      "winner": "Player 1",
+      "pot_size": 30,
+      "showdown": false,
+      "player_hand": [
+        "Td",
+        "Qs"
+      ],
+      "ai_hand": [
+        "2c",
+        "3c"
+      ],
+      "community": [],
+      "actions": [
+        {
+          "player": "Player 2",
+          "action": "fold",
+          "round": "preflop",
+          "pot_after": 30
+        }
+      ]
+    },
+    {
+      "timestamp": "2025-07-29T19:25:56.267866",
+      "winner": "Player 2",
+      "pot_size": 30,
+      "showdown": false,
+      "player_hand": [
+        "Ac",
+        "Ks"
+      ],
+      "ai_hand": [
+        "8s",
+        "Kd"
+      ],
+      "community": [],
+      "actions": [
+        {
+          "player": "Player 1",
+          "action": "fold",
+          "round": "preflop",
+          "pot_after": 30
+        }
+      ]
+    },
+    {
+      "timestamp": "2025-07-29T19:25:57.973930",
+      "winner": "Player 1",
+      "pot_size": 30,
+      "showdown": false,
+      "player_hand": [
+        "4s",
+        "Qs"
+      ],
+      "ai_hand": [
+        "7s",
+        "5s"
+      ],
+      "community": [],
+      "actions": [
+        {
+          "player": "Player 2",
+          "action": "fold",
+          "round": "preflop",
+          "pot_after": 30
+        }
+      ]
+    },
+    {
+      "timestamp": "2025-07-29T19:25:59.883799",
+      "winner": "Player 2",
+      "pot_size": 30,
+      "showdown": false,
+      "player_hand": [
+        "Qc",
+        "Jd"
+      ],
+      "ai_hand": [
+        "7d",
+        "7h"
+      ],
+      "community": [],
+      "actions": [
+        {
+          "player": "Player 1",
+          "action": "fold",
+          "round": "preflop",
+          "pot_after": 30
+        }
+      ]
+    },
+    {
+      "timestamp": "2025-07-29T19:26:06.049087",
+      "winner": "Player 2",
+      "pot_size": 40,
+      "showdown": false,
+      "player_hand": [
+        "Tc",
+        "9d"
+      ],
+      "ai_hand": [
+        "3c",
+        "Ad"
+      ],
+      "community": [
+        "9h",
+        "2h",
+        "Kd"
+      ],
+      "actions": [
+        {
+          "player": "Player 2",
+          "action": "call",
+          "round": "preflop",
+          "pot_after": 40,
+          "amount": 0
+        },
+        {
+          "player": "Player 1",
+          "action": "check",
+          "round": "preflop",
+          "pot_after": 40
+        },
+        {
+          "player": "Player 2",
+          "action": "check",
+          "round": "flop",
+          "pot_after": 40
+        },
+        {
+          "player": "Player 1",
+          "action": "fold",
+          "round": "flop",
+          "pot_after": 40
+        }
+      ]
+    },
+    {
+      "timestamp": "2025-07-29T19:26:07.289697",
+      "winner": "Player 2",
+      "pot_size": 30,
+      "showdown": false,
+      "player_hand": [
+        "4c",
+        "Ad"
+      ],
+      "ai_hand": [
+        "Jh",
+        "Tc"
+      ],
+      "community": [],
+      "actions": [
+        {
+          "player": "Player 1",
+          "action": "fold",
+          "round": "preflop",
+          "pot_after": 30
+        }
+      ]
+    },
+    {
+      "timestamp": "2025-07-29T19:26:10.183247",
+      "winner": "Player 2",
+      "pot_size": 70,
+      "showdown": false,
+      "player_hand": [
+        "Th",
+        "6h"
+      ],
+      "ai_hand": [
+        "Ks",
+        "As"
+      ],
+      "community": [],
+      "actions": [
+        {
+          "player": "Player 2",
+          "action": "raise",
+          "round": "preflop",
+          "pot_after": 70,
+          "amount": 50
+        },
+        {
+          "player": "Player 1",
+          "action": "fold",
+          "round": "preflop",
+          "pot_after": 70
+        }
+      ]
+    },
+    {
+      "timestamp": "2025-07-29T19:26:11.556347",
+      "winner": "Player 2",
+      "pot_size": 30,
+      "showdown": false,
+      "player_hand": [
+        "7h",
+        "2d"
+      ],
+      "ai_hand": [
+        "9d",
+        "Tc"
+      ],
+      "community": [],
+      "actions": [
+        {
+          "player": "Player 1",
+          "action": "fold",
+          "round": "preflop",
+          "pot_after": 30
+        }
+      ]
+    },
+    {
+      "timestamp": "2025-07-29T19:26:13.020074",
+      "winner": "Player 1",
+      "pot_size": 30,
+      "showdown": false,
+      "player_hand": [
+        "8s",
+        "Ad"
+      ],
+      "ai_hand": [
+        "3s",
+        "7s"
+      ],
+      "community": [],
+      "actions": [
+        {
+          "player": "Player 2",
+          "action": "fold",
+          "round": "preflop",
+          "pot_after": 30
+        }
+      ]
+    },
+    {
+      "timestamp": "2025-07-29T19:45:17.551278",
+      "winner": "Player 1",
+      "pot_size": 40,
+      "showdown": true,
+      "player_hand": [
+        "4c",
+        "2d"
+      ],
+      "ai_hand": [
+        "7h",
+        "3d"
+      ],
+      "community": [
+        "Ts",
+        "8h",
+        "2h",
+        "5c",
+        "6s"
+      ],
+      "actions": [
+        {
+          "player": "Player 1",
+          "action": "call",
+          "round": "preflop",
+          "pot_after": 40,
+          "amount": 0
+        },
+        {
+          "player": "Player 2",
+          "action": "check",
+          "round": "preflop",
+          "pot_after": 40
+        },
+        {
+          "player": "Player 1",
+          "action": "check",
+          "round": "flop",
+          "pot_after": 40
+        },
+        {
+          "player": "Player 2",
+          "action": "check",
+          "round": "flop",
+          "pot_after": 40
+        },
+        {
+          "player": "Player 1",
+          "action": "check",
+          "round": "turn",
+          "pot_after": 40
+        },
+        {
+          "player": "Player 2",
+          "action": "check",
+          "round": "turn",
+          "pot_after": 40
+        },
+        {
+          "player": "Player 1",
+          "action": "check",
+          "round": "river",
+          "pot_after": 40
+        },
+        {
+          "player": "Player 2",
+          "action": "check",
+          "round": "river",
+          "pot_after": 40
+        }
+      ]
+    },
+    {
+      "timestamp": "2025-07-29T19:52:07.722752",
+      "winner": "Player 1",
+      "pot_size": 40,
+      "showdown": false,
+      "player_hand": [
+        "Jh",
+        "5s"
+      ],
+      "ai_hand": [
+        "2s",
+        "Ad"
+      ],
+      "community": [],
+      "actions": [
+        {
+          "player": "Player 1",
+          "action": "call",
+          "round": "preflop",
+          "pot_after": 40,
+          "amount": 0
+        },
+        {
+          "player": "Player 2",
+          "action": "fold",
+          "round": "preflop",
+          "pot_after": 40
+        }
+      ]
+    },
+    {
+      "timestamp": "2025-07-29T19:52:12.877948",
+      "winner": "Player 1",
+      "pot_size": 30,
+      "showdown": false,
+      "player_hand": [
+        "2s",
+        "Jd"
+      ],
+      "ai_hand": [
+        "Js",
+        "9s"
+      ],
+      "community": [],
+      "actions": [
+        {
+          "player": "Player 2",
+          "action": "fold",
+          "round": "preflop",
+          "pot_after": 30
+        }
+      ]
+    },
+    {
+      "timestamp": "2025-07-29T19:52:17.563473",
+      "winner": "Player 1",
+      "pot_size": 40,
+      "showdown": false,
+      "player_hand": [
+        "8c",
+        "Qd"
+      ],
+      "ai_hand": [
+        "9h",
+        "7h"
+      ],
+      "community": [],
+      "actions": [
+        {
+          "player": "Player 1",
+          "action": "call",
+          "round": "preflop",
+          "pot_after": 40,
+          "amount": 0
+        },
+        {
+          "player": "Player 2",
+          "action": "fold",
+          "round": "preflop",
+          "pot_after": 40
+        }
+      ]
+    },
+    {
+      "timestamp": "2025-07-29T19:52:21.631318",
+      "winner": "Player 1",
+      "pot_size": 30,
+      "showdown": false,
+      "player_hand": [
+        "Kh",
+        "Kd"
+      ],
+      "ai_hand": [
+        "5c",
+        "6s"
+      ],
+      "community": [],
+      "actions": [
+        {
+          "player": "Player 2",
+          "action": "fold",
+          "round": "preflop",
+          "pot_after": 30
+        }
+      ]
+    },
+    {
+      "timestamp": "2025-07-29T19:52:25.120944",
+      "winner": "Player 1",
+      "pot_size": 40,
+      "showdown": false,
+      "player_hand": [
+        "Jd",
+        "5h"
+      ],
+      "ai_hand": [
+        "Tc",
+        "Ad"
+      ],
+      "community": [],
+      "actions": [
+        {
+          "player": "Player 1",
+          "action": "call",
+          "round": "preflop",
+          "pot_after": 40,
+          "amount": 0
+        },
+        {
+          "player": "Player 2",
+          "action": "fold",
+          "round": "preflop",
+          "pot_after": 40
+        }
+      ]
+    },
+    {
+      "timestamp": "2025-07-29T19:52:26.678740",
+      "winner": "Player 1",
+      "pot_size": 30,
+      "showdown": false,
+      "player_hand": [
+        "8c",
+        "2s"
+      ],
+      "ai_hand": [
+        "Ac",
+        "Kc"
+      ],
+      "community": [],
+      "actions": [
+        {
+          "player": "Player 2",
+          "action": "fold",
+          "round": "preflop",
+          "pot_after": 30
+        }
+      ]
+    },
+    {
+      "timestamp": "2025-07-29T19:54:59.413785",
+      "winner": "Player 1",
+      "pot_size": 40,
+      "showdown": false,
+      "player_hand": [
+        "2h",
+        "8h"
+      ],
+      "ai_hand": [
+        "8d",
+        "6s"
+      ],
+      "community": [],
+      "actions": [
+        {
+          "player": "Player 1",
+          "action": "call",
+          "round": "preflop",
+          "pot_after": 40,
+          "amount": 0
+        },
+        {
+          "player": "Player 2",
+          "action": "fold",
+          "round": "preflop",
+          "pot_after": 40
+        }
+      ]
+    },
+    {
+      "timestamp": "2025-07-29T19:55:03.209913",
+      "winner": "Player 1",
+      "pot_size": 30,
+      "showdown": false,
+      "player_hand": [
+        "Qc",
+        "8s"
+      ],
+      "ai_hand": [
+        "3c",
+        "2c"
+      ],
+      "community": [],
+      "actions": [
+        {
+          "player": "Player 2",
+          "action": "fold",
+          "round": "preflop",
+          "pot_after": 30
+        }
+      ]
+    },
+    {
+      "timestamp": "2025-07-29T19:55:08.358104",
+      "winner": "Player 1",
+      "pot_size": 40,
+      "showdown": false,
+      "player_hand": [
+        "Js",
+        "6h"
+      ],
+      "ai_hand": [
+        "4c",
+        "7h"
+      ],
+      "community": [],
+      "actions": [
+        {
+          "player": "Player 1",
+          "action": "call",
+          "round": "preflop",
+          "pot_after": 40,
+          "amount": 0
+        },
+        {
+          "player": "Player 2",
+          "action": "fold",
+          "round": "preflop",
+          "pot_after": 40
+        }
+      ]
+    },
+    {
+      "timestamp": "2025-07-29T19:55:10.924795",
+      "winner": "Player 1",
+      "pot_size": 30,
+      "showdown": false,
+      "player_hand": [
+        "3d",
+        "5c"
+      ],
+      "ai_hand": [
+        "8h",
+        "Kc"
+      ],
+      "community": [],
+      "actions": [
+        {
+          "player": "Player 2",
+          "action": "fold",
+          "round": "preflop",
+          "pot_after": 30
+        }
+      ]
+    },
+    {
+      "timestamp": "2025-07-29T19:55:16.212850",
+      "winner": "Player 1",
+      "pot_size": 40,
+      "showdown": false,
+      "player_hand": [
+        "8d",
+        "4s"
+      ],
+      "ai_hand": [
+        "3s",
+        "2s"
+      ],
+      "community": [],
+      "actions": [
+        {
+          "player": "Player 1",
+          "action": "call",
+          "round": "preflop",
+          "pot_after": 40,
+          "amount": 0
+        },
+        {
+          "player": "Player 2",
+          "action": "fold",
+          "round": "preflop",
+          "pot_after": 40
+        }
+      ]
+    },
+    {
+      "timestamp": "2025-07-29T19:56:14.769407",
+      "winner": "Player 1",
+      "pot_size": 40,
+      "showdown": false,
+      "player_hand": [
+        "4h",
+        "9d"
+      ],
+      "ai_hand": [
+        "8s",
+        "8d"
+      ],
+      "community": [],
+      "actions": [
+        {
+          "player": "Player 1",
+          "action": "call",
+          "round": "preflop",
+          "pot_after": 40,
+          "amount": 0
+        },
+        {
+          "player": "Player 2",
+          "action": "fold",
+          "round": "preflop",
+          "pot_after": 40
+        }
+      ]
+    },
+    {
+      "timestamp": "2025-07-29T19:56:16.658486",
+      "winner": "Player 1",
+      "pot_size": 30,
+      "showdown": false,
+      "player_hand": [
+        "8d",
+        "9d"
+      ],
+      "ai_hand": [
+        "Kh",
+        "3c"
+      ],
+      "community": [],
+      "actions": [
+        {
+          "player": "Player 2",
+          "action": "fold",
+          "round": "preflop",
+          "pot_after": 30
+        }
+      ]
+    },
+    {
+      "timestamp": "2025-07-29T19:56:31.901327",
+      "winner": "Player 1",
+      "pot_size": 40,
+      "showdown": false,
+      "player_hand": [
+        "4c",
+        "Ks"
+      ],
+      "ai_hand": [
+        "Qc",
+        "Jc"
+      ],
+      "community": [],
+      "actions": [
+        {
+          "player": "Player 1",
+          "action": "call",
+          "round": "preflop",
+          "pot_after": 40,
+          "amount": 0
+        },
+        {
+          "player": "Player 2",
+          "action": "fold",
+          "round": "preflop",
+          "pot_after": 40
+        }
+      ]
+    },
+    {
+      "timestamp": "2025-07-29T19:56:33.636505",
+      "winner": "Player 1",
+      "pot_size": 30,
+      "showdown": false,
+      "player_hand": [
+        "As",
+        "Ks"
+      ],
+      "ai_hand": [
+        "Jd",
+        "Td"
+      ],
+      "community": [],
+      "actions": [
+        {
+          "player": "Player 2",
+          "action": "fold",
+          "round": "preflop",
+          "pot_after": 30
+        }
+      ]
+    },
+    {
+      "timestamp": "2025-07-29T19:57:54.488878",
+      "winner": "Player 1",
+      "pot_size": 40,
+      "showdown": false,
+      "player_hand": [
+        "8h",
+        "7s"
+      ],
+      "ai_hand": [
+        "Ts",
+        "3c"
+      ],
+      "community": [],
+      "actions": [
+        {
+          "player": "Player 1",
+          "action": "call",
+          "round": "preflop",
+          "pot_after": 40,
+          "amount": 0
+        },
+        {
+          "player": "Player 2",
+          "action": "fold",
+          "round": "preflop",
+          "pot_after": 40
+        }
+      ]
+    },
+    {
+      "timestamp": "2025-07-29T19:57:56.585759",
+      "winner": "Player 1",
+      "pot_size": 30,
+      "showdown": false,
+      "player_hand": [
+        "Qs",
+        "Td"
+      ],
+      "ai_hand": [
+        "6c",
+        "9h"
+      ],
+      "community": [],
+      "actions": [
+        {
+          "player": "Player 2",
+          "action": "fold",
+          "round": "preflop",
+          "pot_after": 30
+        }
+      ]
+    },
+    {
+      "timestamp": "2025-07-29T20:00:23.383280",
+      "winner": "Player 1",
+      "pot_size": 40,
+      "showdown": false,
+      "player_hand": [
+        "Qh",
+        "4d"
+      ],
+      "ai_hand": [
+        "3d",
+        "2h"
+      ],
+      "community": [],
+      "actions": [
+        {
+          "player": "Player 1",
+          "action": "call",
+          "round": "preflop",
+          "pot_after": 40,
+          "amount": 0
+        },
+        {
+          "player": "Player 2",
+          "action": "fold",
+          "round": "preflop",
+          "pot_after": 40
+        }
+      ]
+    },
+    {
+      "timestamp": "2025-07-29T20:00:25.626200",
+      "winner": "Player 1",
+      "pot_size": 30,
+      "showdown": false,
+      "player_hand": [
+        "6s",
+        "Qh"
+      ],
+      "ai_hand": [
+        "Ad",
+        "5d"
+      ],
+      "community": [],
+      "actions": [
+        {
+          "player": "Player 2",
+          "action": "fold",
+          "round": "preflop",
+          "pot_after": 30
+        }
+      ]
+    },
+    {
+      "timestamp": "2025-07-29T20:00:28.669166",
+      "winner": "Player 1",
+      "pot_size": 40,
+      "showdown": false,
+      "player_hand": [
+        "4d",
+        "5h"
+      ],
+      "ai_hand": [
+        "Qd",
+        "Kd"
+      ],
+      "community": [],
+      "actions": [
+        {
+          "player": "Player 1",
+          "action": "call",
+          "round": "preflop",
+          "pot_after": 40,
+          "amount": 0
+        },
+        {
+          "player": "Player 2",
+          "action": "fold",
+          "round": "preflop",
+          "pot_after": 40
+        }
+      ]
+    },
+    {
+      "timestamp": "2025-07-29T20:00:30.590793",
+      "winner": "Player 1",
+      "pot_size": 30,
+      "showdown": false,
+      "player_hand": [
+        "7h",
+        "3s"
+      ],
+      "ai_hand": [
+        "4c",
+        "Ts"
+      ],
+      "community": [],
+      "actions": [
+        {
+          "player": "Player 2",
+          "action": "fold",
+          "round": "preflop",
+          "pot_after": 30
+        }
+      ]
+    },
+    {
+      "timestamp": "2025-07-29T20:02:08.382100",
+      "winner": "Player 1",
+      "pot_size": 40,
+      "showdown": false,
+      "player_hand": [
+        "3h",
+        "Qs"
+      ],
+      "ai_hand": [
+        "6h",
+        "4s"
+      ],
+      "community": [],
+      "actions": [
+        {
+          "player": "Player 1",
+          "action": "call",
+          "round": "preflop",
+          "pot_after": 40,
+          "amount": 0
+        },
+        {
+          "player": "Player 2",
+          "action": "fold",
+          "round": "preflop",
+          "pot_after": 40
+        }
+      ]
+    },
+    {
+      "timestamp": "2025-07-29T20:02:10.193695",
+      "winner": "Player 1",
+      "pot_size": 30,
+      "showdown": false,
+      "player_hand": [
+        "7s",
+        "6d"
+      ],
+      "ai_hand": [
+        "Ad",
+        "8s"
+      ],
+      "community": [],
+      "actions": [
+        {
+          "player": "Player 2",
+          "action": "fold",
+          "round": "preflop",
+          "pot_after": 30
+        }
+      ]
+    },
+    {
+      "timestamp": "2025-07-29T20:02:12.941665",
+      "winner": "Player 1",
+      "pot_size": 40,
+      "showdown": false,
+      "player_hand": [
+        "3s",
+        "4s"
+      ],
+      "ai_hand": [
+        "Ks",
+        "5c"
+      ],
+      "community": [],
+      "actions": [
+        {
+          "player": "Player 1",
+          "action": "call",
+          "round": "preflop",
+          "pot_after": 40,
+          "amount": 0
+        },
+        {
+          "player": "Player 2",
+          "action": "fold",
+          "round": "preflop",
+          "pot_after": 40
+        }
+      ]
+    },
+    {
+      "timestamp": "2025-07-29T20:02:14.675373",
+      "winner": "Player 1",
+      "pot_size": 30,
+      "showdown": false,
+      "player_hand": [
+        "3c",
+        "Jh"
+      ],
+      "ai_hand": [
+        "Qd",
+        "6d"
+      ],
+      "community": [],
+      "actions": [
+        {
+          "player": "Player 2",
+          "action": "fold",
+          "round": "preflop",
+          "pot_after": 30
+        }
+      ]
+    },
+    {
+      "timestamp": "2025-07-29T20:03:17.761908",
+      "winner": "Player 1",
+      "pot_size": 40,
+      "showdown": false,
+      "player_hand": [
+        "9h",
+        "5h"
+      ],
+      "ai_hand": [
+        "6d",
+        "8s"
+      ],
+      "community": [],
+      "actions": [
+        {
+          "player": "Player 1",
+          "action": "call",
+          "round": "preflop",
+          "pot_after": 40,
+          "amount": 0
+        },
+        {
+          "player": "Player 2",
+          "action": "fold",
+          "round": "preflop",
+          "pot_after": 40
+        }
+      ]
+    },
+    {
+      "timestamp": "2025-07-29T20:03:19.707099",
+      "winner": "Player 1",
+      "pot_size": 30,
+      "showdown": false,
+      "player_hand": [
+        "8s",
+        "9d"
+      ],
+      "ai_hand": [
+        "9c",
+        "Td"
+      ],
+      "community": [],
+      "actions": [
+        {
+          "player": "Player 2",
+          "action": "fold",
+          "round": "preflop",
+          "pot_after": 30
+        }
+      ]
+    },
+    {
+      "timestamp": "2025-07-29T20:03:22.430407",
+      "winner": "Player 1",
+      "pot_size": 40,
+      "showdown": false,
+      "player_hand": [
+        "3h",
+        "9s"
+      ],
+      "ai_hand": [
+        "8s",
+        "5d"
+      ],
+      "community": [],
+      "actions": [
+        {
+          "player": "Player 1",
+          "action": "call",
+          "round": "preflop",
+          "pot_after": 40,
+          "amount": 0
+        },
+        {
+          "player": "Player 2",
+          "action": "fold",
+          "round": "preflop",
+          "pot_after": 40
+        }
+      ]
+    },
+    {
+      "timestamp": "2025-07-29T20:03:24.168341",
+      "winner": "Player 1",
+      "pot_size": 30,
+      "showdown": false,
+      "player_hand": [
+        "Ks",
+        "Ts"
+      ],
+      "ai_hand": [
+        "4d",
+        "Ac"
+      ],
+      "community": [],
+      "actions": [
+        {
+          "player": "Player 2",
+          "action": "fold",
+          "round": "preflop",
+          "pot_after": 30
+        }
+      ]
+    },
+    {
+      "timestamp": "2025-07-29T20:03:29.319970",
+      "winner": "Player 1",
+      "pot_size": 40,
+      "showdown": false,
+      "player_hand": [
+        "Ad",
+        "As"
+      ],
+      "ai_hand": [
+        "6s",
+        "6c"
+      ],
+      "community": [],
+      "actions": [
+        {
+          "player": "Player 1",
+          "action": "call",
+          "round": "preflop",
+          "pot_after": 40,
+          "amount": 0
+        },
+        {
+          "player": "Player 2",
+          "action": "fold",
+          "round": "preflop",
+          "pot_after": 40
+        }
+      ]
+    },
+    {
+      "timestamp": "2025-07-29T20:04:58.466408",
+      "winner": "Player 1",
+      "pot_size": 40,
+      "showdown": false,
+      "player_hand": [
+        "5c",
+        "Ts"
+      ],
+      "ai_hand": [
+        "9d",
+        "Qh"
+      ],
+      "community": [],
+      "actions": [
+        {
+          "player": "Player 1",
+          "action": "call",
+          "round": "preflop",
+          "pot_after": 40,
+          "amount": 0
+        },
+        {
+          "player": "Player 2",
+          "action": "fold",
+          "round": "preflop",
+          "pot_after": 40
+        }
+      ]
+    },
+    {
+      "timestamp": "2025-07-29T20:05:38.116023",
+      "winner": "Player 1",
+      "pot_size": 40,
+      "showdown": false,
+      "player_hand": [
+        "3s",
+        "3h"
+      ],
+      "ai_hand": [
+        "9h",
+        "6c"
+      ],
+      "community": [],
+      "actions": [
+        {
+          "player": "Player 1",
+          "action": "call",
+          "round": "preflop",
+          "pot_after": 40,
+          "amount": 0
+        },
+        {
+          "player": "Player 2",
+          "action": "fold",
+          "round": "preflop",
+          "pot_after": 40
+        }
+      ]
+    },
+    {
+      "timestamp": "2025-07-29T20:06:39.876663",
+      "winner": "Player 1",
+      "pot_size": 40,
+      "showdown": false,
+      "player_hand": [
+        "Ah",
+        "8h"
+      ],
+      "ai_hand": [
+        "7s",
+        "7h"
+      ],
+      "community": [],
+      "actions": [
+        {
+          "player": "Player 1",
+          "action": "call",
+          "round": "preflop",
+          "pot_after": 40,
+          "amount": 0
+        },
+        {
+          "player": "Player 2",
+          "action": "fold",
+          "round": "preflop",
+          "pot_after": 40
+        }
+      ]
+    },
+    {
+      "timestamp": "2025-07-29T20:08:44.082417",
+      "winner": "Player 1",
+      "pot_size": 60,
+      "showdown": false,
+      "player_hand": [
+        "As",
+        "4s"
+      ],
+      "ai_hand": [
+        "Th",
+        "Jc"
+      ],
+      "community": [],
+      "actions": [
+        {
+          "player": "Player 1",
+          "action": "raise",
+          "round": "preflop",
+          "pot_after": 60,
+          "amount": 30
+        },
+        {
+          "player": "Player 2",
+          "action": "fold",
+          "round": "preflop",
+          "pot_after": 60
+        }
+      ]
+    },
+    {
+      "timestamp": "2025-07-29T20:09:05.155455",
+      "winner": "Player 2",
+      "pot_size": 40,
+      "showdown": false,
+      "player_hand": [
+        "7h",
+        "Tc"
+      ],
+      "ai_hand": [
+        "Kh",
+        "Qs"
+      ],
+      "community": [
+        "7d",
+        "8h",
+        "3h"
+      ],
+      "actions": [
+        {
+          "player": "Player 1",
+          "action": "call",
+          "round": "preflop",
+          "pot_after": 40,
+          "amount": 0
+        },
+        {
+          "player": "Player 2",
+          "action": "check",
+          "round": "preflop",
+          "pot_after": 40
+        },
+        {
+          "player": "Player 1",
+          "action": "fold",
+          "round": "flop",
+          "pot_after": 40
+        }
+      ]
+    },
+    {
+      "timestamp": "2025-07-29T20:09:07.101956",
+      "winner": "Player 1",
+      "pot_size": 30,
+      "showdown": false,
+      "player_hand": [
+        "Qc",
+        "Th"
+      ],
+      "ai_hand": [
+        "3d",
+        "Qh"
+      ],
+      "community": [],
+      "actions": [
+        {
+          "player": "Player 2",
+          "action": "fold",
+          "round": "preflop",
+          "pot_after": 30
+        }
+      ]
+    },
+    {
+      "timestamp": "2025-07-29T20:09:09.180093",
+      "winner": "Player 2",
+      "pot_size": 30,
+      "showdown": false,
+      "player_hand": [
+        "Qh",
+        "7h"
+      ],
+      "ai_hand": [
+        "Js",
+        "8h"
+      ],
+      "community": [],
+      "actions": [
+        {
+          "player": "Player 1",
+          "action": "fold",
+          "round": "preflop",
+          "pot_after": 30
+        }
+      ]
+    },
+    {
+      "timestamp": "2025-07-29T20:09:10.867277",
+      "winner": "Player 1",
+      "pot_size": 30,
+      "showdown": false,
+      "player_hand": [
+        "2s",
+        "Td"
+      ],
+      "ai_hand": [
+        "6h",
+        "Kc"
+      ],
+      "community": [],
+      "actions": [
+        {
+          "player": "Player 2",
+          "action": "fold",
+          "round": "preflop",
+          "pot_after": 30
+        }
+      ]
+    },
+    {
+      "timestamp": "2025-07-29T20:09:12.353867",
+      "winner": "Player 2",
+      "pot_size": 30,
+      "showdown": false,
+      "player_hand": [
+        "9c",
+        "Ad"
+      ],
+      "ai_hand": [
+        "Td",
+        "Qh"
+      ],
+      "community": [],
+      "actions": [
+        {
+          "player": "Player 1",
+          "action": "fold",
+          "round": "preflop",
+          "pot_after": 30
+        }
+      ]
+    },
+    {
+      "timestamp": "2025-07-29T20:09:13.928420",
+      "winner": "Player 1",
+      "pot_size": 30,
+      "showdown": false,
+      "player_hand": [
+        "9h",
+        "Js"
+      ],
+      "ai_hand": [
+        "8s",
+        "Tc"
+      ],
+      "community": [],
+      "actions": [
+        {
+          "player": "Player 2",
+          "action": "fold",
+          "round": "preflop",
+          "pot_after": 30
+        }
+      ]
+    },
+    {
+      "timestamp": "2025-07-29T20:09:15.975167",
+      "winner": "Player 2",
+      "pot_size": 30,
+      "showdown": false,
+      "player_hand": [
+        "4d",
+        "Jd"
+      ],
+      "ai_hand": [
+        "3c",
+        "5c"
+      ],
+      "community": [],
+      "actions": [
+        {
+          "player": "Player 1",
+          "action": "fold",
+          "round": "preflop",
+          "pot_after": 30
+        }
+      ]
+    },
+    {
+      "timestamp": "2025-07-29T20:09:17.550092",
+      "winner": "Player 1",
+      "pot_size": 30,
+      "showdown": false,
+      "player_hand": [
+        "6h",
+        "5s"
+      ],
+      "ai_hand": [
+        "5d",
+        "7c"
+      ],
+      "community": [],
+      "actions": [
+        {
+          "player": "Player 2",
+          "action": "fold",
+          "round": "preflop",
+          "pot_after": 30
+        }
+      ]
+    },
+    {
+      "timestamp": "2025-07-29T20:15:06.885543",
+      "winner": "Player 1",
+      "pot_size": 30,
+      "showdown": false,
+      "player_hand": [
+        "5h",
+        "Kd"
+      ],
+      "ai_hand": [
+        "4h",
+        "7h"
+      ],
+      "community": [],
+      "actions": [
+        {
+          "player": "Player 2",
+          "action": "fold",
+          "round": "preflop",
+          "pot_after": 30
+        }
+      ]
+    },
+    {
+      "timestamp": "2025-07-29T20:16:19.720474",
+      "winner": "Player 2",
+      "pot_size": 40,
+      "showdown": false,
+      "player_hand": [
+        "4s",
+        "9c"
+      ],
+      "ai_hand": [
+        "3d",
+        "As"
+      ],
+      "community": [
+        "2s",
+        "Kd",
+        "8h"
+      ],
+      "actions": [
+        {
+          "player": "Player 1",
+          "action": "call",
+          "round": "preflop",
+          "pot_after": 40,
+          "amount": 0
+        },
+        {
+          "player": "Player 2",
+          "action": "check",
+          "round": "preflop",
+          "pot_after": 40
+        },
+        {
+          "player": "Player 1",
+          "action": "fold",
+          "round": "flop",
+          "pot_after": 40
+        }
+      ]
+    },
+    {
+      "timestamp": "2025-07-29T20:16:21.265178",
+      "winner": "Player 1",
+      "pot_size": 30,
+      "showdown": false,
+      "player_hand": [
+        "Kh",
+        "3d"
+      ],
+      "ai_hand": [
+        "7c",
+        "6h"
+      ],
+      "community": [],
+      "actions": [
+        {
+          "player": "Player 2",
+          "action": "fold",
+          "round": "preflop",
+          "pot_after": 30
+        }
+      ]
+    },
+    {
+      "timestamp": "2025-07-29T20:16:22.770502",
+      "winner": "Player 2",
+      "pot_size": 30,
+      "showdown": false,
+      "player_hand": [
+        "8h",
+        "7c"
+      ],
+      "ai_hand": [
+        "2d",
+        "Jc"
+      ],
+      "community": [],
+      "actions": [
+        {
+          "player": "Player 1",
+          "action": "fold",
+          "round": "preflop",
+          "pot_after": 30
+        }
+      ]
+    },
+    {
+      "timestamp": "2025-07-29T20:16:24.191995",
+      "winner": "Player 1",
+      "pot_size": 30,
+      "showdown": false,
+      "player_hand": [
+        "Ks",
+        "7h"
+      ],
+      "ai_hand": [
+        "Ts",
+        "7c"
+      ],
+      "community": [],
+      "actions": [
+        {
+          "player": "Player 2",
+          "action": "fold",
+          "round": "preflop",
+          "pot_after": 30
+        }
+      ]
+    },
+    {
+      "timestamp": "2025-07-29T20:19:28.554801",
+      "winner": "Player 2",
+      "pot_size": 30,
+      "showdown": false,
+      "player_hand": [
+        "6s",
+        "4d"
+      ],
+      "ai_hand": [
+        "8s",
+        "9h"
+      ],
+      "community": [],
+      "actions": [
+        {
+          "player": "Player 1",
+          "action": "fold",
+          "round": "preflop",
+          "pot_after": 30
+        }
+      ]
+    },
+    {
+      "timestamp": "2025-07-29T20:19:30.391806",
+      "winner": "Player 1",
+      "pot_size": 30,
+      "showdown": false,
+      "player_hand": [
+        "2s",
+        "2d"
+      ],
+      "ai_hand": [
+        "9s",
+        "6d"
+      ],
+      "community": [],
+      "actions": [
+        {
+          "player": "Player 2",
+          "action": "fold",
+          "round": "preflop",
+          "pot_after": 30
+        }
+      ]
+    },
+    {
+      "timestamp": "2025-07-29T20:19:31.746904",
+      "winner": "Player 2",
+      "pot_size": 30,
+      "showdown": false,
+      "player_hand": [
+        "4c",
+        "Jh"
+      ],
+      "ai_hand": [
+        "5s",
+        "8h"
+      ],
+      "community": [],
+      "actions": [
+        {
+          "player": "Player 1",
+          "action": "fold",
+          "round": "preflop",
+          "pot_after": 30
+        }
+      ]
+    },
+    {
+      "timestamp": "2025-07-29T20:19:33.185621",
+      "winner": "Player 1",
+      "pot_size": 30,
+      "showdown": false,
+      "player_hand": [
+        "9c",
+        "9s"
+      ],
+      "ai_hand": [
+        "9h",
+        "6d"
+      ],
+      "community": [],
+      "actions": [
+        {
+          "player": "Player 2",
+          "action": "fold",
+          "round": "preflop",
+          "pot_after": 30
+        }
+      ]
+    },
+    {
+      "timestamp": "2025-07-29T20:19:34.136218",
+      "winner": "Player 2",
+      "pot_size": 30,
+      "showdown": false,
+      "player_hand": [
+        "Ks",
+        "As"
+      ],
+      "ai_hand": [
+        "6s",
+        "Th"
+      ],
+      "community": [],
+      "actions": [
+        {
+          "player": "Player 1",
+          "action": "fold",
+          "round": "preflop",
+          "pot_after": 30
+        }
+      ]
+    },
+    {
+      "timestamp": "2025-07-29T20:19:35.434706",
+      "winner": "Player 1",
+      "pot_size": 30,
+      "showdown": false,
+      "player_hand": [
+        "5c",
+        "Kc"
+      ],
+      "ai_hand": [
+        "Js",
+        "Kd"
+      ],
+      "community": [],
+      "actions": [
+        {
+          "player": "Player 2",
+          "action": "fold",
+          "round": "preflop",
+          "pot_after": 30
+        }
+      ]
+    },
+    {
+      "timestamp": "2025-07-29T20:22:13.469636",
+      "winner": "Player 2",
+      "pot_size": 30,
+      "showdown": false,
+      "player_hand": [
+        "3c",
+        "Ac"
+      ],
+      "ai_hand": [
+        "Tc",
+        "Qs"
+      ],
+      "community": [],
+      "actions": [
+        {
+          "player": "Player 1",
+          "action": "fold",
+          "round": "preflop",
+          "pot_after": 30
+        }
+      ]
+    },
+    {
+      "timestamp": "2025-07-29T20:22:15.115292",
+      "winner": "Player 1",
+      "pot_size": 30,
+      "showdown": false,
+      "player_hand": [
+        "Qs",
+        "Ts"
+      ],
+      "ai_hand": [
+        "9s",
+        "Jd"
+      ],
+      "community": [],
+      "actions": [
+        {
+          "player": "Player 2",
+          "action": "fold",
+          "round": "preflop",
+          "pot_after": 30
+        }
+      ]
+    },
+    {
+      "timestamp": "2025-07-29T20:22:16.358225",
+      "winner": "Player 2",
+      "pot_size": 30,
+      "showdown": false,
+      "player_hand": [
+        "9h",
+        "Jc"
+      ],
+      "ai_hand": [
+        "Kd",
+        "Jh"
+      ],
+      "community": [],
+      "actions": [
+        {
+          "player": "Player 1",
+          "action": "fold",
+          "round": "preflop",
+          "pot_after": 30
+        }
+      ]
+    },
+    {
+      "timestamp": "2025-07-29T20:22:20.144593",
+      "winner": "Player 1",
+      "pot_size": 30,
+      "showdown": false,
+      "player_hand": [
+        "Kd",
+        "Jd"
+      ],
+      "ai_hand": [
+        "5h",
+        "As"
+      ],
+      "community": [],
+      "actions": [
+        {
+          "player": "Player 2",
+          "action": "fold",
+          "round": "preflop",
+          "pot_after": 30
+        }
+      ]
+    },
+    {
+      "timestamp": "2025-07-29T20:25:27.437422",
+      "winner": "Player 2",
+      "pot_size": 30,
+      "showdown": false,
+      "player_hand": [
+        "Ac",
+        "2d"
+      ],
+      "ai_hand": [
+        "Tc",
+        "Jh"
+      ],
+      "community": [],
+      "actions": [
+        {
+          "player": "Player 1",
+          "action": "fold",
+          "round": "preflop",
+          "pot_after": 30
+        }
+      ]
+    },
+    {
+      "timestamp": "2025-07-29T20:25:55.070932",
+      "winner": "Player 2",
+      "pot_size": 66,
+      "showdown": false,
+      "player_hand": [
+        "Ac",
+        "7s"
+      ],
+      "ai_hand": [
+        "Qs",
+        "5c"
+      ],
+      "community": [],
+      "actions": [
+        {
+          "player": "Player 2",
+          "action": "raise",
+          "round": "preflop",
+          "pot_after": 66,
+          "amount": 46
+        },
+        {
+          "player": "Player 1",
+          "action": "fold",
+          "round": "preflop",
+          "pot_after": 66
+        }
+      ]
+    },
+    {
+      "timestamp": "2025-07-29T20:27:53.803532",
+      "winner": "Player 1",
+      "pot_size": 134,
+      "showdown": false,
+      "player_hand": [
+        "3h",
+        "Jc"
+      ],
+      "ai_hand": [
+        "7h",
+        "Th"
+      ],
+      "community": [
+        "4h",
+        "3s",
+        "Ac"
+      ],
+      "actions": [
+        {
+          "player": "Player 1",
+          "action": "raise",
+          "round": "preflop",
+          "pot_after": 70,
+          "amount": 50
+        },
+        {
+          "player": "Player 2",
+          "action": "call",
+          "round": "preflop",
+          "pot_after": 100,
+          "amount": 0
+        },
+        {
+          "player": "Player 1",
+          "action": "raise",
+          "round": "flop",
+          "pot_after": 134,
+          "amount": 34
+        },
+        {
+          "player": "Player 2",
+          "action": "fold",
+          "round": "flop",
+          "pot_after": 134
+        }
+      ]
+    },
+    {
+      "timestamp": "2025-07-29T20:30:43.912899",
+      "winner": "Player 1",
+      "pot_size": 70,
+      "showdown": false,
+      "player_hand": [
+        "6s",
+        "4c"
+      ],
+      "ai_hand": [
+        "Qd",
+        "8h"
+      ],
+      "community": [],
+      "actions": [
+        {
+          "player": "Player 1",
+          "action": "raise",
+          "round": "preflop",
+          "pot_after": 70,
+          "amount": 50
+        },
+        {
+          "player": "Player 2",
+          "action": "fold",
+          "round": "preflop",
+          "pot_after": 70
+        }
+      ]
+    },
+    {
+      "timestamp": "2025-07-29T20:30:47.691095",
+      "winner": "Player 2",
+      "pot_size": 66,
+      "showdown": false,
+      "player_hand": [
+        "6c",
+        "2d"
+      ],
+      "ai_hand": [
+        "Qd",
+        "Ks"
+      ],
+      "community": [],
+      "actions": [
+        {
+          "player": "Player 2",
+          "action": "raise",
+          "round": "preflop",
+          "pot_after": 66,
+          "amount": 46
+        },
+        {
+          "player": "Player 1",
+          "action": "fold",
+          "round": "preflop",
+          "pot_after": 66
+        }
+      ]
+    },
+    {
+      "timestamp": "2025-07-29T20:30:52.467414",
+      "winner": "Player 1",
+      "pot_size": 70,
+      "showdown": false,
+      "player_hand": [
+        "9d",
+        "Tc"
+      ],
+      "ai_hand": [
+        "6c",
+        "Qd"
+      ],
+      "community": [],
+      "actions": [
+        {
+          "player": "Player 1",
+          "action": "raise",
+          "round": "preflop",
+          "pot_after": 70,
+          "amount": 50
+        },
+        {
+          "player": "Player 2",
+          "action": "fold",
+          "round": "preflop",
+          "pot_after": 70
+        }
+      ]
+    },
+    {
+      "timestamp": "2025-07-29T20:31:00.734317",
+      "winner": "Player 1",
+      "pot_size": 145,
+      "showdown": false,
+      "player_hand": [
+        "Ac",
+        "8d"
+      ],
+      "ai_hand": [
+        "4s",
+        "6h"
+      ],
+      "community": [],
+      "actions": [
+        {
+          "player": "Player 2",
+          "action": "raise",
+          "round": "preflop",
+          "pot_after": 66,
+          "amount": 46
+        },
+        {
+          "player": "Player 1",
+          "action": "raise",
+          "round": "preflop",
+          "pot_after": 145,
+          "amount": 99
+        },
+        {
+          "player": "Player 2",
+          "action": "fold",
+          "round": "preflop",
+          "pot_after": 145
+        }
+      ]
+    },
+    {
+      "timestamp": "2025-07-29T20:31:07.091803",
+      "winner": "Player 1",
+      "pot_size": 70,
+      "showdown": false,
+      "player_hand": [
+        "3h",
+        "4c"
+      ],
+      "ai_hand": [
+        "Qd",
+        "8s"
+      ],
+      "community": [],
+      "actions": [
+        {
+          "player": "Player 1",
+          "action": "raise",
+          "round": "preflop",
+          "pot_after": 70,
+          "amount": 50
+        },
+        {
+          "player": "Player 2",
+          "action": "fold",
+          "round": "preflop",
+          "pot_after": 70
+        }
+      ]
+    },
+    {
+      "timestamp": "2025-07-29T20:32:17.860308",
+      "winner": "Player 1",
+      "pot_size": 184,
+      "showdown": true,
+      "player_hand": [
+        "6s",
+        "8c"
+      ],
+      "ai_hand": [
+        "3h",
+        "6h"
+      ],
+      "community": [
+        "7d",
+        "Jh",
+        "5c",
+        "5s",
+        "2s"
+      ],
+      "actions": [
+        {
+          "player": "Player 2",
+          "action": "raise",
+          "round": "preflop",
+          "pot_after": 66,
+          "amount": 46
+        },
+        {
+          "player": "Player 1",
+          "action": "call",
+          "round": "preflop",
+          "pot_after": 92,
+          "amount": 0
+        },
+        {
+          "player": "Player 2",
+          "action": "check",
+          "round": "flop",
+          "pot_after": 92
+        },
+        {
+          "player": "Player 1",
+          "action": "raise",
+          "round": "flop",
+          "pot_after": 138,
+          "amount": 46
+        },
+        {
+          "player": "Player 2",
+          "action": "call",
+          "round": "flop",
+          "pot_after": 184,
+          "amount": 0
+        },
+        {
+          "player": "Player 2",
+          "action": "check",
+          "round": "turn",
+          "pot_after": 184
+        },
+        {
+          "player": "Player 1",
+          "action": "check",
+          "round": "turn",
+          "pot_after": 184
+        },
+        {
+          "player": "Player 2",
+          "action": "check",
+          "round": "river",
+          "pot_after": 184
+        },
+        {
+          "player": "Player 1",
+          "action": "check",
+          "round": "river",
+          "pot_after": 184
+        }
+      ]
+    },
+    {
+      "timestamp": "2025-07-29T20:34:22.722965",
+      "winner": "Player 1",
+      "pot_size": 956,
+      "showdown": true,
+      "player_hand": [
+        "Qc",
+        "Ah"
+      ],
+      "ai_hand": [
+        "4c",
+        "Ac"
+      ],
+      "community": [
+        "As",
+        "6d",
+        "7h",
+        "6s",
+        "9d"
+      ],
+      "actions": [
+        {
+          "player": "Player 1",
+          "action": "raise",
+          "round": "preflop",
+          "pot_after": 70,
+          "amount": 50
+        },
+        {
+          "player": "Player 2",
+          "action": "call",
+          "round": "preflop",
+          "pot_after": 100,
+          "amount": 0
+        },
+        {
+          "player": "Player 1",
+          "action": "raise",
+          "round": "flop",
+          "pot_after": 150,
+          "amount": 50
+        },
+        {
+          "player": "Player 2",
+          "action": "call",
+          "round": "flop",
+          "pot_after": 200,
+          "amount": 0
+        },
+        {
+          "player": "Player 1",
+          "action": "raise",
+          "round": "turn",
+          "pot_after": 339,
+          "amount": 139
+        },
+        {
+          "player": "Player 2",
+          "action": "call",
+          "round": "turn",
+          "pot_after": 478,
+          "amount": 0
+        },
+        {
+          "player": "Player 1",
+          "action": "raise",
+          "round": "river",
+          "pot_after": 717,
+          "amount": 239
+        },
+        {
+          "player": "Player 2",
+          "action": "call",
+          "round": "river",
+          "pot_after": 956,
+          "amount": 0
+        }
+      ]
+    },
+    {
+      "timestamp": "2025-07-29T20:34:32.177655",
+      "winner": "Player 1",
+      "pot_size": 30,
+      "showdown": false,
+      "player_hand": [
+        "Jh",
+        "2s"
+      ],
+      "ai_hand": [
+        "2d",
+        "8h"
+      ],
+      "community": [],
+      "actions": [
+        {
+          "player": "Player 2",
+          "action": "fold",
+          "round": "preflop",
+          "pot_after": 30
+        }
+      ]
+    },
+    {
+      "timestamp": "2025-07-29T20:34:37.925294",
+      "winner": "Player 1",
+      "pot_size": 70,
+      "showdown": false,
+      "player_hand": [
+        "Ac",
+        "5d"
+      ],
+      "ai_hand": [
+        "Qd",
+        "7h"
+      ],
+      "community": [],
+      "actions": [
+        {
+          "player": "Player 1",
+          "action": "raise",
+          "round": "preflop",
+          "pot_after": 70,
+          "amount": 50
+        },
+        {
+          "player": "Player 2",
+          "action": "fold",
+          "round": "preflop",
+          "pot_after": 70
+        }
+      ]
+    },
+    {
+      "timestamp": "2025-07-29T20:37:13.376593",
+      "winner": "Player 1",
+      "pot_size": 70,
+      "showdown": false,
+      "player_hand": [
+        "2c",
+        "Ts"
+      ],
+      "ai_hand": [
+        "7c",
+        "Td"
+      ],
+      "community": [],
+      "actions": [
+        {
+          "player": "Player 1",
+          "action": "raise",
+          "round": "preflop",
+          "pot_after": 70,
+          "amount": 50
+        },
+        {
+          "player": "Player 2",
+          "action": "fold",
+          "round": "preflop",
+          "pot_after": 70
+        }
+      ]
+    },
+    {
+      "timestamp": "2025-07-29T20:37:17.153570",
+      "winner": "Player 2",
+      "pot_size": 66,
+      "showdown": false,
+      "player_hand": [
+        "5d",
+        "8h"
+      ],
+      "ai_hand": [
+        "Kh",
+        "Ts"
+      ],
+      "community": [],
+      "actions": [
+        {
+          "player": "Player 2",
+          "action": "raise",
+          "round": "preflop",
+          "pot_after": 66,
+          "amount": 46
+        },
+        {
+          "player": "Player 1",
+          "action": "fold",
+          "round": "preflop",
+          "pot_after": 66
+        }
+      ]
+    },
+    {
+      "timestamp": "2025-07-29T20:40:57.823067",
+      "winner": "Player 1",
+      "pot_size": 70,
+      "showdown": false,
+      "player_hand": [
+        "Kc",
+        "4h"
+      ],
+      "ai_hand": [
+        "7s",
+        "Qd"
+      ],
+      "community": [],
+      "actions": [
+        {
+          "player": "Player 1",
+          "action": "raise",
+          "round": "preflop",
+          "pot_after": 70,
+          "amount": 50
+        },
+        {
+          "player": "Player 2",
+          "action": "fold",
+          "round": "preflop",
+          "pot_after": 70
+        }
+      ]
+    },
+    {
+      "timestamp": "2025-07-29T20:40:59.802624",
+      "winner": "Player 1",
+      "pot_size": 30,
+      "showdown": false,
+      "player_hand": [
+        "2c",
+        "Kc"
+      ],
+      "ai_hand": [
+        "Ts",
+        "3d"
+      ],
+      "community": [],
+      "actions": [
+        {
+          "player": "Player 2",
+          "action": "fold",
+          "round": "preflop",
+          "pot_after": 30
+        }
+      ]
+    },
+    {
+      "timestamp": "2025-07-29T20:41:17.639198",
+      "winner": "Player 2",
+      "pot_size": 1200,
+      "showdown": true,
+      "player_hand": [
+        "9d",
+        "9h"
+      ],
+      "ai_hand": [
+        "Tc",
+        "As"
+      ],
+      "community": [
+        "6h",
+        "Jc",
+        "Td",
+        "7d",
+        "Jh"
+      ],
+      "actions": [
+        {
+          "player": "Player 1",
+          "action": "raise",
+          "round": "preflop",
+          "pot_after": 70,
+          "amount": 50
+        },
+        {
+          "player": "Player 2",
+          "action": "call",
+          "round": "preflop",
+          "pot_after": 100,
+          "amount": 0
+        },
+        {
+          "player": "Player 1",
+          "action": "raise",
+          "round": "flop",
+          "pot_after": 150,
+          "amount": 50
+        },
+        {
+          "player": "Player 2",
+          "action": "call",
+          "round": "flop",
+          "pot_after": 200,
+          "amount": 0
+        },
+        {
+          "player": "Player 1",
+          "action": "raise",
+          "round": "turn",
+          "pot_after": 300,
+          "amount": 100
+        },
+        {
+          "player": "Player 2",
+          "action": "call",
+          "round": "turn",
+          "pot_after": 400,
+          "amount": 0
+        },
+        {
+          "player": "Player 1",
+          "action": "raise",
+          "round": "river",
+          "pot_after": 800,
+          "amount": 400
+        },
+        {
+          "player": "Player 2",
+          "action": "call",
+          "round": "river",
+          "pot_after": 1200,
+          "amount": 0
+        }
+      ]
+    },
+    {
+      "timestamp": "2025-07-29T20:41:29.157747",
+      "winner": "Player 1",
+      "pot_size": 135,
+      "showdown": false,
+      "player_hand": [
+        "7c",
+        "7s"
+      ],
+      "ai_hand": [
+        "Qs",
+        "Tc"
+      ],
+      "community": [],
+      "actions": [
+        {
+          "player": "Player 2",
+          "action": "raise",
+          "round": "preflop",
+          "pot_after": 66,
+          "amount": 46
+        },
+        {
+          "player": "Player 1",
+          "action": "raise",
+          "round": "preflop",
+          "pot_after": 135,
+          "amount": 89
+        },
+        {
+          "player": "Player 2",
+          "action": "fold",
+          "round": "preflop",
+          "pot_after": 135
+        }
+      ]
+    },
+    {
+      "timestamp": "2025-07-29T20:41:35.172871",
+      "winner": "Player 1",
+      "pot_size": 70,
+      "showdown": false,
+      "player_hand": [
+        "Ks",
+        "Kd"
+      ],
+      "ai_hand": [
+        "Kh",
+        "6h"
+      ],
+      "community": [],
+      "actions": [
+        {
+          "player": "Player 1",
+          "action": "raise",
+          "round": "preflop",
+          "pot_after": 70,
+          "amount": 50
+        },
+        {
+          "player": "Player 2",
+          "action": "fold",
+          "round": "preflop",
+          "pot_after": 70
+        }
+      ]
+    },
+    {
+      "timestamp": "2025-07-29T20:41:55.044049",
+      "winner": "Player 2",
+      "pot_size": 841.271184,
+      "showdown": false,
+      "player_hand": [
+        "4c",
+        "6s"
+      ],
+      "ai_hand": [
+        "Qd",
+        "9c"
+      ],
+      "community": [
+        "Ks",
+        "Js",
+        "Th",
+        "2d",
+        "Ad"
+      ],
+      "actions": [
+        {
+          "player": "Player 2",
+          "action": "raise",
+          "round": "preflop",
+          "pot_after": 66,
+          "amount": 46
+        },
+        {
+          "player": "Player 1",
+          "action": "call",
+          "round": "preflop",
+          "pot_after": 92,
+          "amount": 0
+        },
+        {
+          "player": "Player 2",
+          "action": "raise",
+          "round": "flop",
+          "pot_after": 153.64,
+          "amount": 61.64
+        },
+        {
+          "player": "Player 1",
+          "action": "call",
+          "round": "flop",
+          "pot_after": 215.27999999999997,
+          "amount": 0.0
+        },
+        {
+          "player": "Player 2",
+          "action": "raise",
+          "round": "turn",
+          "pot_after": 359.51759999999996,
+          "amount": 144.2376
+        },
+        {
+          "player": "Player 1",
+          "action": "call",
+          "round": "turn",
+          "pot_after": 503.75519999999995,
+          "amount": 0.0
+        },
+        {
+          "player": "Player 2",
+          "action": "raise",
+          "round": "river",
+          "pot_after": 841.271184,
+          "amount": 337.515984
+        },
+        {
+          "player": "Player 1",
+          "action": "fold",
+          "round": "river",
+          "pot_after": 841.271184
+        }
+      ]
+    },
+    {
+      "timestamp": "2025-07-29T20:46:59.952914",
+      "winner": "Player 1",
+      "pot_size": 30,
+      "showdown": false,
+      "player_hand": [
+        "4s",
+        "6s"
+      ],
+      "ai_hand": [
+        "7s",
+        "3d"
+      ],
+      "community": [],
+      "actions": [
+        {
+          "player": "Player 2",
+          "action": "fold",
+          "round": "preflop",
+          "pot_after": 30
+        }
+      ]
+    },
+    {
+      "timestamp": "2025-07-29T20:47:05.881847",
+      "winner": "Player 1",
+      "pot_size": 80,
+      "showdown": false,
+      "player_hand": [
+        "3s",
+        "2d"
+      ],
+      "ai_hand": [
+        "8c",
+        "Kc"
+      ],
+      "community": [],
+      "actions": [
+        {
+          "player": "Player 1",
+          "action": "raise",
+          "round": "preflop",
+          "pot_after": 80,
+          "amount": 60
+        },
+        {
+          "player": "Player 2",
+          "action": "fold",
+          "round": "preflop",
+          "pot_after": 80
+        }
+      ]
+    },
+    {
+      "timestamp": "2025-07-29T20:47:25.426094",
+      "winner": "Player 2",
+      "pot_size": 66,
+      "showdown": false,
+      "player_hand": [
+        "9c",
+        "6s"
+      ],
+      "ai_hand": [
+        "3h",
+        "Ks"
+      ],
+      "community": [],
+      "actions": [
+        {
+          "player": "Player 2",
+          "action": "raise",
+          "round": "preflop",
+          "pot_after": 66,
+          "amount": 46
+        },
+        {
+          "player": "Player 1",
+          "action": "fold",
+          "round": "preflop",
+          "pot_after": 66
+        }
+      ]
+    },
+    {
+      "timestamp": "2025-07-29T20:47:39.610010",
+      "winner": "Player 2",
+      "pot_size": 260,
+      "showdown": false,
+      "player_hand": [
+        "Ad",
+        "2c"
+      ],
+      "ai_hand": [
+        "7s",
+        "9s"
+      ],
+      "community": [
+        "4c",
+        "9h",
+        "9c",
+        "7h",
+        "Jd"
+      ],
+      "actions": [
+        {
+          "player": "Player 1",
+          "action": "raise",
+          "round": "preflop",
+          "pot_after": 70,
+          "amount": 50
+        },
+        {
+          "player": "Player 2",
+          "action": "call",
+          "round": "preflop",
+          "pot_after": 100,
+          "amount": 0
+        },
+        {
+          "player": "Player 1",
+          "action": "check",
+          "round": "flop",
+          "pot_after": 100
+        },
+        {
+          "player": "Player 2",
+          "action": "check",
+          "round": "flop",
+          "pot_after": 100
+        },
+        {
+          "player": "Player 1",
+          "action": "check",
+          "round": "turn",
+          "pot_after": 100
+        },
+        {
+          "player": "Player 2",
+          "action": "raise",
+          "round": "turn",
+          "pot_after": 180,
+          "amount": 80
+        },
+        {
+          "player": "Player 1",
+          "action": "call",
+          "round": "turn",
+          "pot_after": 260,
+          "amount": 0
+        },
+        {
+          "player": "Player 1",
+          "action": "fold",
+          "round": "river",
+          "pot_after": 260
+        }
+      ]
+    },
+    {
+      "timestamp": "2025-07-29T20:47:47.355810",
+      "winner": "Player 2",
+      "pot_size": 30,
+      "showdown": false,
+      "player_hand": [
+        "8d",
+        "9s"
+      ],
+      "ai_hand": [
+        "Qc",
+        "2c"
+      ],
+      "community": [],
+      "actions": [
+        {
+          "player": "Player 1",
+          "action": "fold",
+          "round": "preflop",
+          "pot_after": 30
+        }
+      ]
+    },
+    {
+      "timestamp": "2025-07-29T20:47:54.945457",
+      "winner": "Player 1",
+      "pot_size": 184,
+      "showdown": false,
+      "player_hand": [
+        "4c",
+        "9h"
+      ],
+      "ai_hand": [
+        "7c",
+        "5s"
+      ],
+      "community": [
+        "2h",
+        "Kh",
+        "Kd"
+      ],
+      "actions": [
+        {
+          "player": "Player 2",
+          "action": "raise",
+          "round": "preflop",
+          "pot_after": 66,
+          "amount": 46
+        },
+        {
+          "player": "Player 1",
+          "action": "call",
+          "round": "preflop",
+          "pot_after": 92,
+          "amount": 0
+        },
+        {
+          "player": "Player 2",
+          "action": "check",
+          "round": "flop",
+          "pot_after": 92
+        },
+        {
+          "player": "Player 1",
+          "action": "raise",
+          "round": "flop",
+          "pot_after": 184,
+          "amount": 92
+        },
+        {
+          "player": "Player 2",
+          "action": "fold",
+          "round": "flop",
+          "pot_after": 184
+        }
+      ]
+    },
+    {
+      "timestamp": "2025-07-29T20:47:57.929948",
+      "winner": "Player 2",
+      "pot_size": 30,
+      "showdown": false,
+      "player_hand": [
+        "3h",
+        "Ts"
+      ],
+      "ai_hand": [
+        "Qs",
+        "3d"
+      ],
+      "community": [],
+      "actions": [
+        {
+          "player": "Player 1",
           "action": "fold",
           "round": "preflop",
           "pot_after": 30

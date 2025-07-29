@@ -3,7 +3,7 @@ from app.game.poker import (
     start_new_game, apply_action, betting_round_over, advance_round, 
     award_pot, next_player, showdown, prepare_next_hand, deal_remaining_cards
 )
-from app.game.ai_optimized import decide_action_optimized
+from app.game.ai_gto_enhanced import decide_action_gto
 from app.game.analytics import analytics
 import uuid
 
@@ -22,6 +22,25 @@ def start_game():
     
     response = serialize_game_state(game_state)
     response['game_id'] = game_id
+    
+    # Create console logs for game start
+    console_logs = []
+    console_logs.append(f"🎮 NEW GAME STARTED")
+    console_logs.append(f"🎲 Dealer Position: {game_state.get('dealer_pos')}")
+    console_logs.append(f"👤 Current Player: {game_state.get('current_player')}")
+    console_logs.append(f"🤖 AI is dealer: {game_state.get('dealer_pos') == 1}")
+    console_logs.append(f"🃏 AI Hand: {game_state['players'][1]['hand']}")
+    
+    # Add debug info for initial game state
+    response['debug_info'] = {
+        'dealer_pos': game_state.get('dealer_pos'),
+        'current_player': game_state.get('current_player'),
+        'ai_is_dealer': game_state.get('dealer_pos') == 1,
+        'ai_hand': game_state['players'][1]['hand'],
+        'blinds_posted': True
+    }
+    response['console_logs'] = console_logs
+    
     return jsonify(response)
 
 @bp.route('/player-action', methods=['POST'])
@@ -93,8 +112,50 @@ def process_ai_turn():
     
     # Only process if it's AI's turn and AI is active
     if game_state['current_player'] == 1 and game_state['players'][1]['status'] == 'active':
+        # Create debug messages for browser console
+        console_logs = []
+        
+        # Debug info for browser console
+        debug_info = {
+            'dealer_pos': game_state.get('dealer_pos'),
+            'current_player': game_state.get('current_player'),
+            'ai_hand': game_state['players'][1]['hand'],
+            'action_history': game_state.get('action_history', []),
+            'to_call': game_state.get('current_bet', 0) - game_state['players'][1]['current_bet'],
+            'pot': game_state['pot']
+        }
+        
+        # Add debug messages
+        console_logs.append(f"🤖 AI DECISION START")
+        console_logs.append(f"🎯 AI Hand: {debug_info['ai_hand']}")
+        console_logs.append(f"🎲 Dealer Position: {debug_info['dealer_pos']} (AI is player 1)")
+        console_logs.append(f"👤 Current Player: {debug_info['current_player']}")
+        console_logs.append(f"💰 To Call: ${debug_info['to_call']}")
+        console_logs.append(f"🏆 Pot: ${debug_info['pot']}")
+        console_logs.append(f"📝 Action History: {debug_info['action_history']}")
+        
+        # Check if AI is dealer (Small Blind)
+        ai_is_dealer = debug_info['dealer_pos'] == 1
+        ai_position = "Small Blind (Dealer)" if ai_is_dealer else "Big Blind"
+        console_logs.append(f"📍 AI Position: {ai_position}")
+        
+        # Check SB RFI conditions
+        is_first_action = len(debug_info['action_history']) == 0
+        console_logs.append(f"🔍 SB RFI Check:")
+        console_logs.append(f"  - AI is dealer: {ai_is_dealer}")
+        console_logs.append(f"  - To call is 0: {debug_info['to_call'] == 0}")
+        console_logs.append(f"  - First action: {is_first_action}")
+        
+        should_use_sb_rfi = ai_is_dealer and debug_info['to_call'] == 0 and is_first_action
+        console_logs.append(f"✅ Should use SB RFI: {should_use_sb_rfi}")
+        
         # AI makes decision
-        ai_action, ai_amount = decide_action_optimized(game_state)
+        ai_action, ai_amount = decide_action_gto(game_state)
+        
+        console_logs.append(f"🎬 AI Action: {ai_action}")
+        if ai_amount > 0:
+            console_logs.append(f"💵 AI Amount: ${ai_amount}")
+        
         apply_action(game_state, ai_action, ai_amount)
         log_action(game_state, 1, ai_action, ai_amount)
         
@@ -112,13 +173,22 @@ def process_ai_turn():
         else:
             result['message'] = ai_message
         
+        # Add debug info to response
+        result['debug_info'] = debug_info
+        result['console_logs'] = console_logs
+        result['ai_action_debug'] = {
+            'action': ai_action,
+            'amount': ai_amount,
+            'hand': game_state['players'][1]['hand'],
+            'should_use_sb_rfi': should_use_sb_rfi
+        }
+        
         return jsonify(result)
     else:
         # Not AI's turn, just return current state
         return jsonify({
             'game_state': serialize_game_state(game_state),
             'hand_over': False,
-            'message': 'Not AI\'s turn'
         })
 
 @bp.route('/new-hand', methods=['POST'])
@@ -156,8 +226,15 @@ def get_analytics():
 
 def process_game_flow(game_state):
     """Process the game flow after an action"""
+    print(f"DEBUG: process_game_flow called, current_player: {game_state.get('current_player')}, betting_round: {game_state.get('betting_round')}")
+    
+    # Flag to track if we advanced to a new round
+    advanced_to_new_round = False
+    
     # Check if betting round is over and advance rounds as needed
     while betting_round_over(game_state):
+        print(f"DEBUG: Betting round over, advancing from {game_state.get('betting_round')}")
+        
         # Check if game is over (only one player left in hand)
         players_in_hand = [p for p in game_state['players'] if p['status'] in ['active', 'all-in']]
         active_players = [p for p in game_state['players'] if p['status'] == 'active']
@@ -204,14 +281,25 @@ def process_game_flow(game_state):
             }
         else:
             # Advance to next street
+            print(f"DEBUG: Advancing to next street from {game_state.get('betting_round')}")
             advance_round(game_state)
+            print(f"DEBUG: Advanced to {game_state.get('betting_round')}")
             # Set current player to first active player after dealer
             set_first_to_act(game_state)
+            print(f"DEBUG: Set first to act: current_player = {game_state.get('current_player')}")
+            advanced_to_new_round = True
             # Continue the loop to check if this new round is immediately over too
     
-    # If betting round is not over, move to next player
-    if not betting_round_over(game_state):
+    # Only move to next player if we're in the middle of a betting round
+    # Don't move to next player if we just advanced to a new round and set first to act
+    if not betting_round_over(game_state) and not advanced_to_new_round:
+        print(f"DEBUG: Betting round not over, moving to next player from {game_state.get('current_player')}")
         next_player(game_state)
+        print(f"DEBUG: Next player is now: {game_state.get('current_player')}")
+    elif advanced_to_new_round:
+        print(f"DEBUG: Just advanced to new round, staying with first to act player: {game_state.get('current_player')}")
+    
+    print(f"DEBUG: process_game_flow finished, current_player: {game_state.get('current_player')}, betting_round: {game_state.get('betting_round')}")
     
     return {
         'game_state': serialize_game_state(game_state),
@@ -221,8 +309,14 @@ def process_game_flow(game_state):
 def set_first_to_act(game_state):
     """Set the first active player to act for a new betting round"""
     num_players = len(game_state['players'])
-    # Start with player after dealer
-    first_pos = (game_state['dealer_pos'] + 1) % num_players
+    
+    # In heads-up poker, postflop the button/dealer acts first
+    if num_players == 2:
+        # Heads-up: dealer acts first postflop
+        first_pos = game_state['dealer_pos']
+    else:
+        # Multi-way: player after dealer acts first
+        first_pos = (game_state['dealer_pos'] + 1) % num_players
     
     for i in range(num_players):
         pos = (first_pos + i) % num_players
