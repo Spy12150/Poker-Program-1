@@ -13,6 +13,9 @@ const GamePage = () => {
   const [betSliderValue, setBetSliderValue] = useState(0);
   const [minBet, setMinBet] = useState(0);
   const [maxBet, setMaxBet] = useState(0);
+  const [dealingCards, setDealingCards] = useState(false);
+  const [previousCommunityLength, setPreviousCommunityLength] = useState(0);
+  const [newCardIndices, setNewCardIndices] = useState([]);
 
   // Function definitions (moved above useEffect to avoid reference errors)
   const getCallAmount = () => {
@@ -21,6 +24,26 @@ const GamePage = () => {
     const currentBet = gameState.current_bet || 0;
     const playerCurrentBet = player.current_bet || 0;
     return Math.max(0, currentBet - playerCurrentBet);
+  };
+
+  // Logarithmic slider conversion functions
+  const betToSliderPosition = (betValue, minBet, maxBet) => {
+    if (minBet >= maxBet || betValue <= minBet) return 0;
+    if (betValue >= maxBet) return 100;
+    
+    // Logarithmic scale: log(betValue/minBet) / log(maxBet/minBet)
+    const logRatio = Math.log(betValue / minBet) / Math.log(maxBet / minBet);
+    return Math.round(logRatio * 100);
+  };
+
+  const sliderPositionToBet = (position, minBet, maxBet) => {
+    if (position <= 0) return minBet;
+    if (position >= 100) return maxBet;
+    
+    // Convert logarithmic position back to bet value
+    const ratio = position / 100;
+    const betValue = minBet * Math.pow(maxBet / minBet, ratio);
+    return Math.round(betValue);
   };
 
   const canCheck = () => {
@@ -45,18 +68,18 @@ const GamePage = () => {
     const player = state.players[0];
     const currentBet = state.current_bet || 0;
     const playerCurrentBet = player.current_bet || 0;
-    const toCall = currentBet - playerCurrentBet;
+    const lastBetAmount = state.last_bet_amount || 0;
     
-    // Minimum raise: current bet + big blind (or 2x current bet if bigger)
+    // Minimum raise calculation (matches backend logic)
     const bigBlind = 20; // From config
     let minRaise;
     
     if (currentBet === 0) {
-      // First bet of the round
+      // First bet of the round - minimum is big blind
       minRaise = bigBlind;
     } else {
-      // Must raise by at least the size of the last raise, or big blind minimum
-      minRaise = Math.max(currentBet * 2, currentBet + bigBlind);
+      // Must raise by at least the size of the last bet/raise
+      minRaise = currentBet + Math.max(lastBetAmount, bigBlind);
     }
     
     // Maximum bet: all-in
@@ -67,7 +90,9 @@ const GamePage = () => {
     
     setMinBet(finalMinBet);
     setMaxBet(maxBetAmount);
-    setBetSliderValue(Math.max(finalMinBet, betSliderValue));
+    // Always default to minimum bet for new actions
+    setBetSliderValue(finalMinBet);
+    setRaiseAmount(finalMinBet.toString());
   };
 
   const handleSliderRaise = () => {
@@ -82,12 +107,76 @@ const GamePage = () => {
     makeAction('raise', betSliderValue);
   };
 
+  // Get position information for a player
+  const getPlayerPosition = (playerIndex) => {
+    if (!gameState || gameState.dealer_pos === undefined) return {};
+    
+    // In heads-up poker:
+    // - Dealer (dealer_pos) is also small blind
+    // - Other player is big blind
+    const isDealer = playerIndex === gameState.dealer_pos;
+    const isSmallBlind = playerIndex === gameState.dealer_pos;
+    const isBigBlind = playerIndex === ((gameState.dealer_pos + 1) % 2);
+    
+    return { isDealer, isSmallBlind, isBigBlind };
+  };
+
+  // Check if a player has checked in the current round
+  const hasPlayerChecked = (playerIndex) => {
+    if (!gameState?.action_history) return false;
+    
+    const playerName = gameState.players[playerIndex]?.name;
+    const currentRound = gameState.round || 'preflop';
+    
+    // Look for the most recent check action by this player in the current round
+    const recentActions = gameState.action_history.slice().reverse();
+    for (const action of recentActions) {
+      if (action.player === playerName && action.round === currentRound) {
+        return action.action === 'check';
+      }
+    }
+    return false;
+  };
+
   // Update betting limits when game state changes
   useEffect(() => {
     if (gameState) {
       updateBetLimits(gameState);
     }
   }, [gameState]);
+
+  // Handle card dealing animation
+  useEffect(() => {
+    if (gameState && gameState.community) {
+      const currentCommunityLength = gameState.community.length;
+      if (currentCommunityLength > previousCommunityLength) {
+        setDealingCards(true);
+        
+        // Determine which cards are new
+        const newIndices = [];
+        for (let i = previousCommunityLength; i < currentCommunityLength; i++) {
+          newIndices.push(i);
+        }
+        
+        // Special case for flop: if we're going from 0 to 3 cards, animate all 3
+        if (previousCommunityLength === 0 && currentCommunityLength === 3) {
+          setNewCardIndices([0, 1, 2]);
+        } else {
+          setNewCardIndices(newIndices);
+        }
+        
+        // Check if it's an all-in showdown with multiple cards dealt at once
+        const cardsDifference = currentCommunityLength - previousCommunityLength;
+        const animationDuration = cardsDifference > 1 ? 1500 : 1000; // Longer for multiple cards
+        
+        setTimeout(() => {
+          setDealingCards(false);
+          setNewCardIndices([]);
+        }, animationDuration);
+      }
+      setPreviousCommunityLength(currentCommunityLength);
+    }
+  }, [gameState?.community?.length, previousCommunityLength]);
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -142,6 +231,13 @@ const GamePage = () => {
       setShowdown(false);
       setWinners([]);
       updateBetLimits(data);
+      
+      // Check if AI needs to act first
+      if (data.current_player === 1 && !data.hand_over) {
+        setTimeout(() => {
+          processAITurn();
+        }, 1000); // Give a moment for UI to update, then process AI turn
+      }
     } catch (error) {
       setMessage('Failed to start game. Make sure the server is running.');
     } finally {
@@ -171,8 +267,17 @@ const GamePage = () => {
         setShowdown(data.showdown || false);
       }
 
+      // Handle all-in showdown
+      if (data.all_in_showdown) {
+        setShowdown(true);
+        setWinners(data.winners || []);
+        if (data.message) {
+          setMessage(data.message);
+        }
+      }
+
       // Show AI action message for 2 seconds
-      if (data.message) {
+      if (data.message && !data.all_in_showdown) {
         setMessage(data.message);
         setTimeout(() => {
           setMessage('');
@@ -211,6 +316,16 @@ const GamePage = () => {
       setMessage(data.message || `You ${action}${amount > 0 ? ` $${amount}` : ''}`);
       setRaiseAmount('');
       updateBetLimits(data.game_state);
+
+      // Handle all-in showdown
+      if (data.all_in_showdown) {
+        setShowdown(true);
+        setWinners(data.winners || []);
+        if (data.message) {
+          setMessage(data.message);
+        }
+        return; // Don't process AI turn if showdown occurred
+      }
 
       // Clear player action message after 1 second, then check for AI turn
       setTimeout(() => {
@@ -253,6 +368,13 @@ const GamePage = () => {
       setWinners([]);
       setMessage('New hand started!');
       updateBetLimits(data);
+      
+      // Check if AI needs to act first in the new hand
+      if (data.current_player === 1 && !data.hand_over) {
+        setTimeout(() => {
+          processAITurn();
+        }, 1000); // Give a moment for UI to update, then process AI turn
+      }
     } catch (error) {
       setMessage('Failed to start new hand.');
     } finally {
@@ -273,14 +395,15 @@ const GamePage = () => {
 
   const formatActionHistory = () => {
     if (!gameState?.action_history) return [];
-    return gameState.action_history.slice(-5); // Show last 5 actions
+    return gameState.action_history.slice(-10); // Show last 10 actions
   };
 
   return (
     <div className="game-container">
       {/* Site Title */}
       <div className="site-title">
-        Riposte
+        <div className="main-title">RIPOSTE</div>
+        <div className="subtitle">POKER AI</div>
       </div>
 
       {/* Start Game Button - only show when no game */}
@@ -324,6 +447,26 @@ const GamePage = () => {
                       ))}
                     </div>
                     
+                    {/* Position Indicators */}
+                    <div className="position-indicators">
+                      {(() => {
+                        const position = getPlayerPosition(1);
+                        return (
+                          <>
+                            {position.isDealer && (
+                              <div className="position-indicator dealer-button">D</div>
+                            )}
+                            {position.isSmallBlind && (
+                              <div className="position-indicator small-blind">SB</div>
+                            )}
+                            {position.isBigBlind && (
+                              <div className="position-indicator big-blind">BB</div>
+                            )}
+                          </>
+                        );
+                      })()}
+                    </div>
+                    
                     {/* AI Thinking Indicator */}
                     {!handOver && gameState.current_player === 1 && (
                       <div className="turn-indicator ai-thinking">
@@ -333,9 +476,12 @@ const GamePage = () => {
                   </div>
                   
                   {/* AI Current Bet */}
-                  {gameState.players[1]?.current_bet > 0 && (
+                  {(gameState.players[1]?.current_bet > 0 || hasPlayerChecked(1)) && (
                     <div className="current-bet-container ai-bet">
-                      ${gameState.players[1]?.current_bet}
+                      {gameState.players[1]?.current_bet > 0 ? 
+                        `$${gameState.players[1]?.current_bet}` : 
+                        'CHECK'
+                      }
                     </div>
                   )}
                 </div>
@@ -345,13 +491,13 @@ const GamePage = () => {
                   <div className="pot-info">
                     POT: ${gameState.pot}
                   </div>
-                  <div className="community-cards">
+                  <div className={`community-cards ${dealingCards ? 'dealing-animation' : ''}`}>
                     {gameState.community.map((card, idx) => (
                       <img 
                         key={idx} 
                         src={`/cards/${translateCard(card)}.png`} 
                         alt="community card"
-                        className="community-card"
+                        className={`community-card ${dealingCards && newCardIndices.includes(idx) ? 'new-card' : ''}`}
                       />
                     ))}
                     {/* Show placeholders for undealt cards */}
@@ -364,9 +510,12 @@ const GamePage = () => {
                 {/* Human Player */}
                 <div className="player-area">
                   {/* Player Current Bet */}
-                  {gameState.players[0]?.current_bet > 0 && (
+                  {(gameState.players[0]?.current_bet > 0 || hasPlayerChecked(0)) && (
                     <div className="current-bet-container player-bet">
-                      ${gameState.players[0]?.current_bet}
+                      {gameState.players[0]?.current_bet > 0 ? 
+                        `$${gameState.players[0]?.current_bet}` : 
+                        'CHECK'
+                      }
                     </div>
                   )}
                   
@@ -384,6 +533,26 @@ const GamePage = () => {
                           className="card"
                         />
                       ))}
+                    </div>
+                    
+                    {/* Position Indicators */}
+                    <div className="position-indicators">
+                      {(() => {
+                        const position = getPlayerPosition(0);
+                        return (
+                          <>
+                            {position.isDealer && (
+                              <div className="position-indicator dealer-button">D</div>
+                            )}
+                            {position.isSmallBlind && (
+                              <div className="position-indicator small-blind">SB</div>
+                            )}
+                            {position.isBigBlind && (
+                              <div className="position-indicator big-blind">BB</div>
+                            )}
+                          </>
+                        );
+                      })()}
                     </div>
                     
                     {/* Your Turn Indicator */}
@@ -417,15 +586,15 @@ const GamePage = () => {
                   disabled={loading || (!canCheck() && !canCall())}
                   className="modern-action-button call-button"
                 >
-                  {canCheck() ? 'CHECK' : `CALL ${getCallAmount() > 0 ? getCallAmount() + ' BB' : ''}`}
+                  {canCheck() ? 'CHECK' : `CALL ${getCallAmount() > 0 ? '$' + getCallAmount() : ''}`}
                 </button>
                 
                 <button
                   onClick={() => makeAction('raise', betSliderValue)}
-                  disabled={loading || !canRaise() || betSliderValue < minBet}
+                  disabled={loading || !canRaise() || betSliderValue === '' || betSliderValue < minBet || betSliderValue > maxBet}
                   className="modern-action-button raise-button"
                 >
-                  RAISE TO<br/>{Math.round(betSliderValue / 20)} BB
+                  RAISE TO<br/>${betSliderValue || 0}
                 </button>
               </div>
 
@@ -437,6 +606,7 @@ const GamePage = () => {
                   onClick={() => {
                     const newValue = Math.max(minBet, betSliderValue - 20);
                     setBetSliderValue(newValue);
+                    setRaiseAmount(newValue.toString());
                   }}
                   disabled={betSliderValue <= minBet}
                 >
@@ -445,7 +615,15 @@ const GamePage = () => {
                 
                 <button 
                   className="bet-adjust-button bars"
-                  onClick={() => setBetSliderValue(gameState.pot || 40)}
+                  onClick={() => {
+                    const callAmount = getCallAmount();
+                    const currentPot = gameState.pot;
+                    const opponentCurrentBet = gameState.players[1].current_bet || 0;
+                    const potBet = currentPot + callAmount + opponentCurrentBet;
+                    const finalBet = Math.min(maxBet, Math.max(minBet, potBet));
+                    setBetSliderValue(finalBet);
+                    setRaiseAmount(finalBet.toString());
+                  }}
                 >
                   |||
                 </button>
@@ -454,10 +632,15 @@ const GamePage = () => {
                 <div className="slider-container">
                   <input
                     type="range"
-                    min={minBet}
-                    max={maxBet}
-                    value={betSliderValue}
-                    onChange={(e) => setBetSliderValue(Number(e.target.value))}
+                    min={0}
+                    max={100}
+                    value={betToSliderPosition(betSliderValue, minBet, maxBet)}
+                    onChange={(e) => {
+                      const sliderPosition = Number(e.target.value);
+                      const betValue = sliderPositionToBet(sliderPosition, minBet, maxBet);
+                      setBetSliderValue(betValue);
+                      setRaiseAmount(betValue.toString());
+                    }}
                     className="bet-slider"
                   />
                 </div>
@@ -467,33 +650,182 @@ const GamePage = () => {
                   onClick={() => {
                     const newValue = Math.min(maxBet, betSliderValue + 20);
                     setBetSliderValue(newValue);
+                    setRaiseAmount(newValue.toString());
                   }}
                   disabled={betSliderValue >= maxBet}
                 >
                   +
                 </button>
 
-                {/* Bet Amount Display */}
-                <div className="bet-amount-display">
-                  {Math.round(betSliderValue / 20 * 10) / 10}
-                </div>
+                {/* Bet Amount Display as Input */}
+                <input
+                  type="number"
+                  value={betSliderValue}
+                  onChange={(e) => {
+                    const inputValue = e.target.value;
+                    // Allow empty string or any valid number input
+                    if (inputValue === '') {
+                      setBetSliderValue('');
+                      setRaiseAmount('');
+                    } else {
+                      const numValue = Number(inputValue);
+                      setBetSliderValue(numValue);
+                      setRaiseAmount(inputValue);
+                    }
+                  }}
+                  onBlur={(e) => {
+                    const inputValue = e.target.value;
+                    // If empty on blur, don't set to 0, keep it empty
+                    if (inputValue === '') {
+                      setBetSliderValue('');
+                      setRaiseAmount('');
+                    } else {
+                      const numValue = Number(inputValue) || 0;
+                      setBetSliderValue(numValue);
+                      setRaiseAmount(numValue.toString());
+                    }
+                  }}
+                  className="bet-amount-input"
+                />
               </div>
 
-              {/* Quick Bet Buttons */}
+              {/* Quick Bet Buttons - Conditional based on betting round */}
               <div className="quick-bet-row">
-                <button 
-                  className="quick-bet-button"
-                  onClick={() => setBetSliderValue(Math.round(gameState.pot * 0.5))}
-                >
-                  Pot
-                </button>
-                
-                <button 
-                  className="quick-bet-button"
-                  onClick={() => setBetSliderValue(maxBet)}
-                >
-                  ALL-IN
-                </button>
+                {gameState.betting_round === 'preflop' ? (
+                  // Preflop buttons: 2.5x (50), 3x (60), Pot, All-in
+                  <>
+                    {minBet <= 50 && (
+                      <button 
+                        className="quick-bet-button bet-2-5x"
+                        onClick={() => {
+                          setBetSliderValue(50);
+                          setRaiseAmount('50');
+                        }}
+                      >
+                        2.5x
+                      </button>
+                    )}
+                    {minBet <= 60 && (
+                      <button 
+                        className="quick-bet-button bet-3x"
+                        onClick={() => {
+                          setBetSliderValue(60);
+                          setRaiseAmount('60');
+                        }}
+                      >
+                        3x
+                      </button>
+                    )}
+                    {(() => {
+                      const callAmount = getCallAmount();
+                      const currentPot = gameState.pot;
+                      const opponentCurrentBet = gameState.players[1].current_bet || 0;
+                      const potBet = currentPot + callAmount + opponentCurrentBet;
+                      
+                      // Only show Pot button if calculated bet is greater than minimum bet
+                      return potBet > minBet ? (
+                        <button 
+                          className="quick-bet-button bet-pot"
+                          onClick={() => {
+                            const finalBet = Math.min(maxBet, Math.max(minBet, potBet));
+                            setBetSliderValue(finalBet);
+                            setRaiseAmount(finalBet.toString());
+                          }}
+                        >
+                          Pot
+                        </button>
+                      ) : null;
+                    })()}
+                    <button 
+                      className="quick-bet-button bet-allin"
+                      onClick={() => {
+                        setBetSliderValue(maxBet);
+                        setRaiseAmount(maxBet.toString());
+                      }}
+                    >
+                      ALL-IN
+                    </button>
+                  </>
+                ) : (
+                  // Post-flop buttons: 1/3, 1/2, Pot, All-in
+                  <>
+                    {(() => {
+                      const callAmount = getCallAmount();
+                      const currentPot = gameState.pot;
+                      const opponentCurrentBet = gameState.players[1].current_bet || 0;
+                      const totalPot = currentPot + opponentCurrentBet;
+                      const oneThirdPot = Math.ceil(totalPot / 3) + callAmount;
+                      
+                      // Only show 1/3 button if calculated bet is greater than minimum bet
+                      return oneThirdPot > minBet ? (
+                        <button 
+                          className="quick-bet-button bet-third"
+                          onClick={() => {
+                            const finalBet = Math.min(maxBet, Math.max(minBet, oneThirdPot));
+
+                            setBetSliderValue(finalBet);
+                            setRaiseAmount(finalBet.toString());
+                          }}
+                        >
+                          1/3 Pot
+                        </button>
+                      ) : null;
+                    })()}
+                    
+                    {(() => {
+                      const callAmount = getCallAmount();
+                      const currentPot = gameState.pot;
+                      const opponentCurrentBet = gameState.players[1].current_bet || 0;
+                      const totalPot = currentPot + opponentCurrentBet;
+                      const halfPot = Math.ceil(totalPot / 2) + callAmount;
+                      
+                      // Only show 1/2 button if calculated bet is greater than minimum bet
+                      return halfPot > minBet ? (
+                        <button 
+                          className="quick-bet-button bet-half"
+                          onClick={() => {
+                            const finalBet = Math.min(maxBet, Math.max(minBet, halfPot));
+                            setBetSliderValue(finalBet);
+                            setRaiseAmount(finalBet.toString());
+                          }}
+                        >
+                          1/2 Pot
+                        </button>
+                      ) : null;
+                    })()}
+                    
+                    {(() => {
+                      const callAmount = getCallAmount();
+                      const currentPot = gameState.pot;
+                      const opponentCurrentBet = gameState.players[1].current_bet || 0;
+                      const potBet = currentPot + callAmount + opponentCurrentBet;
+                      
+                      // Only show Pot button if calculated bet is greater than minimum bet
+                      return potBet > minBet ? (
+                        <button 
+                          className="quick-bet-button bet-pot"
+                          onClick={() => {
+                            const finalBet = Math.min(maxBet, Math.max(minBet, potBet));
+                            setBetSliderValue(finalBet);
+                            setRaiseAmount(finalBet.toString());
+                          }}
+                        >
+                          Pot
+                        </button>
+                      ) : null;
+                    })()}
+                    
+                    <button 
+                      className="quick-bet-button bet-allin"
+                      onClick={() => {
+                        setBetSliderValue(maxBet);
+                        setRaiseAmount(maxBet.toString());
+                      }}
+                    >
+                      ALL-IN
+                    </button>
+                  </>
+                )}
               </div>
             </div>
           )}
@@ -530,7 +862,6 @@ const GamePage = () => {
                   {winners.map((winner, idx) => (
                     <div key={idx} className="winner-info">
                       <strong>{winner.name}</strong> wins with {winner.hand_class}
-                      <div>Cards: {winner.hand?.join(', ')}</div>
                     </div>
                   ))}
                 </div>
@@ -547,8 +878,8 @@ const GamePage = () => {
             <div>
               {formatActionHistory().map((entry, idx) => (
                 <div key={idx} className="history-entry">
-                  <strong>{entry.player}</strong> {entry.action}
-                  {entry.amount && ` $${entry.amount}`} 
+                  <strong>{entry.player}</strong> {entry.action.charAt(0).toUpperCase() + entry.action.slice(1)}
+                  {entry.action === 'raise' && entry.amount && entry.amount > 0 && ` $${entry.amount}`} 
                   <span className="round">({entry.round})</span>
                 </div>
               ))}

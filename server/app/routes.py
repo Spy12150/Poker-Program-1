@@ -1,7 +1,7 @@
 from flask import Blueprint, jsonify, request
 from app.game.poker import (
     start_new_game, apply_action, betting_round_over, advance_round, 
-    award_pot, next_player, showdown, prepare_next_hand
+    award_pot, next_player, showdown, prepare_next_hand, deal_remaining_cards
 )
 from app.game.ai_optimized import decide_action_optimized
 from app.game.analytics import analytics
@@ -158,11 +158,12 @@ def process_game_flow(game_state):
     """Process the game flow after an action"""
     # Check if betting round is over and advance rounds as needed
     while betting_round_over(game_state):
-        # Check if game is over (only one active player)
+        # Check if game is over (only one player left in hand)
+        players_in_hand = [p for p in game_state['players'] if p['status'] in ['active', 'all-in']]
         active_players = [p for p in game_state['players'] if p['status'] == 'active']
         
-        if len(active_players) <= 1:
-            # Someone folded, award pot
+        if len(players_in_hand) <= 1:
+            # Someone folded or everyone else is eliminated, award pot
             winners = award_pot(game_state)
             # Record hand for analytics
             analytics.record_hand(game_state, [{'name': winners[0]}], game_state.get('action_history', []))
@@ -171,6 +172,22 @@ def process_game_flow(game_state):
                 'winners': winners,
                 'hand_over': True,
                 'message': f"{winners[0]} wins the pot!"
+            }
+        
+        # Check if all remaining players are all-in
+        if len(active_players) == 0 and len(players_in_hand) > 1:
+            # All players are all-in, deal remaining cards and go to showdown
+            deal_remaining_cards(game_state)
+            winners = showdown(game_state)
+            # Record hand for analytics
+            analytics.record_hand(game_state, winners, game_state.get('action_history', []))
+            return {
+                'game_state': serialize_game_state(game_state),
+                'winners': winners,
+                'hand_over': True,
+                'showdown': True,
+                'all_in_showdown': True,
+                'message': f"All-in showdown! Winner(s): {', '.join([w['name'] for w in winners])}"
             }
         
         # If we're at river, go to showdown

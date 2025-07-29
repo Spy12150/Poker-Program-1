@@ -13,15 +13,33 @@
 
 .site-title {
   position: fixed;
-  top: 30px;
-  left: 30px;
+  top: 15px;
+  right: 30px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  z-index: 1000;
+}
+
+.main-title {
   font-size: 48px;
   font-weight: bold;
   color: #f8bbd9;
   text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
   font-family: "Times New Roman", serif;
   letter-spacing: 2px;
-  z-index: 1000;
+  line-height: 1;
+}
+
+.subtitle {
+  font-size: 20px;
+  font-weight: 600;
+  color: #f8bbd9;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+  letter-spacing: 1px;
+  margin-top: 2px;
+  opacity: 0.9;
 }
 
 .info-container {
@@ -77,10 +95,10 @@
 .poker-table {
   width: 900px;
   height: 550px;
-  background: radial-gradient(ellipse at center, #228b22 0%, #1e7e1e 30%, #1a6b1a 70%, #0a4d0a 100%);
+  background: radial-gradient(ellipse at center, #228b22 0%, #1e7e1e 30%, #8b4513 70%, #0a4d0a 100%);
   border-radius: 45%;
   position: relative;
-  border: 12px solid #8b4513;
+  border: 12px solid #5d2c09;
   box-shadow: inset 0 0 50px rgba(0,0,0,0.3), 0 10px 30px rgba(0,0,0,0.5);
   display: flex;
   justify-content: center;
@@ -90,10 +108,11 @@
 .table-inner {
   width: 95%;
   height: 85%;
-  border: 3px solid #ffd700;
+  border: 2px solid #ffd700;
   border-radius: 45%;
   position: relative;
-  background: radial-gradient(ellipse at center, #1e7e1e 0%, #0a4d0a 100%);
+  background: url('/cards/background.png') center center;
+  background-size: cover;
 }
 
 .opponent-area {
@@ -164,10 +183,8 @@
 
 .card {
   height: 80px;
-  border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+  border-radius: 0px;
   transition: transform 0.2s ease;
-  border: 2px solid rgba(255, 255, 255, 0.8);
 }
 
 .community-cards {
@@ -179,13 +196,76 @@
   border: 2px solid #dee2e6;
   box-shadow: 0 4px 20px rgba(0,0,0,0.2);
   backdrop-filter: blur(10px);
+  width: 370px;
+  justify-content: center;
 }
 
 .community-card {
+  width: 64px;
   height: 90px;
-  border-radius: 8px;
+  border-radius: 0px;
   box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-  border: 2px solid rgba(255, 255, 255, 0.8);
+  transition: all 0.5s ease;
+  object-fit: cover;
+}
+
+/* Card dealing animations */
+.dealing-animation {
+  position: relative;
+}
+
+.community-card.new-card {
+  animation: cardDeal 0.8s ease-out;
+  animation-fill-mode: backwards;
+}
+
+/* Staggered animation for multiple cards */
+.community-card.new-card:nth-child(2) {
+  animation-delay: 0.1s;
+  animation-fill-mode: backwards;
+}
+
+.community-card.new-card:nth-child(3) {
+  animation-delay: 0.2s;
+  animation-fill-mode: backwards;
+}
+
+.community-card.new-card:nth-child(4) {
+  animation-delay: 0.15s;
+  animation-fill-mode: backwards;
+}
+
+.community-card.new-card:nth-child(5) {
+  animation-delay: 0.2s;
+  animation-fill-mode: backwards;
+}
+
+@keyframes cardDeal {
+  0% {
+    transform: translateY(-80px) scale(0.8);
+    opacity: 0;
+  }
+  100% {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+}
+
+/* Special handling for all-in showdown with multiple cards */
+.dealing-animation.all-in-showdown .community-card {
+  animation: cardDealFast 0.4s ease-out;
+  animation-fill-mode: backwards;
+}
+
+@keyframes cardDealFast {
+  0% {
+    transform: translateY(-60px) scale(0.8);
+    opacity: 0;
+  }
+  100% {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
 }
 
 .card-placeholder {
@@ -469,17 +549,18 @@
 .hand-over-panel {
   position: fixed;
   top: 50%;
-  left: 15%;
-  transform: translate(-50%, -50%);
-  background: linear-gradient(145deg, #f8bbd9, #e6a8cc);
-  color: #ffffff;
-  padding: 30px 40px;
-  border-radius: 25px;
+  right: 30px;
+  transform: translateY(-50%);
+  background: rgba(255, 255, 255, 0.95);
+  color: #495057;
+  padding: 20px 25px;
+  border-radius: 20px;
+  border: 2px solid #dee2e6;
   text-align: center;
   z-index: 1001;
-  box-shadow: 0 15px 40px rgba(248, 187, 217, 0.5);
-  border: 3px solid #fff;
-  min-width: 400px;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+  min-width: 240px;
+  max-width: 280px;
   backdrop-filter: blur(10px);
 }
 
@@ -488,47 +569,51 @@
 }
 
 .winner-info {
-  background: rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.95);
   padding: 15px;
   border-radius: 15px;
   margin-bottom: 10px;
-  border: 1px solid rgba(255, 255, 255, 0.3);
+  border: 2px solid #dee2e6;
+  color: #495057;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
 .side-panel {
   position: fixed;
-  right: 20px;
+  left: 20px;
   top: 30px;
   background: rgba(255, 255, 255, 0.95);
   padding: 20px;
   border-radius: 15px;
   border: 2px solid #f8bbd9;
   box-shadow: 0 8px 25px rgba(248, 187, 217, 0.3);
-  width: 250px;
-  max-height: 400px;
+  width: 200px;
+  max-height: 450px;
   overflow-y: auto;
   backdrop-filter: blur(10px);
 }
 
 .history-title {
   color: #495057;
-  font-size: 16px;
+  font-size: 18px;
   font-weight: bold;
   margin-bottom: 15px;
   text-align: center;
 }
 
 .history-entry {
-  padding: 8px 0;
+  padding: 10px 0;
   border-bottom: 1px solid rgba(222, 226, 230, 0.5);
-  font-size: 13px;
-  color: #6c757d;
+  font-size: 15px;
+  color: #495057;
+  font-weight: 500;
 }
 
 .round {
-  color: #f8bbd9;
-  font-size: 11px;
+  color: #000000;
+  font-size: 13px;
   margin-left: 8px;
+  font-weight: 600;
 }
 
 /* Modern Action Panel Styles */
@@ -538,29 +623,29 @@
   right: 20px;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 8.5px;
   z-index: 1000;
-  padding: 15px;
+  padding: 12.75px;
   background: rgba(0, 0, 0, 0.8);
-  border-radius: 10px;
+  border-radius: 8.5px;
   border: 2px solid #333;
 }
 
 .main-actions-row {
   display: flex;
-  gap: 10px;
+  gap: 12.75px;
   justify-content: center;
 }
 
 .modern-action-button {
-  padding: 15px 25px;
-  font-size: 14px;
+  padding: 12.75px 17px;
+  font-size: 11.9px;
   font-weight: bold;
   border: 2px solid #555;
-  border-radius: 8px;
+  border-radius: 6.8px;
   cursor: pointer;
   transition: all 0.2s ease;
-  min-width: 100px;
+  flex: 1;
   text-align: center;
 }
 
@@ -602,18 +687,18 @@
 .betting-controls-row {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 8.5px;
   justify-content: center;
 }
 
 .bet-adjust-button {
-  width: 35px;
-  height: 35px;
+  width: 29.75px;
+  height: 29.75px;
   border: 2px solid #555;
-  border-radius: 6px;
+  border-radius: 5.1px;
   background: #444;
   color: white;
-  font-size: 18px;
+  font-size: 15.3px;
   font-weight: bold;
   cursor: pointer;
   display: flex;
@@ -633,19 +718,19 @@
 }
 
 .bet-adjust-button.bars {
-  font-size: 12px;
+  font-size: 10.2px;
   letter-spacing: 1px;
 }
 
 .slider-container {
   flex: 1;
-  margin: 0 10px;
+  margin: 0 0px;
 }
 
 .bet-slider {
   width: 100%;
-  height: 8px;
-  border-radius: 4px;
+  height: 6.8px;
+  border-radius: 3.4px;
   background: #333;
   outline: none;
   opacity: 0.7;
@@ -658,8 +743,8 @@
 
 .bet-slider::-webkit-slider-thumb {
   appearance: none;
-  width: 20px;
-  height: 20px;
+  width: 17px;
+  height: 17px;
   border-radius: 50%;
   background: #f44336;
   cursor: pointer;
@@ -667,42 +752,85 @@
 }
 
 .bet-slider::-moz-range-thumb {
-  width: 20px;
-  height: 20px;
+  width: 17px;
+  height: 17px;
   border-radius: 50%;
   background: #f44336;
   cursor: pointer;
   border: 2px solid #fff;
 }
 
-.bet-amount-display {
+.bet-amount-input {
   background: #333;
   color: white;
-  padding: 8px 12px;
-  border-radius: 6px;
+  padding: 6.8px 6.8px;
+  border-radius: 5.1px;
   border: 2px solid #555;
-  font-size: 14px;
+  font-size: 11.9px;
   font-weight: bold;
-  min-width: 40px;
+  min-width: 42.5px;
+  width: 51px;
   text-align: center;
+  outline: none;
+  appearance: textfield;
+  -moz-appearance: textfield; /* Firefox */
+}
+
+.bet-amount-input::-webkit-outer-spin-button,
+.bet-amount-input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.bet-amount-input:focus {
+  border-color: #f8bbd9;
+  box-shadow: 0 0 5px rgba(248, 187, 217, 0.5);
 }
 
 .quick-bet-row {
-  display: flex;
-  gap: 10px;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 11.05px;
   justify-content: center;
 }
 
 .quick-bet-button {
-  padding: 8px 16px;
-  font-size: 12px;
+  padding: 6.8px 8.5px;
+  font-size: 10.2px;
   font-weight: bold;
   border: 2px solid #555;
-  border-radius: 6px;
+  border-radius: 5.1px;
   background: #444;
   color: white;
   cursor: pointer;
   transition: all 0.2s ease;
+  text-align: center;
+  min-width: 72.25px;
+}
+
+/* Position-specific grid placements */
+.quick-bet-button.bet-2-5x {
+  grid-column: 1;
+}
+
+.quick-bet-button.bet-3x {
+  grid-column: 2;
+}
+
+.quick-bet-button.bet-third {
+  grid-column: 1;
+}
+
+.quick-bet-button.bet-half {
+  grid-column: 2;
+}
+
+.quick-bet-button.bet-pot {
+  grid-column: 3;
+}
+
+.quick-bet-button.bet-allin {
+  grid-column: 4;
 }
 
 .quick-bet-button:hover {
@@ -720,20 +848,20 @@
   text-align: center;
   animation: pulse 2s infinite;
   z-index: 20;
-  left: 50%;
-  transform: translateX(-50%);
+  left: 0;
+  transform: none;
 }
 
 .ai-thinking {
   background: linear-gradient(135deg, #ff6b6b, #ff8e8e);
   color: white;
-  top: -50px; /* Above the AI player container */
+  top: -50px; /* Same margin as your-turn for consistency */
 }
 
 .your-turn {
   background: linear-gradient(135deg, #4ecdc4, #6ee5dd);
   color: white;
-  bottom: -50px; /* Below the player container */
+  bottom: -50px; /* Horizontally aligned with player container */
 }
 
 @keyframes pulse {
@@ -768,4 +896,49 @@
   right: -60px;
   transform: translateY(-50%);
   box-shadow: 0 2px 8px rgba(52, 152, 219, 0.4);
+}
+
+/* Position Indicators */
+.position-indicators {
+  position: absolute;
+  bottom: 8px;
+  left: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  z-index: 30;
+}
+
+.position-indicator {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: bold;
+  color: black;
+  text-shadow: none;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+  background: white;
+  border: 2px solid #f8bbd9;
+}
+
+.dealer-button {
+  background: white;
+  border: 2px solid #f8bbd9;
+  color: black;
+}
+
+.small-blind {
+  background: white;
+  border: 2px solid #f8bbd9;
+  color: black;
+}
+
+.big-blind {
+  background: white;
+  border: 2px solid #f8bbd9;
+  color: black;
 }

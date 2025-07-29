@@ -184,17 +184,26 @@ def betting_round_over(game_state):
     Betting round is over if:
     - All players but one are folded
     - All active players have matched the current bet or are all-in
+    - All remaining players are all-in (no one can act)
     - AND the player who needs to act next has already had their turn this round
     """
-    active = [p for p in game_state['players'] if p['status'] == 'active']
-    if len(active) <= 1:
+    # Include both active and all-in players in the count
+    players_in_hand = [p for p in game_state['players'] if p['status'] in ['active', 'all-in']]
+    active_players = [p for p in game_state['players'] if p['status'] == 'active']
+    
+    # If only one player total is left in the hand, round is over
+    if len(players_in_hand) <= 1:
+        return True
+    
+    # If all remaining players are all-in, no more betting can occur
+    if len(active_players) == 0:
         return True
 
     # All active players must have matched the current bet
     current_bet = game_state.get('current_bet', 0)
     
-    # Check if anyone still needs to call
-    for player in active:
+    # Check if anyone still needs to call (only active players can act)
+    for player in active_players:
         if player['stack'] > 0 and player['current_bet'] != current_bet:
             return False
     
@@ -312,6 +321,32 @@ def advance_round(game_state):
         game_state['betting_round'] = 'showdown'
     reset_bets(game_state)
 
+def deal_remaining_cards(game_state):
+    """
+    Deal all remaining community cards when all players are all-in.
+    This skips betting rounds and goes straight to showdown.
+    """
+    round = game_state['betting_round']
+    
+    if round == 'preflop':
+        # Deal flop (3 cards)
+        game_state['community'].extend([game_state['deck'].pop() for _ in range(3)])
+        # Deal turn (1 card)
+        game_state['community'].append(game_state['deck'].pop())
+        # Deal river (1 card)
+        game_state['community'].append(game_state['deck'].pop())
+    elif round == 'flop':
+        # Deal turn and river
+        game_state['community'].append(game_state['deck'].pop())
+        game_state['community'].append(game_state['deck'].pop())
+    elif round == 'turn':
+        # Deal river only
+        game_state['community'].append(game_state['deck'].pop())
+    
+    # Set to showdown
+    game_state['betting_round'] = 'showdown'
+    reset_bets(game_state)
+
 from .hand_eval_lib import evaluate_hand
 
 def award_pot(game_state):
@@ -319,15 +354,16 @@ def award_pot(game_state):
     At showdown or if only one remains, determine winner(s) and award pot.
     """
     community = game_state['community']
-    active_players = [p for p in game_state['players'] if p['status'] == 'active']
-    if len(active_players) == 1:
+    # Include both active and all-in players in showdown
+    players_in_hand = [p for p in game_state['players'] if p['status'] in ['active', 'all-in']]
+    if len(players_in_hand) == 1:
         # Only one player left, auto-win
-        active_players[0]['stack'] += game_state['pot']
-        return [active_players[0]['name']]
+        players_in_hand[0]['stack'] += game_state['pot']
+        return [players_in_hand[0]['name']]
     else:
         # Showdown: use treys to find the best hand(s)
         scores = []
-        for player in active_players:
+        for player in players_in_hand:
             score, hand_class = evaluate_hand(player['hand'], community)
             scores.append((score, player['name'], hand_class))
         scores.sort()  # Lower is better
@@ -370,20 +406,21 @@ def showdown(game_state):
     Returns a list of winner info and their hand classes.
     """
     community = game_state['community']
-    active_players = [p for p in game_state['players'] if p['status'] == 'active']
+    # Include both active and all-in players in showdown
+    players_in_hand = [p for p in game_state['players'] if p['status'] in ['active', 'all-in']]
 
     # If only one player is left (everyone else folded)
-    if len(active_players) == 1:
-        active_players[0]['stack'] += game_state['pot']
+    if len(players_in_hand) == 1:
+        players_in_hand[0]['stack'] += game_state['pot']
         return [{
-            'name': active_players[0]['name'],
-            'hand': active_players[0]['hand'],
+            'name': players_in_hand[0]['name'],
+            'hand': players_in_hand[0]['hand'],
             'hand_class': 'No Showdown (everyone else folded)'
         }]
 
     # Otherwise: classic showdown
     scores = []
-    for player in active_players:
+    for player in players_in_hand:
         score, hand_class = evaluate_hand(player['hand'], community)
         scores.append((score, player))
 
