@@ -76,6 +76,7 @@ def start_new_game():
         "current_player": (0 + 1) % NUM_PLAYERS,
         "betting_round": "preflop",
         "current_bet": 0,
+        "last_bet_amount": 0,  # Track the last bet/raise amount for minimum raise calculation
         "action_history": [],
     }
 
@@ -126,7 +127,6 @@ def apply_action(game_state, action, amount=0):
     """
     player = game_state['players'][game_state['current_player']]
     to_call = game_state.get('current_bet', 0) - player['current_bet']
-    min_raise = max(game_state.get('current_bet', 0) * 2, 2)  # Example min raise, can adjust
 
     if action == 'fold':
         player['status'] = 'folded'
@@ -142,8 +142,17 @@ def apply_action(game_state, action, amount=0):
         total_bet = amount
         additional_bet = total_bet - player['current_bet']
         
-        # Ensure minimum raise (at least double the current bet, or big blind minimum)
-        min_raise_total = max(game_state.get('current_bet', 0) * 2, BIG_BLIND * 2)
+        # Calculate minimum raise based on last bet amount
+        current_bet = game_state.get('current_bet', 0)
+        last_bet_amount = game_state.get('last_bet_amount', 0)
+        
+        if current_bet == 0:
+            # First bet of the round - minimum is big blind
+            min_raise_total = BIG_BLIND
+        else:
+            # Must raise by at least the size of the last bet/raise
+            min_raise_total = current_bet + max(last_bet_amount, BIG_BLIND)
+        
         if total_bet < min_raise_total:
             total_bet = min_raise_total
             additional_bet = total_bet - player['current_bet']
@@ -154,7 +163,11 @@ def apply_action(game_state, action, amount=0):
         player['stack'] -= additional_bet
         player['current_bet'] += additional_bet
         game_state['pot'] += additional_bet
+        
+        # Update last bet amount (the size of this raise)
+        previous_bet = game_state.get('current_bet', 0)
         game_state['current_bet'] = player['current_bet']
+        game_state['last_bet_amount'] = player['current_bet'] - previous_bet
         
         if player['stack'] == 0:
             player['status'] = 'all-in'
@@ -171,7 +184,7 @@ def betting_round_over(game_state):
     Betting round is over if:
     - All players but one are folded
     - All active players have matched the current bet or are all-in
-    - AND it's not the first action of the round (in heads-up)
+    - AND the player who needs to act next has already had their turn this round
     """
     active = [p for p in game_state['players'] if p['status'] == 'active']
     if len(active) <= 1:
@@ -185,26 +198,70 @@ def betting_round_over(game_state):
         if player['stack'] > 0 and player['current_bet'] != current_bet:
             return False
     
-    # In heads-up, make sure we don't end the round too early
+    # Now check if betting action is complete
+    action_history = game_state.get('action_history', [])
+    betting_round = game_state.get('betting_round', 'preflop')
+    round_actions = [a for a in action_history if a.get('round') == betting_round]
+    
+    # If there are no actions this round, betting isn't over
+    if len(round_actions) == 0:
+        return False
+    
+    # For heads-up poker, we need special logic
     if len(game_state['players']) == 2:
-        betting_round = game_state.get('betting_round', 'preflop')
-        current_player = game_state.get('current_player', 0)
+        # Get the current player index and the other player
+        current_player_idx = game_state.get('current_player', 0)
+        other_player_idx = 1 - current_player_idx
         
-        # For preflop: small blind acts first, big blind must get a chance to act
-        if betting_round == 'preflop':
-            # If it's still the small blind's first turn, round is not over
-            action_history = game_state.get('action_history', [])
-            if len(action_history) == 0:
-                return False
+        current_player = game_state['players'][current_player_idx]
+        other_player = game_state['players'][other_player_idx]
         
-        # For post-flop: if no one has bet yet (current_bet == 0), 
-        # both players should get a chance to check
-        elif current_bet == 0:
-            action_history = game_state.get('action_history', [])
-            # Count actions in this betting round
-            round_actions = [a for a in action_history if a.get('round') == betting_round]
-            if len(round_actions) < 2:  # Both players need to act
-                return False
+        # If current player has already acted this round, and all bets are matched, round is over
+        # Exception: if other player just raised and current player hasn't responded
+        
+        current_player_actions = [a for a in round_actions if a.get('player') == current_player['name']]
+        other_player_actions = [a for a in round_actions if a.get('player') == other_player['name']]
+        
+        # Both players must have acted at least once (unless one folded/all-in)
+        if current_player['status'] == 'active' and len(current_player_actions) == 0:
+            return False
+        if other_player['status'] == 'active' and len(other_player_actions) == 0:
+            return False
+        
+        # Check if the last action was a raise/bet and the other player needs to respond
+        if len(round_actions) > 0:
+            last_action = round_actions[-1]
+            last_actor_name = last_action.get('player', '')
+            
+            # If last action was a raise/bet and the other player hasn't responded yet
+            if last_action['action'] in ['raise', 'bet']:
+                # Find who needs to respond
+                responder = None
+                for p in [current_player, other_player]:
+                    if p['name'] != last_actor_name and p['status'] == 'active':
+                        responder = p
+                        break
+                
+                # If there's someone who needs to respond and they haven't acted after the raise
+                if responder:
+                    # Check if responder acted after this raise by looking at subsequent actions
+                    last_raise_index = -1
+                    for i in range(len(round_actions) - 1, -1, -1):
+                        if (round_actions[i].get('player') == last_actor_name and 
+                            round_actions[i]['action'] in ['raise', 'bet']):
+                            last_raise_index = i
+                            break
+                    
+                    # If we found the raise, check if responder acted after it
+                    if last_raise_index >= 0:
+                        responder_acted_after = False
+                        for i in range(last_raise_index + 1, len(round_actions)):
+                            if round_actions[i].get('player') == responder['name']:
+                                responder_acted_after = True
+                                break
+                        
+                        if not responder_acted_after:
+                            return False
     
     return True
 
@@ -232,6 +289,7 @@ def reset_bets(game_state):
     for player in game_state['players']:
         player['current_bet'] = 0
     game_state['current_bet'] = 0
+    game_state['last_bet_amount'] = 0  # Reset last bet amount for new round
     # Keep action_history but ensure it's initialized
     if 'action_history' not in game_state:
         game_state['action_history'] = []
@@ -299,6 +357,7 @@ def prepare_next_hand(game_state):
     game_state['pot'] = 0
     game_state['betting_round'] = 'preflop'
     game_state['current_bet'] = 0
+    game_state['last_bet_amount'] = 0
     # Post antes and blinds at the start of each new hand
     apply_antes(game_state)
     post_blinds(game_state)
@@ -370,6 +429,7 @@ def post_blinds(game_state, small_blind=SMALL_BLIND, big_blind=BIG_BLIND):
         # Optionally log: (player['name'], name, amount)
     
     game_state['current_bet'] = big_blind
+    game_state['last_bet_amount'] = big_blind  # Big blind is the last bet amount
     game_state['current_player'] = first_to_act  # Set correct first player
 
 

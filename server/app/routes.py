@@ -3,7 +3,7 @@ from app.game.poker import (
     start_new_game, apply_action, betting_round_over, advance_round, 
     award_pot, next_player, showdown, prepare_next_hand
 )
-from app.game.ai import decide_action
+from app.game.ai_optimized import decide_action_optimized
 from app.game.analytics import analytics
 import uuid
 
@@ -47,11 +47,12 @@ def player_action():
     # Additional validation for raise amounts
     if action == 'raise':
         player = game_state['players'][0]
-        min_raise = max(game_state.get('current_bet', 0) * 2, 40)  # Minimum raise
+        # Let the poker.py logic handle minimum raise calculation
+        # Just do basic validation that amount is positive and not more than stack
         max_raise = player['stack'] + player['current_bet']  # All-in amount
         
-        if amount < min_raise:
-            return jsonify({'error': f'Minimum raise is ${min_raise}'}), 400
+        if amount <= 0:
+            return jsonify({'error': 'Raise amount must be positive'}), 400
         if amount > max_raise:
             return jsonify({'error': f'Maximum bet is ${max_raise} (all-in)'}), 400
     
@@ -93,7 +94,7 @@ def process_ai_turn():
     # Only process if it's AI's turn and AI is active
     if game_state['current_player'] == 1 and game_state['players'][1]['status'] == 'active':
         # AI makes decision
-        ai_action, ai_amount = decide_action(game_state)
+        ai_action, ai_amount = decide_action_optimized(game_state)
         apply_action(game_state, ai_action, ai_amount)
         log_action(game_state, 1, ai_action, ai_amount)
         
@@ -252,6 +253,7 @@ def serialize_game_state(game_state):
         'current_player': game_state['current_player'],
         'betting_round': game_state['betting_round'],
         'current_bet': game_state['current_bet'],
+        'last_bet_amount': game_state.get('last_bet_amount', 0),
         'action_history': game_state.get('action_history', []),
         'dealer_pos': game_state['dealer_pos']
     }

@@ -8,38 +8,58 @@ def decide_action(game_state):
     ai_player = game_state['players'][1]  # AI is player 1
     to_call = game_state.get('current_bet', 0) - ai_player['current_bet']
     
+    # Debug print
+    print(f"AI deciding action: current_bet={game_state.get('current_bet', 0)}, ai_current_bet={ai_player['current_bet']}, to_call={to_call}, ai_stack={ai_player['stack']}")
+    
     # If no chips left, can only check/call if possible
     if ai_player['stack'] == 0:
-        return ('check' if to_call == 0 else 'call', 0)
+        action = 'check' if to_call == 0 else 'call'
+        return debug_action(action, 0)
     
     # Random action selection
     if to_call == 0:
         # Can check or bet/raise
         action = random.choice(['check', 'raise'])
         if action == 'check':
-            return ('check', 0)
+            return debug_action('check', 0)
         else:
-            # Random raise amount between 20 and min(stack/2, 100)
-            max_raise = min(ai_player['stack'], 100)
-            raise_amount = random.randint(20, max(20, max_raise))
-            return ('raise', ai_player['current_bet'] + raise_amount)
+            # Calculate raise amount properly
+            big_blind = 20  # From config
+            min_raise = big_blind  # Minimum first bet
+            max_raise = ai_player['current_bet'] + ai_player['stack']  # All-in
+            
+            if max_raise > min_raise:
+                reasonable_max = min(max_raise, min_raise + 100)
+                raise_amount = random.randint(min_raise, reasonable_max)
+                return debug_action('raise', raise_amount)
+            else:
+                return debug_action('check', 0)  # Can't raise, just check
     else:
         # Must call, raise, or fold
         # 60% call, 20% raise, 20% fold
         action = random.choices(['call', 'raise', 'fold'], weights=[60, 20, 20])[0]
         
         if action == 'fold':
-            return ('fold', 0)
+            return debug_action('fold', 0)
         elif action == 'call':
-            return ('call', 0)
+            return debug_action('call', 0)
         else:  # raise
             if ai_player['stack'] > to_call:
-                # Random raise amount
-                available_for_raise = ai_player['stack'] - to_call
-                max_raise = min(available_for_raise, 100)
-                if max_raise > 0:
-                    raise_amount = random.randint(20, max(20, max_raise))
-                    return ('raise', ai_player['current_bet'] + to_call + raise_amount)
+                # Calculate total raise amount (not additional raise)
+                current_bet = game_state.get('current_bet', 0)
+                min_raise = current_bet * 2  # Minimum raise is double current bet
+                max_raise = ai_player['current_bet'] + ai_player['stack']  # All-in amount
+                
+                if max_raise > min_raise:
+                    # Random raise between min raise and reasonable amount
+                    reasonable_max = min(max_raise, current_bet + 100)
+                    raise_amount = random.randint(min_raise, reasonable_max)
+                    return debug_action('raise', raise_amount)
             # Fall back to call if can't raise
-            return ('call', 0)
+            return debug_action('call', 0)
+
+# Add debug print at the end of functions
+def debug_action(action, amount):
+    print(f"AI chose action: {action}, amount: {amount}")
+    return (action, amount)
 
