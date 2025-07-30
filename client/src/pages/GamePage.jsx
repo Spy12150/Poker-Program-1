@@ -1,6 +1,30 @@
 import React, { useState, useEffect } from 'react';
 import './GamePage.css';
 
+// Components
+import GameHeader from '../components/GameHeader';
+import GameMessage from '../components/GameMessage';
+import StartGameButton from '../components/StartGameButton';
+import PokerTable from '../components/PokerTable';
+import ActionPanel from '../components/ActionPanel';
+import HandOverPanel from '../components/HandOverPanel';
+import HandHistory from '../components/HandHistory';
+import DebugPanel from '../components/DebugPanel';
+
+// Utilities
+import { evaluateHand, translateCard } from '../utils/handEvaluation';
+import { 
+  betToSliderPosition, 
+  sliderPositionToBet, 
+  getCallAmount, 
+  getActualCallAmount, 
+  canCheck, 
+  canCall, 
+  canRaise, 
+  getPlayerPosition, 
+  hasPlayerChecked 
+} from '../utils/gameUtils';
+
 const GamePage = () => {
   const [gameState, setGameState] = useState(null);
   const [gameId, setGameId] = useState(null);
@@ -18,59 +42,13 @@ const GamePage = () => {
   const [newCardIndices, setNewCardIndices] = useState([]);
 
   // Function definitions (moved above useEffect to avoid reference errors)
-  const getCallAmount = () => {
-    if (!gameState || !gameState.players) return 0;
-    const player = gameState.players[0];
-    const currentBet = gameState.current_bet || 0;
-    const playerCurrentBet = player.current_bet || 0;
-    return Math.max(0, currentBet - playerCurrentBet);
-  };
-
-  const getActualCallAmount = () => {
-    if (!gameState || !gameState.players) return 0;
-    const player = gameState.players[0];
-    const callAmount = getCallAmount();
-    // Cap call amount at player's remaining stack (for all-in calls)
-    return Math.min(callAmount, player.stack);
-  };
-
-  // Logarithmic slider conversion functions
-  const betToSliderPosition = (betValue, minBet, maxBet) => {
-    if (minBet >= maxBet || betValue <= minBet) return 0;
-    if (betValue >= maxBet) return 100;
-    
-    // Logarithmic scale: log(betValue/minBet) / log(maxBet/minBet)
-    const logRatio = Math.log(betValue / minBet) / Math.log(maxBet / minBet);
-    return Math.round(logRatio * 100);
-  };
-
-  const sliderPositionToBet = (position, minBet, maxBet) => {
-    if (position <= 0) return minBet;
-    if (position >= 100) return maxBet;
-    
-    // Convert logarithmic position back to bet value
-    const ratio = position / 100;
-    const betValue = minBet * Math.pow(maxBet / minBet, ratio);
-    return Math.round(betValue);
-  };
-
-  const canCheck = () => {
-    return getCallAmount() === 0;
-  };
-
-  const canCall = () => {
-    const callAmount = getCallAmount();
-    // You can always call if there's a bet to call and you have chips
-    // Even if the bet is larger than your stack (all-in call)
-    return callAmount > 0 && gameState?.players[0]?.stack > 0;
-  };
-
-  const canRaise = () => {
-    if (!gameState || !gameState.players) return false;
-    const player = gameState.players[0];
-    const callAmount = getCallAmount();
-    return player.stack > callAmount;
-  };
+  const getCallAmountWrapper = () => getCallAmount(gameState);
+  const getActualCallAmountWrapper = () => getActualCallAmount(gameState);
+  const canCheckWrapper = () => canCheck(gameState);
+  const canCallWrapper = () => canCall(gameState);
+  const canRaiseWrapper = () => canRaise(gameState);
+  const getPlayerPositionWrapper = (playerIndex) => getPlayerPosition(gameState, playerIndex);
+  const hasPlayerCheckedWrapper = (playerIndex) => hasPlayerChecked(gameState, playerIndex);
 
   const updateBetLimits = (state) => {
     if (!state || !state.players || state.current_player !== 0) return;
@@ -115,37 +93,6 @@ const GamePage = () => {
       return;
     }
     makeAction('raise', betSliderValue);
-  };
-
-  // Get position information for a player
-  const getPlayerPosition = (playerIndex) => {
-    if (!gameState || gameState.dealer_pos === undefined) return {};
-    
-    // In heads-up poker:
-    // - Dealer (dealer_pos) is also small blind
-    // - Other player is big blind
-    const isDealer = playerIndex === gameState.dealer_pos;
-    const isSmallBlind = playerIndex === gameState.dealer_pos;
-    const isBigBlind = playerIndex === ((gameState.dealer_pos + 1) % 2);
-    
-    return { isDealer, isSmallBlind, isBigBlind };
-  };
-
-  // Check if a player has checked in the current round
-  const hasPlayerChecked = (playerIndex) => {
-    if (!gameState?.action_history) return false;
-    
-    const playerName = gameState.players[playerIndex]?.name;
-    const currentRound = gameState.betting_round || 'preflop';  // Fixed: was gameState.round
-    
-    // Look for the most recent check action by this player in the current round
-    const recentActions = gameState.action_history.slice().reverse();
-    for (const action of recentActions) {
-      if (action.player === playerName && action.round === currentRound) {
-        return action.action === 'check';
-      }
-    }
-    return false;
   };
 
   // Update betting limits when game state changes
@@ -200,15 +147,15 @@ const GamePage = () => {
           break;
         case 'c':
           if (event.ctrlKey || event.metaKey) return;
-          if (canCheck()) {
+          if (canCheckWrapper()) {
             makeAction('check');
-          } else if (canCall()) {
+          } else if (canCallWrapper()) {
             makeAction('call');
           }
           break;
         case 'r':
           if (event.ctrlKey || event.metaKey) return;
-          if (canRaise()) {
+          if (canRaiseWrapper()) {
             handleSliderRaise();
           }
           break;
@@ -242,10 +189,19 @@ const GamePage = () => {
       setWinners([]);
       updateBetLimits(data);
       
+      // Debug logging for AI first move
+      console.log('=== START GAME DEBUG ===');
+      console.log('Current player after start:', data.current_player);
+      console.log('Hand over:', data.hand_over);
+      console.log('AI should act first:', data.current_player === 1 && !data.hand_over);
+      console.log('========================');
+      
       // Check if AI needs to act first
       if (data.current_player === 1 && !data.hand_over) {
+        console.log('🤖 AI needs to act first - scheduling processAITurn()');
         setTimeout(() => {
-          processAITurn();
+          console.log('🤖 Executing processAITurn() now');
+          processAITurn(data.game_id); // Pass game_id directly to avoid state timing issue
         }, 1000); // Give a moment for UI to update, then process AI turn
       }
     } catch (error) {
@@ -255,14 +211,20 @@ const GamePage = () => {
     }
   };
 
-  const processAITurn = async () => {
-    if (!gameId) return;
+  const processAITurn = async (gameIdParam = null) => {
+    const currentGameId = gameIdParam || gameId;
+    console.log('🤖 processAITurn() called - gameId:', currentGameId, '(param:', gameIdParam, ', state:', gameId, ')');
+    if (!currentGameId) {
+      console.log('❌ No gameId, returning early');
+      return;
+    }
     
+    console.log('🤖 Sending request to process-ai-turn endpoint');
     try {
       const res = await fetch('http://localhost:5001/process-ai-turn', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ game_id: gameId })
+        body: JSON.stringify({ game_id: currentGameId })
       });
       const data = await res.json();
 
@@ -329,6 +291,14 @@ const GamePage = () => {
           setMessage('');
         }, 2000);
       }
+
+      // Check if AI needs to act again (e.g., after advancing to a new round)
+      if (data.game_state && data.game_state.current_player === 1 && !data.hand_over && !data.all_in_showdown) {
+        console.log('🤖 AI needs to act again - scheduling another processAITurn()');
+        setTimeout(() => {
+          processAITurn();
+        }, 1000); // Brief delay before next AI action
+      }
     } catch (error) {
       console.error('Failed to process AI turn:', error);
     }
@@ -373,25 +343,23 @@ const GamePage = () => {
         return; // Don't process AI turn if showdown occurred
       }
 
-      // Clear player action message after 1 second, then check for AI turn
-      setTimeout(() => {
-        setMessage('');
-        // If it's now AI's turn and game isn't over, process AI turn after a brief delay
-        if (data.game_state && data.game_state.current_player === 1 && !data.hand_over) {
-          setTimeout(() => {
-            processAITurn();
-          }, 500); // Short delay before AI acts
-        }
-      }, 1000);
+        // Clear player action message after 1 second, then check for AI turn
+        setTimeout(() => {
+          setMessage('');
+          // If it's now AI's turn and game isn't over, process AI turn after a brief delay
+          if (data.game_state && data.game_state.current_player === 1 && !data.hand_over) {
+            setTimeout(() => {
+              processAITurn();
+            }, 500); // Short delay before AI acts
+          }
+        }, 1000);
 
-    } catch (error) {
-      setMessage('Failed to make action. Check your connection.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const newHand = async () => {
+      } catch (error) {
+        setMessage('Failed to make action. Check your connection.');
+      } finally {
+        setLoading(false);
+      }
+    };  const newHand = async () => {
     if (!gameId || loading) return;
     
     setLoading(true);
@@ -437,674 +405,73 @@ const GamePage = () => {
     makeAction('raise', amount);
   };
 
-  // Calculate what actions are available - removed, now using individual can* functions
-
-  const formatActionHistory = () => {
-    if (!gameState?.action_history) return [];
-    return gameState.action_history.slice(-10); // Show last 10 actions
-  };
-
-  // Hand evaluation function
-  const evaluateHand = (playerHand, communityCards) => {
-    if (!playerHand || playerHand.length < 2) {
-      return "No hand";
-    }
-
-    // Combine player hand and community cards
-    const allCards = [...playerHand, ...(communityCards || [])];
-    
-    // If we have less than 5 cards, just evaluate what we have
-    if (allCards.length < 5) {
-      return evaluatePartialHand(allCards);
-    }
-
-    // Convert cards to a format we can work with
-    const cards = allCards.map(card => {
-      const rank = card[0];
-      const suit = card[1];
-      return { rank, suit };
-    });
-
-    // Count ranks and suits
-    const rankCounts = {};
-    const suitCounts = {};
-    const ranks = [];
-
-    cards.forEach(card => {
-      rankCounts[card.rank] = (rankCounts[card.rank] || 0) + 1;
-      suitCounts[card.suit] = (suitCounts[card.suit] || 0) + 1;
-      ranks.push(card.rank);
-    });
-
-    // Convert ranks to numbers for comparison
-    const rankValues = {
-      '2': 2, '3': 3, '4': 4, '5': 5, '6': 6, '7': 7, '8': 8, '9': 9, 'T': 10, 'J': 11, 'Q': 12, 'K': 13, 'A': 14
-    };
-
-    const rankNames = {
-      '2': '2', '3': '3', '4': '4', '5': '5', '6': '6', '7': '7', '8': '8', '9': '9', 'T': '10', 'J': 'Jack', 'Q': 'Queen', 'K': 'King', 'A': 'Ace'
-    };
-
-    // Sort ranks by frequency and value
-    const sortedRanks = Object.keys(rankCounts).sort((a, b) => {
-      if (rankCounts[b] !== rankCounts[a]) {
-        return rankCounts[b] - rankCounts[a];
-      }
-      return rankValues[b] - rankValues[a];
-    });
-
-    // Check for flush
-    const isFlush = Object.values(suitCounts).some(count => count >= 5);
-    
-    // Check for straight
-    const uniqueRanks = [...new Set(ranks)].map(r => rankValues[r]).sort((a, b) => b - a);
-    let isStraight = false;
-    let straightHigh = 0;
-    
-    // Check for regular straight
-    for (let i = 0; i <= uniqueRanks.length - 5; i++) {
-      if (uniqueRanks[i] - uniqueRanks[i + 4] === 4) {
-        isStraight = true;
-        straightHigh = uniqueRanks[i];
-        break;
-      }
-    }
-    
-    // Check for A-2-3-4-5 straight (wheel)
-    if (!isStraight && uniqueRanks.includes(14) && uniqueRanks.includes(2) && uniqueRanks.includes(3) && uniqueRanks.includes(4) && uniqueRanks.includes(5)) {
-      isStraight = true;
-      straightHigh = 5;
-    }
-
-    // Determine hand type
-    const pairs = sortedRanks.filter(rank => rankCounts[rank] === 2);
-    const trips = sortedRanks.filter(rank => rankCounts[rank] === 3);
-    const quads = sortedRanks.filter(rank => rankCounts[rank] === 4);
-
-    if (isStraight && isFlush) {
-      if (straightHigh === 14) {
-        return "Royal Flush";
-      } else {
-        const highCard = Object.keys(rankValues).find(k => rankValues[k] === straightHigh);
-        return `Straight Flush, ${rankNames[highCard]}-high`;
-      }
-    } else if (quads.length > 0) {
-      return `Four of a Kind, ${rankNames[quads[0]]}s`;
-    } else if (trips.length > 0 && pairs.length > 0) {
-      return `Full House, ${rankNames[trips[0]]}s full of ${rankNames[pairs[0]]}s`;
-    } else if (isFlush) {
-      const highCard = sortedRanks[0];
-      return `Flush, ${rankNames[highCard]}-high`;
-    } else if (isStraight) {
-      const highCard = Object.keys(rankValues).find(k => rankValues[k] === straightHigh);
-      return `Straight, ${rankNames[highCard]}-high`;
-    } else if (trips.length > 0) {
-      return `Three of a Kind, ${rankNames[trips[0]]}s`;
-    } else if (pairs.length >= 2) {
-      return `Two Pair, ${rankNames[pairs[0]]}s and ${rankNames[pairs[1]]}s`;
-    } else if (pairs.length === 1) {
-      return `Pair, ${rankNames[pairs[0]]}s`;
-    } else {
-      const highCard = sortedRanks[0];
-      return `High Card, ${rankNames[highCard]}`;
-    }
-  };
-
-  // Helper function for hands with fewer than 5 cards
-  const evaluatePartialHand = (cards) => {
-    if (cards.length === 0) return "No hand";
-    
-    const rankCounts = {};
-    const ranks = [];
-    
-    cards.forEach(card => {
-      const rank = card[0];
-      rankCounts[rank] = (rankCounts[rank] || 0) + 1;
-      ranks.push(rank);
-    });
-
-    const rankValues = {
-      '2': 2, '3': 3, '4': 4, '5': 5, '6': 6, '7': 7, '8': 8, '9': 9, 'T': 10, 'J': 11, 'Q': 12, 'K': 13, 'A': 14
-    };
-
-    const rankNames = {
-      '2': '2', '3': '3', '4': '4', '5': '5', '6': '6', '7': '7', '8': '8', '9': '9', 'T': '10', 'J': 'Jack', 'Q': 'Queen', 'K': 'King', 'A': 'Ace'
-    };
-
-    // Sort ranks by frequency and value
-    const sortedRanks = Object.keys(rankCounts).sort((a, b) => {
-      if (rankCounts[b] !== rankCounts[a]) {
-        return rankCounts[b] - rankCounts[a];
-      }
-      return rankValues[b] - rankValues[a];
-    });
-
-    const pairs = sortedRanks.filter(rank => rankCounts[rank] === 2);
-    
-    if (pairs.length >= 1) {
-      return `Pair, ${rankNames[pairs[0]]}s`;
-    } else {
-      const highCard = sortedRanks[0];
-      return `High Card, ${rankNames[highCard]}`;
-    }
-  };
-
   return (
     <div className="game-container">
-      {/* Site Title */}
-      <div className="site-title">
-        <div className="main-title">RIPOSTE</div>
-        <div className="subtitle">POKER AI</div>
-      </div>
+      <GameHeader />
+      
+      <StartGameButton 
+        gameState={gameState} 
+        startGame={startGame} 
+        loading={loading} 
+      />
 
-      {/* Start Game Button - only show when no game */}
-      {!gameState && (
-        <div className="start-game-container">
-          <button onClick={startGame} disabled={loading} className="start-button">
-            {loading ? 'Starting...' : 'Start New Game'}
-          </button>
-        </div>
-      )}
-
-      {/* Message */}
-      {message && (
-        <div className="message">
-          {message}
-        </div>
-      )}
+      <GameMessage message={message} />
 
       {gameState && (
         <>
-          {/* Main Poker Table */}
-          <div className="table-container">
-            <div className="poker-table">
-              <div className="table-inner">
-                
-                {/* AI Player (Opponent) */}
-                <div className="opponent-area">
-                  <div className="player-card">
-                    <div className="player-name">{gameState.players[1]?.name} (AI)</div>
-                    <div className="player-stats">
-                      <span>Stack: ${gameState.players[1]?.stack}</span>
-                    </div>
-                    <div className="hand-container">
-                      {(showdown ? gameState.players[1]?.hand || ['cardback', 'cardback'] : ['cardback', 'cardback']).map((card, idx) => (
-                        <img 
-                          key={idx} 
-                          src={`/cards/${showdown ? translateCard(card) : 'cardback'}.png`} 
-                          alt="card"
-                          className="card"
-                        />
-                      ))}
-                    </div>
-                    
-                    {/* Position Indicators */}
-                    <div className="position-indicators">
-                      {(() => {
-                        const position = getPlayerPosition(1);
-                        return (
-                          <>
-                            {position.isDealer && (
-                              <div className="position-indicator dealer-button">D</div>
-                            )}
-                            {position.isSmallBlind && (
-                              <div className="position-indicator small-blind">SB</div>
-                            )}
-                            {position.isBigBlind && (
-                              <div className="position-indicator big-blind">BB</div>
-                            )}
-                          </>
-                        );
-                      })()}
-                    </div>
-                    
-                    {/* AI Thinking Indicator */}
-                    {!handOver && gameState.current_player === 1 && (
-                      <div className="turn-indicator ai-thinking">
-                        AI is thinking...
-                      </div>
-                    )}
-                  </div>
-                  
-                  {/* AI Current Bet */}
-                  {(gameState.players[1]?.current_bet > 0 || hasPlayerChecked(1)) && (
-                    <div className="current-bet-container ai-bet">
-                      {gameState.players[1]?.current_bet > 0 ? 
-                        `$${gameState.players[1]?.current_bet}` : 
-                        'CHECK'
-                      }
-                    </div>
-                  )}
-                </div>
+          <PokerTable
+            gameState={gameState}
+            showdown={showdown}
+            dealingCards={dealingCards}
+            newCardIndices={newCardIndices}
+            hasPlayerChecked={hasPlayerCheckedWrapper}
+            getPlayerPosition={getPlayerPositionWrapper}
+            handOver={handOver}
+            evaluateHand={evaluateHand}
+            translateCard={translateCard}
+          />
 
-                {/* Community Cards & Pot */}
-                <div className="community-area">
-                  <div className="pot-info">
-                    POT: ${gameState.pot}
-                  </div>
-                  <div className={`community-cards ${dealingCards ? 'dealing-animation' : ''}`}>
-                    {gameState.community.map((card, idx) => (
-                      <img 
-                        key={idx} 
-                        src={`/cards/${translateCard(card)}.png`} 
-                        alt="community card"
-                        className={`community-card ${dealingCards && newCardIndices.includes(idx) ? 'new-card' : ''}`}
-                      />
-                    ))}
-                    {/* Show placeholders for undealt cards */}
-                    {Array(5 - gameState.community.length).fill().map((_, idx) => (
-                      <div key={`placeholder-${idx}`} className="card-placeholder">?</div>
-                    ))}
-                  </div>
-                </div>
+          <ActionPanel
+            gameState={gameState}
+            handOver={handOver}
+            loading={loading}
+            makeAction={makeAction}
+            canCheck={canCheckWrapper}
+            canCall={canCallWrapper}
+            canRaise={canRaiseWrapper}
+            getActualCallAmount={getActualCallAmountWrapper}
+            betSliderValue={betSliderValue}
+            setBetSliderValue={setBetSliderValue}
+            setRaiseAmount={setRaiseAmount}
+            minBet={minBet}
+            maxBet={maxBet}
+            getCallAmount={getCallAmountWrapper}
+            betToSliderPosition={betToSliderPosition}
+            sliderPositionToBet={sliderPositionToBet}
+          />
 
-                {/* Human Player */}
-                <div className="player-area">
-                  {/* Player Current Bet */}
-                  {(gameState.players[0]?.current_bet > 0 || hasPlayerChecked(0)) && (
-                    <div className="current-bet-container player-bet">
-                      {gameState.players[0]?.current_bet > 0 ? 
-                        `$${gameState.players[0]?.current_bet}` : 
-                        'CHECK'
-                      }
-                    </div>
-                  )}
-                  
-                  <div className="player-card">
-                    <div className="player-name">{gameState.players[0]?.name} (You)</div>
-                    <div className="player-stats">
-                      <span>Stack: ${gameState.players[0]?.stack}</span>
-                    </div>
-                    <div className="hand-container">
-                      {gameState.player_hand?.map((card, idx) => (
-                        <img 
-                          key={idx} 
-                          src={`/cards/${translateCard(card)}.png`} 
-                          alt="your card"
-                          className="card"
-                        />
-                      ))}
-                    </div>
-                    
-                    {/* Position Indicators */}
-                    <div className="position-indicators">
-                      {(() => {
-                        const position = getPlayerPosition(0);
-                        return (
-                          <>
-                            {position.isDealer && (
-                              <div className="position-indicator dealer-button">D</div>
-                            )}
-                            {position.isSmallBlind && (
-                              <div className="position-indicator small-blind">SB</div>
-                            )}
-                            {position.isBigBlind && (
-                              <div className="position-indicator big-blind">BB</div>
-                            )}
-                          </>
-                        );
-                      })()}
-                    </div>
-                    
-                    {/* Your Turn Indicator */}
-                    {!handOver && gameState.current_player === 0 && (
-                      <div className="turn-indicator your-turn">
-                        Your turn
-                      </div>
-                    )}
-                  </div>
+          <DebugPanel 
+            gameState={gameState}
+            handOver={handOver}
+            canCheck={canCheckWrapper}
+            canCall={canCallWrapper}
+            canRaise={canRaiseWrapper}
+            processAITurn={processAITurn}
+          />
 
-                  {/* Hand Evaluation Display */}
-                  {gameState.player_hand && (
-                    <div className="hand-evaluation">
-                      {evaluateHand(gameState.player_hand, gameState.community || [])}
-                    </div>
-                  )}
-                </div>
+          <HandOverPanel 
+            handOver={handOver}
+            showdown={showdown}
+            winners={winners}
+            newHand={newHand}
+            loading={loading}
+          />
 
-              </div>
-            </div>
-          </div>
-
-          {/* New Action Panel - Modern Poker UI */}
-          {!handOver && gameState.current_player === 0 && (
-            <div className="modern-action-panel">
-              {/* Main Action Buttons Row */}
-              <div className="main-actions-row">
-                <button
-                  onClick={() => makeAction('fold')}
-                  disabled={loading}
-                  className="modern-action-button fold-button"
-                >
-                  FOLD
-                </button>
-                
-                <button
-                  onClick={() => makeAction(canCheck() ? 'check' : 'call')}
-                  disabled={loading || (!canCheck() && !canCall())}
-                  className="modern-action-button call-button"
-                >
-                  {canCheck() ? 'CHECK' : `CALL ${getActualCallAmount() > 0 ? '$' + getActualCallAmount() : ''}`}
-                </button>
-                
-                <button
-                  onClick={() => makeAction('raise', betSliderValue)}
-                  disabled={loading || !canRaise() || betSliderValue === '' || betSliderValue < minBet || betSliderValue > maxBet}
-                  className="modern-action-button raise-button"
-                >
-                  RAISE TO<br/>${betSliderValue || 0}
-                </button>
-              </div>
-
-              {/* Betting Controls Row */}
-              <div className="betting-controls-row">
-                {/* Decrease/Increase Buttons */}
-                <button 
-                  className="bet-adjust-button decrease"
-                  onClick={() => {
-                    const newValue = Math.max(minBet, betSliderValue - 20);
-                    setBetSliderValue(newValue);
-                    setRaiseAmount(newValue.toString());
-                  }}
-                  disabled={betSliderValue <= minBet}
-                >
-                  −
-                </button>
-                
-                <button 
-                  className="bet-adjust-button bars"
-                  onClick={() => {
-                    const callAmount = getCallAmount();
-                    const currentPot = gameState.pot;
-                    const opponentCurrentBet = gameState.players[1].current_bet || 0;
-                    const potBet = currentPot + callAmount + opponentCurrentBet;
-                    const finalBet = Math.min(maxBet, Math.max(minBet, potBet));
-                    setBetSliderValue(finalBet);
-                    setRaiseAmount(finalBet.toString());
-                  }}
-                >
-                  |||
-                </button>
-
-                {/* Bet Slider */}
-                <div className="slider-container">
-                  <input
-                    type="range"
-                    min={0}
-                    max={100}
-                    value={betToSliderPosition(betSliderValue, minBet, maxBet)}
-                    onChange={(e) => {
-                      const sliderPosition = Number(e.target.value);
-                      const betValue = sliderPositionToBet(sliderPosition, minBet, maxBet);
-                      setBetSliderValue(betValue);
-                      setRaiseAmount(betValue.toString());
-                    }}
-                    className="bet-slider"
-                  />
-                </div>
-
-                <button 
-                  className="bet-adjust-button increase"
-                  onClick={() => {
-                    const newValue = Math.min(maxBet, betSliderValue + 20);
-                    setBetSliderValue(newValue);
-                    setRaiseAmount(newValue.toString());
-                  }}
-                  disabled={betSliderValue >= maxBet}
-                >
-                  +
-                </button>
-
-                {/* Bet Amount Display as Input */}
-                <input
-                  type="number"
-                  value={betSliderValue}
-                  onChange={(e) => {
-                    const inputValue = e.target.value;
-                    // Allow empty string or any valid number input
-                    if (inputValue === '') {
-                      setBetSliderValue('');
-                      setRaiseAmount('');
-                    } else {
-                      const numValue = Number(inputValue);
-                      setBetSliderValue(numValue);
-                      setRaiseAmount(inputValue);
-                    }
-                  }}
-                  onBlur={(e) => {
-                    const inputValue = e.target.value;
-                    // If empty on blur, don't set to 0, keep it empty
-                    if (inputValue === '') {
-                      setBetSliderValue('');
-                      setRaiseAmount('');
-                    } else {
-                      const numValue = Number(inputValue) || 0;
-                      setBetSliderValue(numValue);
-                      setRaiseAmount(numValue.toString());
-                    }
-                  }}
-                  className="bet-amount-input"
-                />
-              </div>
-
-              {/* Quick Bet Buttons - Conditional based on betting round */}
-              <div className="quick-bet-row">
-                {gameState.betting_round === 'preflop' ? (
-                  // Preflop buttons: 2.5x (50), 3x (60), Pot, All-in
-                  <>
-                    {minBet <= 50 && (
-                      <button 
-                        className="quick-bet-button bet-2-5x"
-                        onClick={() => {
-                          setBetSliderValue(50);
-                          setRaiseAmount('50');
-                        }}
-                      >
-                        2.5x
-                      </button>
-                    )}
-                    {minBet <= 60 && (
-                      <button 
-                        className="quick-bet-button bet-3x"
-                        onClick={() => {
-                          setBetSliderValue(60);
-                          setRaiseAmount('60');
-                        }}
-                      >
-                        3x
-                      </button>
-                    )}
-                    {(() => {
-                      const callAmount = getCallAmount();
-                      const currentPot = gameState.pot;
-                      const opponentCurrentBet = gameState.players[1].current_bet || 0;
-                      const potBet = currentPot + callAmount + opponentCurrentBet;
-                      
-                      // Only show Pot button if calculated bet is greater than minimum bet
-                      return potBet > minBet ? (
-                        <button 
-                          className="quick-bet-button bet-pot"
-                          onClick={() => {
-                            const finalBet = Math.min(maxBet, Math.max(minBet, potBet));
-                            setBetSliderValue(finalBet);
-                            setRaiseAmount(finalBet.toString());
-                          }}
-                        >
-                          Pot
-                        </button>
-                      ) : null;
-                    })()}
-                    <button 
-                      className="quick-bet-button bet-allin"
-                      onClick={() => {
-                        setBetSliderValue(maxBet);
-                        setRaiseAmount(maxBet.toString());
-                      }}
-                    >
-                      ALL-IN
-                    </button>
-                  </>
-                ) : (
-                  // Post-flop buttons: 1/3, 1/2, Pot, All-in
-                  <>
-                    {(() => {
-                      const callAmount = getCallAmount();
-                      const currentPot = gameState.pot;
-                      const opponentCurrentBet = gameState.players[1].current_bet || 0;
-                      const totalPot = currentPot + opponentCurrentBet;
-                      const oneThirdPot = Math.ceil(totalPot / 3) + callAmount;
-                      
-                      // Only show 1/3 button if calculated bet is greater than minimum bet
-                      return oneThirdPot > minBet ? (
-                        <button 
-                          className="quick-bet-button bet-third"
-                          onClick={() => {
-                            const finalBet = Math.min(maxBet, Math.max(minBet, oneThirdPot));
-
-                            setBetSliderValue(finalBet);
-                            setRaiseAmount(finalBet.toString());
-                          }}
-                        >
-                          1/3 Pot
-                        </button>
-                      ) : null;
-                    })()}
-                    
-                    {(() => {
-                      const callAmount = getCallAmount();
-                      const currentPot = gameState.pot;
-                      const opponentCurrentBet = gameState.players[1].current_bet || 0;
-                      const totalPot = currentPot + opponentCurrentBet;
-                      const halfPot = Math.ceil(totalPot / 2) + callAmount;
-                      
-                      // Only show 1/2 button if calculated bet is greater than minimum bet
-                      return halfPot > minBet ? (
-                        <button 
-                          className="quick-bet-button bet-half"
-                          onClick={() => {
-                            const finalBet = Math.min(maxBet, Math.max(minBet, halfPot));
-                            setBetSliderValue(finalBet);
-                            setRaiseAmount(finalBet.toString());
-                          }}
-                        >
-                          1/2 Pot
-                        </button>
-                      ) : null;
-                    })()}
-                    
-                    {(() => {
-                      const callAmount = getCallAmount();
-                      const currentPot = gameState.pot;
-                      const opponentCurrentBet = gameState.players[1].current_bet || 0;
-                      const potBet = currentPot + callAmount + opponentCurrentBet;
-                      
-                      // Only show Pot button if calculated bet is greater than minimum bet
-                      return potBet > minBet ? (
-                        <button 
-                          className="quick-bet-button bet-pot"
-                          onClick={() => {
-                            const finalBet = Math.min(maxBet, Math.max(minBet, potBet));
-                            setBetSliderValue(finalBet);
-                            setRaiseAmount(finalBet.toString());
-                          }}
-                        >
-                          Pot
-                        </button>
-                      ) : null;
-                    })()}
-                    
-                    <button 
-                      className="quick-bet-button bet-allin"
-                      onClick={() => {
-                        setBetSliderValue(maxBet);
-                        setRaiseAmount(maxBet.toString());
-                      }}
-                    >
-                      ALL-IN
-                    </button>
-                  </>
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* Debug Info - remove this after testing */}
-          {gameState && !handOver && (
-            <div style={{position: 'fixed', bottom: '10px', left: '10px', background: 'white', padding: '10px', fontSize: '12px', zIndex: 1000}}>
-              <div>Current Player: {gameState.current_player} (0=You, 1=AI)</div>
-              <div>Your Status: {gameState.players[0]?.status}</div>
-              <div>AI Status: {gameState.players[1]?.status}</div>
-              <div>Hand Over: {handOver ? 'Yes' : 'No'}</div>
-              <div>Can Check: {canCheck() ? 'Yes' : 'No'}</div>
-              <div>Can Call: {canCall() ? 'Yes' : 'No'}</div>
-              <div>Can Raise: {canRaise() ? 'Yes' : 'No'}</div>
-              <div>Action Panel Should Show: {(!handOver && gameState.current_player === 0) ? 'YES' : 'NO'}</div>
-              {gameState.current_player === 1 && (
-                <button 
-                  onClick={processAITurn}
-                  style={{marginTop: '5px', padding: '5px 10px', background: '#4CAF50', color: 'white', border: 'none', borderRadius: '3px'}}
-                >
-                  Force AI Turn
-                </button>
-              )}
-            </div>
-          )}
-
-          {/* Hand Over Panel */}
-          {handOver && (
-            <div className="hand-over-panel">
-              <h2>HAND COMPLETE!</h2>
-              {showdown && (
-                <div className="winners-section">
-                  <h3>SHOWDOWN RESULTS:</h3>
-                  {winners.map((winner, idx) => (
-                    <div key={idx} className="winner-info">
-                      <strong>{winner.name}</strong> wins with {winner.hand_class}
-                    </div>
-                  ))}
-                </div>
-              )}
-              <button onClick={newHand} disabled={loading} className="start-button">
-                {loading ? 'Dealing...' : 'Deal Next Hand'}
-              </button>
-            </div>
-          )}
-
-          {/* Side Panel - Action History */}
-          <div className="side-panel">
-            <div className="history-title">ACTION HISTORY</div>
-            <div>
-              {formatActionHistory().map((entry, idx) => (
-                <div key={idx} className="history-entry">
-                  <strong>{entry.player}</strong> {entry.action.charAt(0).toUpperCase() + entry.action.slice(1)}
-                  {entry.action === 'raise' && entry.amount && entry.amount > 0 && ` $${entry.amount}`} 
-                  <span className="round">({entry.round})</span>
-                </div>
-              ))}
-            </div>
-          </div>
+          <HandHistory gameState={gameState} />
         </>
       )}
     </div>
   );
-};
-
-const translateCard = (shortCode) => {
-  const rankMap = {
-    '2': '2', '3': '3', '4': '4', '5': '5', '6': '6',
-    '7': '7', '8': '8', '9': '9', 'T': '10', 'J': 'jack',
-    'Q': 'queen', 'K': 'king', 'A': 'ace'
-  };
-  const suitMap = {
-    's': 'spades',
-    'h': 'hearts',
-    'd': 'diamonds',
-    'c': 'clubs'
-  };
-
-  const rank = rankMap[shortCode[0]];
-  const suit = suitMap[shortCode[1]];
-  return `${rank}_of_${suit}`;
 };
 
 export default GamePage;

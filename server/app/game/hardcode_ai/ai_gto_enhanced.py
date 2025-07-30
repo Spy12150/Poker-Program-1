@@ -9,8 +9,8 @@ import random
 import math
 import json
 import os
-from .hand_eval_lib import evaluate_hand
-from .config import BIG_BLIND, SMALL_BLIND
+from ..hand_eval_lib import evaluate_hand
+from ..config import BIG_BLIND, SMALL_BLIND
 from .preflop_charts import PreflopCharts
 from .postflop_strategy import PostflopStrategy
 
@@ -56,10 +56,13 @@ class GTOEnhancedAI:
         """Load the small blind raise-first-in chart"""
         try:
             chart_path = os.path.join(os.path.dirname(__file__), 'poker_charts', 'headsup_SBRFI.json')
+            print(f"DEBUG: Loading SB RFI chart from: {chart_path}")
             with open(chart_path, 'r') as f:
-                return json.load(f)
+                chart = json.load(f)
+            print(f"DEBUG: SB RFI chart loaded successfully, contains {len(chart)} hands")
+            return chart
         except Exception as e:
-            print(f"Error loading SB RFI chart: {e}")
+            print(f"ERROR: Failed to load SB RFI chart: {e}")
             return {}
     
     def hand_to_string(self, hand):
@@ -98,20 +101,33 @@ class GTOEnhancedAI:
     
     def sb_first_action(self, hand):
         """Get action from SB RFI chart"""
+        print(f"DEBUG: sb_first_action called with hand: {hand}")
         hand_str = self.hand_to_string(hand)
-        if not hand_str or hand_str not in self.sb_rfi_chart:
+        print(f"DEBUG: Hand converted to string: {hand_str}")
+        
+        if not hand_str:
+            print("DEBUG: hand_str is None, returning fold")
+            return 'fold'
+            
+        if hand_str not in self.sb_rfi_chart:
+            print(f"DEBUG: Hand {hand_str} not found in SB RFI chart, returning fold")
             return 'fold'
         
         chart_entry = self.sb_rfi_chart[hand_str]
+        print(f"DEBUG: Chart entry for {hand_str}: {chart_entry}")
         
         # Use probabilities to determine action
         rand = random.random()
+        print(f"DEBUG: Random number: {rand}")
         
         if rand < chart_entry['raise']:
+            print("DEBUG: Action chosen: raise")
             return 'raise'
         elif rand < chart_entry['raise'] + chart_entry['call']:
+            print("DEBUG: Action chosen: call")
             return 'call'
         else:
+            print("DEBUG: Action chosen: fold")
             return 'fold'
     
     def decide_action(self, game_state):
@@ -563,7 +579,7 @@ class GTOEnhancedAI:
         elif hand_strength >= 0.75:
             bet_size = min(stack, pot * 0.67)  # Standard value bet
         else:
-            bet_size = min(stack, pot * 0.5)   # Smaller value bet
+            bet_size = min(stack, pot * 0.4)   # Smaller value bet
         
         return round(bet_size)
     

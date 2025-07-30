@@ -12,7 +12,7 @@ Implements sophisticated postflop play including:
 import random
 import itertools
 try:
-    from .hand_eval_lib import evaluate_hand
+    from ..hand_eval_lib import evaluate_hand
 except ImportError:
     try:
         from hand_eval_lib import evaluate_hand

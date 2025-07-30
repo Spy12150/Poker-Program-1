@@ -116,11 +116,15 @@ def deal_community_cards(game_state):
 def next_player(game_state):
     num_players = len(game_state['players'])
     i = game_state['current_player']
+    print(f"DEBUG: next_player called, current: {i}")
     for _ in range(num_players):
         i = (i + 1) % num_players
+        print(f"DEBUG: checking player {i}, status: {game_state['players'][i]['status']}")
         if game_state['players'][i]['status'] == "active":
             game_state['current_player'] = i
+            print(f"DEBUG: next_player set current_player to {i}")
             return
+    print(f"DEBUG: next_player found no active players!")
 
 def apply_action(game_state, action, amount=0):
     """
@@ -187,6 +191,7 @@ def betting_round_over(game_state):
     - All players but one are folded
     - All active players have matched the current bet or are all-in
     - All remaining players are all-in (no one can act)
+    - No more betting actions are possible (e.g., one player all-in, other called)
     - AND the player who needs to act next has already had their turn this round
     """
     # Include both active and all-in players in the count
@@ -200,6 +205,20 @@ def betting_round_over(game_state):
     # If all remaining players are all-in, no more betting can occur
     if len(active_players) == 0:
         return True
+
+    # Check if no more betting actions are possible
+    # This happens when at least one player is all-in and all others have called
+    all_in_players = [p for p in game_state['players'] if p['status'] == 'all-in']
+    if len(all_in_players) > 0:
+        # If someone is all-in, check if all other players have matched the current bet
+        current_bet = game_state.get('current_bet', 0)
+        all_matched = True
+        for player in players_in_hand:
+            if player['status'] == 'active' and player['current_bet'] != current_bet:
+                all_matched = False
+                break
+        if all_matched:
+            return True
 
     # All active players must have matched the current bet
     current_bet = game_state.get('current_bet', 0)
@@ -276,15 +295,10 @@ def betting_round_over(game_state):
     
     return True
 
-def reset_bets(game_state):
-    for player in game_state['players']:
-        player['current_bet'] = 0
-    game_state['current_bet'] = 0
-
 def run_betting_round(game_state, action_sequence):
     """
     action_sequence: list of tuples (action, amount)
-    For actual play, you’ll step this as each player acts.
+    For actual play, you'll step this as each player acts.
     """
     for action, amount in action_sequence:
         apply_action(game_state, action, amount)
@@ -299,6 +313,9 @@ def run_betting_round(game_state, action_sequence):
 def reset_bets(game_state):
     for player in game_state['players']:
         player['current_bet'] = 0
+        # Reset player status to active if they have chips and aren't folded
+        if player['stack'] > 0 and player['status'] not in ['folded']:
+            player['status'] = 'active'
     game_state['current_bet'] = 0
     game_state['last_bet_amount'] = 0  # Reset last bet amount for new round
     # Keep action_history but ensure it's initialized
@@ -347,35 +364,10 @@ def deal_remaining_cards(game_state):
     
     # Set to showdown
     game_state['betting_round'] = 'showdown'
-    reset_bets(game_state)
+    # DON'T reset bets here - we need current_bet values for side pot calculation
+    # reset_bets(game_state)  # REMOVED: This was wiping out investment info needed for showdown
 
 from .hand_eval_lib import evaluate_hand
-
-def award_pot(game_state):
-    """
-    At showdown or if only one remains, determine winner(s) and award pot.
-    """
-    community = game_state['community']
-    # Include both active and all-in players in showdown
-    players_in_hand = [p for p in game_state['players'] if p['status'] in ['active', 'all-in']]
-    if len(players_in_hand) == 1:
-        # Only one player left, auto-win
-        players_in_hand[0]['stack'] += game_state['pot']
-        return [players_in_hand[0]['name']]
-    else:
-        # Showdown: use treys to find the best hand(s)
-        scores = []
-        for player in players_in_hand:
-            score, hand_class = evaluate_hand(player['hand'], community)
-            scores.append((score, player['name'], hand_class))
-        scores.sort()  # Lower is better
-        best_score = scores[0][0]
-        winners = [tup[1] for tup in scores if tup[0] == best_score]
-        pot_share = game_state['pot'] // len(winners)
-        for player in game_state['players']:
-            if player['name'] in winners:
-                player['stack'] += pot_share
-        return winners
 
 def prepare_next_hand(game_state):
     num_players = len(game_state['players'])
@@ -409,7 +401,8 @@ def prepare_next_hand(game_state):
 
 def showdown(game_state):
     """
-    Evaluates all active players' hands, determines the winner(s), and awards the pot.
+    Evaluates all active players' hands, determines the winner(s), and awards the pot with proper side pot logic.
+    When a player goes all-in with fewer chips, they can only win as much as they contributed from each opponent.
     Returns a list of winner info and their hand classes.
     """
     community = game_state['community']
@@ -419,35 +412,169 @@ def showdown(game_state):
     # If only one player is left (everyone else folded)
     if len(players_in_hand) == 1:
         players_in_hand[0]['stack'] += game_state['pot']
+        # Clear the pot and reset bets since we awarded it
+        game_state['pot'] = 0
+        # Reset current_bet values
+        for player in game_state['players']:
+            player['current_bet'] = 0
+        game_state['current_bet'] = 0
         return [{
             'name': players_in_hand[0]['name'],
             'hand': players_in_hand[0]['hand'],
             'hand_class': 'No Showdown (everyone else folded)'
         }]
 
-    # Otherwise: classic showdown
-    scores = []
+    # Evaluate hands
+    player_scores = {}
     for player in players_in_hand:
         score, hand_class = evaluate_hand(player['hand'], community)
-        scores.append((score, player))
+        player_scores[player['name']] = (score, hand_class, player)
 
-    scores.sort(key=lambda tup: tup[0])  # Lowest score wins (treys logic)
-    best_score = scores[0][0]
-    winners = [player for (score, player) in scores if score == best_score]
-
-    # Split the pot among winners
-    pot_share = game_state['pot'] // len(winners)
-    for player in winners:
-        player['stack'] += pot_share
-
-    # Build info for frontend/UI/logging
-    winner_info = [{
-        'name': p['name'],
-        'hand': p['hand'],
-        'hand_class': evaluate_hand(p['hand'], community)[1]
-    } for p in winners]
-
-    return winner_info
+    # Sort by hand strength (lowest score wins with treys)
+    sorted_hands = sorted(player_scores.values(), key=lambda x: x[0])
+    best_score = sorted_hands[0][0]
+    
+    # For heads-up poker, implement proper all-in side pot logic
+    if len(players_in_hand) == 2:
+        player1, player2 = players_in_hand[0], players_in_hand[1]
+        
+        # Find who has the better hand
+        p1_score = player_scores[player1['name']][0]
+        p2_score = player_scores[player2['name']][0]
+        
+        # Get actual investments (current_bet represents total investment this hand)
+        p1_investment = player1['current_bet']
+        p2_investment = player2['current_bet']
+        
+        # Store the total pot before we clear it
+        total_pot = game_state['pot']
+        
+        # Determine winner(s)
+        if p1_score < p2_score:
+            winner, loser = player1, player2
+            winner_investment, loser_investment = p1_investment, p2_investment
+        elif p2_score < p1_score:
+            winner, loser = player2, player1
+            winner_investment, loser_investment = p2_investment, p1_investment
+        else:
+            # Tie - split the actual pot based on investments
+            smaller_investment = min(p1_investment, p2_investment)
+            larger_investment = max(p1_investment, p2_investment)
+            
+            # Calculate main pot and side pot from actual investments
+            if smaller_investment == larger_investment:
+                # Equal investments - split the entire pot
+                each_gets = total_pot // 2
+                player1['stack'] += each_gets
+                player2['stack'] += each_gets
+                # Handle odd chip
+                if total_pot % 2 == 1:
+                    player1['stack'] += 1  # Give odd chip to first player
+            else:
+                # Unequal investments - proper side pot calculation
+                # Main pot is contested by both players
+                main_pot_size = smaller_investment * 2
+                side_pot_size = total_pot - main_pot_size
+                
+                # Split main pot equally
+                each_gets_from_main = main_pot_size // 2
+                player1['stack'] += each_gets_from_main
+                player2['stack'] += each_gets_from_main
+                
+                # Give side pot to whoever invested more
+                if p1_investment > p2_investment:
+                    player1['stack'] += side_pot_size
+                else:
+                    player2['stack'] += side_pot_size
+            
+            # Clear the pot and reset bets
+            game_state['pot'] = 0
+            for player in game_state['players']:
+                player['current_bet'] = 0
+            game_state['current_bet'] = 0
+            
+            return [
+                {
+                    'name': player1['name'],
+                    'hand': player1['hand'],
+                    'hand_class': player_scores[player1['name']][1]
+                },
+                {
+                    'name': player2['name'],
+                    'hand': player2['hand'],
+                    'hand_class': player_scores[player2['name']][1]
+                }
+            ]
+        
+        # Winner takes contested portion, excess goes back to whoever invested it
+        smaller_investment = min(winner_investment, loser_investment)
+        larger_investment = max(winner_investment, loser_investment)
+        
+        if smaller_investment == larger_investment:
+            # Equal investments - winner gets entire pot
+            winner['stack'] += total_pot
+        else:
+            # Unequal investments - calculate main pot and side pot
+            main_pot_size = smaller_investment * 2
+            side_pot_size = total_pot - main_pot_size
+            
+            # Winner gets the main pot (contested portion)
+            winner['stack'] += main_pot_size
+            
+            # Side pot goes to whoever invested more
+            if winner_investment > loser_investment:
+                # Winner invested more, gets side pot too
+                winner['stack'] += side_pot_size
+            else:
+                # Loser invested more, gets side pot back
+                loser['stack'] += side_pot_size
+        
+        # Clear the pot and reset bets
+        game_state['pot'] = 0
+        for player in game_state['players']:
+            player['current_bet'] = 0
+        game_state['current_bet'] = 0
+        
+        return [{
+            'name': winner['name'],
+            'hand': winner['hand'],
+            'hand_class': player_scores[winner['name']][1]
+        }]
+    
+    else:
+        # Multi-player: enhanced logic for side pots
+        # For now, use simplified approach but fix chopped pot
+        winners = [info[2] for info in sorted_hands if info[0] == best_score]
+        
+        total_pot = game_state['pot']
+        
+        if len(winners) == 1:
+            # Single winner gets everything
+            winners[0]['stack'] += total_pot
+        else:
+            # Multiple winners - split pot
+            pot_share = total_pot // len(winners)
+            remainder = total_pot % len(winners)
+            
+            for i, winner in enumerate(winners):
+                winner['stack'] += pot_share
+                # Give remainder to first winner(s)
+                if i < remainder:
+                    winner['stack'] += 1
+        
+        # Clear the pot and reset bets
+        game_state['pot'] = 0
+        for player in game_state['players']:
+            player['current_bet'] = 0
+        game_state['current_bet'] = 0
+        
+        winner_info = [{
+            'name': p['name'],
+            'hand': p['hand'],
+            'hand_class': player_scores[p['name']][1]
+        } for p in winners]
+        
+        return winner_info
 
 def post_blinds(game_state, small_blind=SMALL_BLIND, big_blind=BIG_BLIND):
     num_players = len(game_state['players'])
