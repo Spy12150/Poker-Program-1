@@ -36,11 +36,11 @@ class GameService:
         
         # Create console logs for game start
         console_logs = [
-            f"🎮 NEW GAME STARTED",
-            f"🎲 Dealer Position: {game_state.get('dealer_pos')}",
-            f"👤 Current Player: {game_state.get('current_player')}",
-            f"🤖 AI is dealer: {game_state.get('dealer_pos') == 1}",
-            f"🃏 AI Hand: {game_state['players'][1]['hand']}"
+            f"NEW GAME STARTED",
+            f"Dealer Position: {game_state.get('dealer_pos')}",
+            f"Current Player: {game_state.get('current_player')}",
+            f"AI is dealer: {game_state.get('dealer_pos') == 1}",
+            f"AI Hand: {game_state['players'][1]['hand']}"
         ]
         
         # Build response with debug info
@@ -161,38 +161,38 @@ class GameService:
         
         # Add debug messages
         console_logs.extend([
-            f"🤖 AI DECISION START",
-            f"🎯 AI Hand: {debug_info['ai_hand']}",
-            f"🎲 Dealer Position: {debug_info['dealer_pos']} (AI is player 1)",
-            f"👤 Current Player: {debug_info['current_player']}",
-            f"💰 To Call: ${debug_info['to_call']}",
-            f"🏆 Pot: ${debug_info['pot']}",
-            f"📝 Action History: {debug_info['action_history']}"
+            f"AI DECISION START",
+            f"AI Hand: {debug_info['ai_hand']}",
+            f"Dealer Position: {debug_info['dealer_pos']} (AI is player 1)",
+            f"Current Player: {debug_info['current_player']}",
+            f"To Call: ${debug_info['to_call']}",
+            f"Pot: ${debug_info['pot']}",
+            f"Action History: {debug_info['action_history']}"
         ])
         
         # Check if AI is dealer (Small Blind)
         ai_is_dealer = debug_info['dealer_pos'] == 1
         ai_position = "Small Blind (Dealer)" if ai_is_dealer else "Big Blind"
-        console_logs.append(f"📍 AI Position: {ai_position}")
+        console_logs.append(f"AI Position: {ai_position}")
         
         # Check SB RFI conditions
         is_first_action = len(debug_info['action_history']) == 0
         console_logs.extend([
-            f"🔍 SB RFI Check:",
+            f"SB RFI Check:",
             f"  - AI is dealer: {ai_is_dealer}",
             f"  - To call is 0: {debug_info['to_call'] == 0}",
             f"  - First action: {is_first_action}"
         ])
         
         should_use_sb_rfi = ai_is_dealer and debug_info['to_call'] == 0 and is_first_action
-        console_logs.append(f"✅ Should use SB RFI: {should_use_sb_rfi}")
+        console_logs.append(f"Should use SB RFI: {should_use_sb_rfi}")
         
         # AI makes decision
         ai_action, ai_amount = decide_action_gto(game_state)
         
-        console_logs.append(f"🎬 AI Action: {ai_action}")
+        console_logs.append(f"AI Action: {ai_action}")
         if ai_amount > 0:
-            console_logs.append(f"💵 AI Amount: ${ai_amount}")
+            console_logs.append(f"AI Amount: ${ai_amount}")
         
         apply_action(game_state, ai_action, ai_amount)
         self._log_action(game_state, 1, ai_action, ai_amount)
@@ -251,6 +251,36 @@ class GameService:
             raise ValueError('Game over - insufficient players with chips')
         
         # Prepare next hand
+        prepare_next_hand(game_state)
+        game_state['action_history'] = []
+        
+        return self._serialize_game_state(game_state)
+    
+    def start_new_round(self, game_id: str) -> Dict:
+        """
+        Start a new round in existing game (reset chip stacks to starting amount)
+        
+        Args:
+            game_id: The game session ID
+            
+        Returns:
+            Serialized game state for new round
+            
+        Raises:
+            ValueError: If game not found
+        """
+        if game_id not in self.game_sessions:
+            raise ValueError('Invalid game session')
+        
+        game_state = self.game_sessions[game_id]
+        
+        # Reset both players' chip stacks to starting amount
+        from app.game.config import STARTING_STACK
+        for player in game_state['players']:
+            player['stack'] = STARTING_STACK
+            player['status'] = 'active'
+        
+        # Prepare next hand with reset stacks
         prepare_next_hand(game_state)
         game_state['action_history'] = []
         

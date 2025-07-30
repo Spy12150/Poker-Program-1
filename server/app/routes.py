@@ -106,6 +106,24 @@ def new_hand():
     except Exception as e:
         return jsonify({'error': 'Internal server error'}), 500
 
+@bp.route('/new-round', methods=['POST'])
+def new_round():
+    """Start a new round in existing game (reset chip stacks)"""
+    data = request.json
+    game_id = data.get('game_id')
+    
+    is_valid, error_msg = validation_service.validate_game_id(game_id)
+    if not is_valid:
+        return jsonify({'error': error_msg}), 400
+    
+    try:
+        game_state = game_service.start_new_round(game_id)
+        return jsonify(game_state)
+    except ValueError as e:
+        return jsonify({'error': str(e)}), 400
+    except Exception as e:
+        return jsonify({'error': 'Internal server error'}), 500
+
 @bp.route('/analytics', methods=['GET'])
 def get_analytics():
     """Get game analytics and statistics"""

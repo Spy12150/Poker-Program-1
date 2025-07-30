@@ -112,17 +112,55 @@ class PreflopCharts:
         """Determine BB defense strategy vs button open"""
         hand_tuple = self.get_hand_tuple(hand)
         
+        # Short stack strategy - push/fold with very short stacks
+        if stack_bb <= 15:
+            # Push/fold range - only strong hands
+            push_fold_range = [
+                # Premium pairs and hands
+                (14, 14), (13, 13), (12, 12), (11, 11), (10, 10), (9, 9), (8, 8), (7, 7),
+                (14, 13, True), (14, 13, False), (14, 12, True), (14, 12, False),
+                (14, 11, True), (14, 10, True), (13, 12, True), (13, 11, True),
+                # Some suited connectors and aces
+                (14, 9, True), (14, 8, True), (14, 7, True), (14, 6, True), (14, 5, True),
+                (13, 10, True), (12, 11, True), (11, 10, True)
+            ]
+            if hand_tuple in push_fold_range:
+                return 'call'  # All-in call
+            else:
+                return 'fold'
+        
         # Adjust defense range based on raise size
-        if raise_size_bb > 4:  # Large raise - tighter defense
-            return hand_tuple in self.bb_defense_range['3bet']
+        if raise_size_bb > 4:  # Large raise - much tighter defense
+            if hand_tuple in self.bb_defense_range['3bet']:
+                return '3bet'
+            elif hand_tuple in [(14, 14), (13, 13), (12, 12), (11, 11), (10, 10),
+                               (14, 13, True), (14, 13, False), (14, 12, True)]:
+                return 'call'  # Only premium hands vs large raises
+            else:
+                return 'fold'
         
-        # Stack depth adjustments
-        if stack_bb < 20:  # Short stack - more calling, less 3-betting
-            return hand_tuple in self.bb_defense_range['call'][:50]  # Top 50 hands
+        # Medium stack adjustments (20-40bb)
+        if stack_bb < 40:
+            # Tighter 3-betting, more calling
+            if hand_tuple in self.bb_defense_range['3bet'][:8]:  # Top 3-bet hands only
+                return '3bet'
+            elif hand_tuple in self.bb_defense_range['call']:
+                return 'call'
+            else:
+                return 'fold'
         
-        # Normal defense
+        # Deep stack normal defense
         if hand_tuple in self.bb_defense_range['3bet']:
-            return '3bet'
+            # Mix between 3-bet and call for some hands
+            premium_3bets = [(14, 14), (13, 13), (12, 12), (11, 11), (10, 10),
+                           (14, 13, True), (14, 13, False), (14, 12, True)]
+            if hand_tuple in premium_3bets:
+                return '3bet'
+            elif hand_tuple in self.bb_defense_range['3bet']:
+                # Bluff 3-bets - mix strategy
+                return '3bet' if random.random() < 0.7 else 'call'
+            else:
+                return '3bet'
         elif hand_tuple in self.bb_defense_range['call']:
             return 'call'
         else:
@@ -143,33 +181,77 @@ class PreflopCharts:
         
         if position == 'button':
             if action_to_hero == 'none':
-                # Unopened pot
+                # Unopened pot - handled by SB RFI chart, not this function
                 if self.should_open_button(hand, stack_bb):
                     return 'raise'
                 else:
-                    return 'fold'  # Actually 'check' in implementation
+                    return 'fold'
+            
+            elif action_to_hero == 'raise':
+                # Button facing BB 3-bet (after our open)
+                # Short stack - simplified ranges
+                if stack_bb <= 15:
+                    nuts_hands = [(14, 14), (13, 13), (12, 12), (14, 13, True), (14, 13, False)]
+                    if hand_tuple in nuts_hands:
+                        return 'call'  # All-in
+                    else:
+                        return 'fold'
+                
+                # Normal 4-bet decision vs 3-bet
+                if hand_tuple in self.four_bet_range['value']:
+                    return '4bet'
+                elif hand_tuple in self.four_bet_range['bluff'] and stack_bb > 50:
+                    return '4bet' if random.random() < 0.3 else 'fold'
+                else:
+                    # Calling range vs 3-bet
+                    call_vs_3bet = [
+                        (11, 11), (10, 10), (9, 9), (8, 8), (7, 7),  # Medium pairs
+                        (14, 12, True), (14, 11, True), (14, 10, True),  # Suited aces
+                        (13, 12, True), (13, 11, True), (12, 11, True)   # Suited broadways
+                    ]
+                    if hand_tuple in call_vs_3bet:
+                        return 'call'
+                    else:
+                        return 'fold'
             
             elif action_to_hero == '3bet':
-                # Facing BB 3-bet
-                if hand_tuple in self.four_bet_range['value']:
-                    return '4bet_value'
-                elif hand_tuple in self.four_bet_range['bluff'] and stack_bb > 50:
-                    return '4bet_bluff' if random.random() < 0.3 else 'fold'
-                elif hand_tuple in self.button_opening_range['premium'][:10]:  # Top hands
+                # This is actually facing a 3-bet, same as 'raise' case above
+                return self.get_preflop_action(hand, position, 'raise', raise_size_bb, stack_bb)
+            
+            elif action_to_hero == '4bet':
+                # Facing BB 4-bet (after our 3-bet)
+                if hand_tuple in [(14, 14), (13, 13), (14, 13, True)]:  # Only the nuts
                     return 'call'
                 else:
                     return 'fold'
         
         else:  # Big Blind
             if action_to_hero == 'raise':
-                # Facing button open
+                # Facing button open - this is the main BB defense case
                 defense = self.should_defend_bb(hand, raise_size_bb, stack_bb)
-                return defense if defense != 'fold' else 'fold'
+                return defense
+            
+            elif action_to_hero == '3bet':
+                # BB facing button 3-bet (after our call/3-bet)
+                if stack_bb <= 15:
+                    # Short stack - call with strong hands only
+                    if hand_tuple in [(14, 14), (13, 13), (12, 12), (14, 13, True)]:
+                        return 'call'
+                    else:
+                        return 'fold'
+                
+                # Normal 4-bet decision
+                if hand_tuple in self.four_bet_range['value']:
+                    return '4bet'
+                elif hand_tuple in [(11, 11), (10, 10), (14, 12, True)]:  # Calling hands
+                    return 'call'
+                else:
+                    return 'fold'
             
             elif action_to_hero == '4bet':
                 # Facing button 4-bet (after our 3-bet)
                 if hand_tuple in [(14, 14), (13, 13), (14, 13, True)]:  # Only the nuts
-                    return 'call'  # or '5bet' with AA/KK
+                    return 'call'
                 else:
                     return 'fold'
         

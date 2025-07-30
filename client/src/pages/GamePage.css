@@ -577,6 +577,29 @@
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
+.game-over-section {
+  margin-bottom: 20px;
+  padding: 15px;
+  background: linear-gradient(135deg, #fff3cd, #ffeaa7);
+  border-radius: 15px;
+  border: 2px solid #f39c12;
+  box-shadow: 0 4px 12px rgba(243, 156, 18, 0.2);
+}
+
+.game-over-section h3 {
+  margin: 0 0 10px 0;
+  color: #e67e22;
+  font-size: 18px;
+  font-weight: bold;
+}
+
+.game-over-section p {
+  margin: 0;
+  color: #d68910;
+  font-size: 14px;
+  font-weight: 500;
+}
+
 .side-panel {
   position: fixed;
   left: 20px;

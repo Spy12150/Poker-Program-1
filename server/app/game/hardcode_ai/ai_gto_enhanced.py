@@ -288,39 +288,44 @@ class GTOEnhancedAI:
             print(f"DEBUG: Chart action: {chart_action}")
         except Exception as e:
             print(f"DEBUG: Error in preflop_charts.get_preflop_action: {e}")
-            chart_action = 'fold'  # Will be overridden below
+            chart_action = 'fold'  # Fallback
         
-        # Since preflop charts are broken, use simple hand strength logic
-        hand_strength = self.get_simple_hand_strength(hand)
-        print(f"DEBUG: Hand strength: {hand_strength}")
-        
-        if action_to_hero == 'none':
-            # Unopened pot - should never happen here since SB RFI handles this
-            chart_action = 'fold'
-        elif action_to_hero == 'raise':
-            # Facing a raise - defend based on hand strength and position
-            if position == 'bb':  # Big blind defending
-                if hand_strength >= 0.6:  # Strong hands
-                    chart_action = 'call'
-                elif hand_strength >= 0.4:  # Medium hands - sometimes call
-                    chart_action = 'call' if random.random() < 0.6 else 'fold'
-                else:
-                    chart_action = 'fold'
-            else:  # Button facing 3-bet
-                if hand_strength >= 0.8:  # Very strong hands
-                    chart_action = 'call'
-                elif hand_strength >= 0.6:  # Strong hands - sometimes call
-                    chart_action = 'call' if random.random() < 0.4 else 'fold'
-                else:
-                    chart_action = 'fold'
+        # Use chart action if it's valid, otherwise fall back to simple logic
+        if chart_action in ['call', '3bet', '4bet', 'raise', 'fold']:
+            print(f"DEBUG: Using chart action: {chart_action}")
         else:
-            # 3-bet, 4-bet situations - be very tight
-            if hand_strength >= 0.85:
-                chart_action = 'call'
-            else:
+            print(f"DEBUG: Chart returned invalid action '{chart_action}', using simple hand strength logic")
+            # Fallback to simple hand strength logic
+            hand_strength = self.get_simple_hand_strength(hand)
+            print(f"DEBUG: Hand strength: {hand_strength}")
+            
+            if action_to_hero == 'none':
+                # Unopened pot - should never happen here since SB RFI handles this
                 chart_action = 'fold'
-        
-        print(f"DEBUG: Simple strategy chart action: {chart_action}")
+            elif action_to_hero == 'raise':
+                # Facing a raise - defend based on hand strength and position
+                if position == 'bb':  # Big blind defending
+                    if hand_strength >= 0.6:  # Strong hands
+                        chart_action = 'call'
+                    elif hand_strength >= 0.4:  # Medium hands - sometimes call
+                        chart_action = 'call' if random.random() < 0.6 else 'fold'
+                    else:
+                        chart_action = 'fold'
+                else:  # Button facing 3-bet
+                    if hand_strength >= 0.8:  # Very strong hands
+                        chart_action = 'call'
+                    elif hand_strength >= 0.6:  # Strong hands - sometimes call
+                        chart_action = 'call' if random.random() < 0.4 else 'fold'
+                    else:
+                        chart_action = 'fold'
+            else:
+                # 3-bet, 4-bet situations - be very tight
+                if hand_strength >= 0.85:
+                    chart_action = 'call'
+                else:
+                    chart_action = 'fold'
+            
+            print(f"DEBUG: Fallback chart action: {chart_action}")
         
         # Apply opponent adjustments
         adjusted_action = self.adjust_for_opponent_preflop(
@@ -342,9 +347,15 @@ class GTOEnhancedAI:
         
         # Against tight opponents (low VPIP), 3-bet more for value
         if opponent_vpip < 0.3 and chart_action == 'call':
-            hand_strength = self.preflop_charts.get_hand_tuple(hand)
-            if hand_strength in [(14, 14), (13, 13), (12, 12), (14, 13, True)]:
-                chart_action = '3bet'
+            try:
+                hand_strength = self.preflop_charts.get_hand_tuple(hand)
+                if hand_strength in [(14, 14), (13, 13), (12, 12), (14, 13, True)]:
+                    chart_action = '3bet'
+            except:
+                # Fallback if get_hand_tuple fails
+                hand_strength = self.get_simple_hand_strength(hand)
+                if hand_strength >= 0.85:
+                    chart_action = '3bet'
         
         # Against loose opponents (high VPIP), call more and 3-bet less
         elif opponent_vpip > 0.7 and chart_action == '3bet':
@@ -355,6 +366,20 @@ class GTOEnhancedAI:
         if opponent_fold_to_3bet > 0.8 and position == 'bb':
             if chart_action == 'fold' and random.random() < 0.15:
                 chart_action = '3bet'  # Light 3-bet bluff
+        
+        # Against opponents who don't fold enough to 3-bets, reduce bluff frequency
+        elif opponent_fold_to_3bet < 0.5 and chart_action == '3bet':
+            # Only 3-bet with strong hands
+            try:
+                hand_strength = self.preflop_charts.get_hand_tuple(hand)
+                value_3bets = [(14, 14), (13, 13), (12, 12), (11, 11), (10, 10), 
+                              (14, 13, True), (14, 13, False), (14, 12, True)]
+                if hand_strength not in value_3bets:
+                    chart_action = 'call'  # Convert bluff 3-bets to calls
+            except:
+                hand_strength = self.get_simple_hand_strength(hand)
+                if hand_strength < 0.8:  # Not strong enough for value 3-bet
+                    chart_action = 'call'
         
         return chart_action
     
@@ -543,9 +568,13 @@ class GTOEnhancedAI:
         elif board_texture.get('dry', False):
             base_freq *= 0.8  # Fewer bluffs on dry boards
         
-        # Consider stack size
-        if stack < pot * 2:  # Short stack
-            base_freq *= 0.7
+        # Consider stack size - more nuanced stack adjustments
+        if stack < pot * 1.5:  # Very short stack
+            base_freq *= 0.5  # Much fewer bluffs
+        elif stack < pot * 3:  # Short stack
+            base_freq *= 0.7  # Fewer bluffs
+        elif stack > pot * 8:   # Deep stack
+            base_freq *= 1.1    # Slightly more bluffs with deep stacks
         
         return random.random() < base_freq
     
@@ -762,7 +791,7 @@ class GTOEnhancedAI:
             return ('check', 0) if to_call == 0 else ('fold', 0)
         elif chart_action in ['call']:
             return ('call', 0) if to_call > 0 else ('check', 0)
-        elif chart_action in ['raise', '3bet', '4bet', 'bet']:
+        elif chart_action in ['raise', 'bet']:
             if street == 'preflop':
                 if to_call == SMALL_BLIND:
                     # SB RFI when completing blind: raise to 2.3 BB total
@@ -782,6 +811,11 @@ class GTOEnhancedAI:
             three_bet_size = max(to_call * 3, BIG_BLIND * 8)
             three_bet_size = min(three_bet_size, ai_player['stack'])
             return ('raise', ai_player['current_bet'] + three_bet_size)
+        elif chart_action in ['4bet']:
+            # 4-bet sizing: typically 2.2-2.5x the 3-bet size
+            four_bet_size = max(to_call * 2.3, BIG_BLIND * 16)
+            four_bet_size = min(four_bet_size, ai_player['stack'])
+            return ('raise', ai_player['current_bet'] + four_bet_size)
         else:
             return ('check', 0) if to_call == 0 else ('fold', 0)
 

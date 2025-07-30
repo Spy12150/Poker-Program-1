@@ -198,9 +198,9 @@ const GamePage = () => {
       
       // Check if AI needs to act first
       if (data.current_player === 1 && !data.hand_over) {
-        console.log('🤖 AI needs to act first - scheduling processAITurn()');
+        console.log('AI needs to act first - scheduling processAITurn()');
         setTimeout(() => {
-          console.log('🤖 Executing processAITurn() now');
+          console.log('Executing processAITurn() now');
           processAITurn(data.game_id); // Pass game_id directly to avoid state timing issue
         }, 1000); // Give a moment for UI to update, then process AI turn
       }
@@ -213,13 +213,13 @@ const GamePage = () => {
 
   const processAITurn = async (gameIdParam = null) => {
     const currentGameId = gameIdParam || gameId;
-    console.log('🤖 processAITurn() called - gameId:', currentGameId, '(param:', gameIdParam, ', state:', gameId, ')');
+    console.log('processAITurn() called - gameId:', currentGameId, '(param:', gameIdParam, ', state:', gameId, ')');
     if (!currentGameId) {
-      console.log('❌ No gameId, returning early');
+      console.log('No gameId, returning early');
       return;
     }
     
-    console.log('🤖 Sending request to process-ai-turn endpoint');
+    console.log('Sending request to process-ai-turn endpoint');
     try {
       const res = await fetch('http://localhost:5001/process-ai-turn', {
         method: 'POST',
@@ -263,9 +263,9 @@ const GamePage = () => {
         
         // Log if it should be player's turn now
         if (data.game_state.current_player === 0 && !data.hand_over) {
-          console.log('✅ It should be player\'s turn now - UI should show action panel');
+          console.log('It should be player\'s turn now - UI should show action panel');
         } else if (data.game_state.current_player === 1) {
-          console.log('⚠️ Still AI\'s turn after AI action - this might be an issue');
+          console.log('Still AI\'s turn after AI action - this might be an issue');
         }
       }
 
@@ -294,7 +294,7 @@ const GamePage = () => {
 
       // Check if AI needs to act again (e.g., after advancing to a new round)
       if (data.game_state && data.game_state.current_player === 1 && !data.hand_over && !data.all_in_showdown) {
-        console.log('🤖 AI needs to act again - scheduling another processAITurn()');
+        console.log('AI needs to act again - scheduling another processAITurn()');
         setTimeout(() => {
           processAITurn();
         }, 1000); // Brief delay before next AI action
@@ -396,6 +396,43 @@ const GamePage = () => {
     }
   };
 
+  const newRound = async () => {
+    if (!gameId || loading) return;
+    
+    setLoading(true);
+    try {
+      const res = await fetch('http://localhost:5001/new-round', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ game_id: gameId })
+      });
+      const data = await res.json();
+
+      if (data.error) {
+        setMessage(`Error: ${data.error}`);
+        return;
+      }
+
+      setGameState(data);
+      setHandOver(false);
+      setShowdown(false);
+      setWinners([]);
+      setMessage('New round started! Chip stacks reset.');
+      updateBetLimits(data);
+      
+      // Check if AI needs to act first in the new round
+      if (data.current_player === 1 && !data.hand_over) {
+        setTimeout(() => {
+          processAITurn();
+        }, 1000); // Give a moment for UI to update, then process AI turn
+      }
+    } catch (error) {
+      setMessage('Failed to start new round.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleRaise = () => {
     const amount = parseInt(raiseAmount);
     if (isNaN(amount) || amount <= 0) {
@@ -464,7 +501,9 @@ const GamePage = () => {
             showdown={showdown}
             winners={winners}
             newHand={newHand}
+            newRound={newRound}
             loading={loading}
+            gameState={gameState}
           />
 
           <HandHistory gameState={gameState} />
