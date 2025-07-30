@@ -200,8 +200,18 @@ class GameService:
         # Process game flow after AI action
         result = self._process_game_flow(game_state)
         
-        # Add AI action message
-        ai_message = f"AI {ai_action}"
+        # Add AI action message with proper verb tense
+        action_verb = ai_action
+        if ai_action == 'call':
+            action_verb = 'calls'
+        elif ai_action == 'raise':
+            action_verb = 'raises'
+        elif ai_action == 'fold':
+            action_verb = 'folds'
+        elif ai_action == 'check':
+            action_verb = 'checks'
+        
+        ai_message = f"AI {action_verb}"
         if ai_amount > 0:
             ai_message += f" ${ai_amount}"
         

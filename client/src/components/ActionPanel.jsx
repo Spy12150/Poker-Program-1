@@ -26,13 +26,15 @@ const ActionPanel = ({
     <div className="modern-action-panel">
       {/* Main Action Buttons Row */}
       <div className="main-actions-row">
-        <button
-          onClick={() => makeAction('fold')}
-          disabled={loading}
-          className="modern-action-button fold-button"
-        >
-          FOLD
-        </button>
+        {!canCheck() && (
+          <button
+            onClick={() => makeAction('fold')}
+            disabled={loading}
+            className="modern-action-button fold-button"
+          >
+            FOLD
+          </button>
+        )}
         
         <button
           onClick={() => makeAction(canCheck() ? 'check' : 'call')}

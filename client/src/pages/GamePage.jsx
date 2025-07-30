@@ -40,6 +40,21 @@ const GamePage = () => {
   const [dealingCards, setDealingCards] = useState(false);
   const [previousCommunityLength, setPreviousCommunityLength] = useState(0);
   const [newCardIndices, setNewCardIndices] = useState([]);
+  const [selectedCardback, setSelectedCardback] = useState('Cardback18');
+
+  // Array of all available cardbacks from IvoryCards folder
+  const cardbacks = [
+    'Cardback18', 'Cardback17', 'Cardback3', 'Cardback4', 'Cardback5',
+    'Cardback6', 'Cardback7', 'Cardback8', 'Cardback9', 'Cardback10',
+    'Cardback11', 'Cardback12', 'Cardback13', 'Cardback14', 
+    'Cardback16', 'Cardback2', 'Cardback1', 'Cardback19'
+  ];
+
+  const cycleCardback = () => {
+    const currentIndex = cardbacks.indexOf(selectedCardback);
+    const nextIndex = (currentIndex + 1) % cardbacks.length;
+    setSelectedCardback(cardbacks[nextIndex]);
+  };
 
   // Function definitions (moved above useEffect to avoid reference errors)
   const getCallAmountWrapper = () => getCallAmount(gameState);
@@ -287,9 +302,6 @@ const GamePage = () => {
       // Show AI action message for 2 seconds
       if (data.message && !data.all_in_showdown) {
         setMessage(data.message);
-        setTimeout(() => {
-          setMessage('');
-        }, 2000);
       }
 
       // Check if AI needs to act again (e.g., after advancing to a new round)
@@ -345,7 +357,6 @@ const GamePage = () => {
 
         // Clear player action message after 1 second, then check for AI turn
         setTimeout(() => {
-          setMessage('');
           // If it's now AI's turn and game isn't over, process AI turn after a brief delay
           if (data.game_state && data.game_state.current_player === 1 && !data.hand_over) {
             setTimeout(() => {
@@ -466,6 +477,7 @@ const GamePage = () => {
             handOver={handOver}
             evaluateHand={evaluateHand}
             translateCard={translateCard}
+            selectedCardback={selectedCardback}
           />
 
           <ActionPanel
@@ -507,6 +519,15 @@ const GamePage = () => {
           />
 
           <HandHistory gameState={gameState} />
+
+          {/* Cardback Selector Button - only show during active game */}
+          <button 
+            className="cardback-selector-btn"
+            onClick={cycleCardback}
+            title={`Current: ${selectedCardback}`}
+          >
+            CB
+          </button>
         </>
       )}
     </div>

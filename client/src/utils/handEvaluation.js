@@ -147,17 +147,17 @@ export const evaluatePartialHand = (cards) => {
 export const translateCard = (shortCode) => {
   const rankMap = {
     '2': '2', '3': '3', '4': '4', '5': '5', '6': '6',
-    '7': '7', '8': '8', '9': '9', 'T': '10', 'J': 'jack',
-    'Q': 'queen', 'K': 'king', 'A': 'ace'
+    '7': '7', '8': '8', '9': '9', 'T': 'T', 'J': 'J',
+    'Q': 'Q', 'K': 'K', 'A': 'A'
   };
   const suitMap = {
-    's': 'spades',
-    'h': 'hearts',
-    'd': 'diamonds',
-    'c': 'clubs'
+    's': 's',
+    'h': 'h',
+    'd': 'd',
+    'c': 'c'
   };
 
   const rank = rankMap[shortCode[0]];
   const suit = suitMap[shortCode[1]];
-  return `${rank}_of_${suit}`;
+  return `${rank}${suit}`;
 };

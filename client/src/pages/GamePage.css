@@ -22,24 +22,26 @@
 }
 
 .main-title {
-  font-size: 48px;
+  font-size: 60px;
   font-weight: bold;
   color: #f8bbd9;
   text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
   font-family: "Times New Roman", serif;
   letter-spacing: 2px;
   line-height: 1;
+  -webkit-text-stroke: 1.5px white;
 }
 
 .subtitle {
   font-size: 20px;
   font-weight: 600;
-  color: #f8bbd9;
+  color: #6d2b4c;
   font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
   text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
   letter-spacing: 1px;
-  margin-top: 2px;
+  margin-top: -2px;
   opacity: 0.9;
+
 }
 
 .info-container {
@@ -110,7 +112,7 @@
   border: 2px solid #ffd700;
   border-radius: 45%;
   position: relative;
-  background: url('/cards/background.png') center center;
+  background: url('/IvoryCards/background.png') center center;
   background-size: cover;
 }
 
@@ -176,27 +178,30 @@
 
 .hand-container {
   display: flex;
-  gap: 8px;
+  gap: 12px;
   justify-content: center;
 }
 
 .card {
   height: 80px;
   border-radius: 0px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
   transition: transform 0.2s ease;
 }
 
 .community-cards {
   display: flex;
-  gap: 10px;
+  gap: 12px;
   padding: 20px;
   background: rgba(255, 255, 255, 0.9);
   border-radius: 15px;
   border: 2px solid #dee2e6;
   box-shadow: 0 4px 20px rgba(0,0,0,0.2);
   backdrop-filter: blur(10px);
-  width: 370px;
+  width: 380px;
+  height: 90px;
   justify-content: center;
+  align-items: center;
 }
 
 .community-card {
@@ -206,6 +211,7 @@
   box-shadow: 0 4px 12px rgba(0,0,0,0.2);
   transition: all 0.5s ease;
   object-fit: cover;
+  box-sizing: border-box;
 }
 
 /* Card dealing animations */
@@ -279,6 +285,8 @@
   font-size: 20px;
   color: #6c757d;
   box-shadow: inset 0 2px 5px rgba(0,0,0,0.1);
+  flex-shrink: 0; /* Prevent shrinking */
+  box-sizing: border-box;
 }
 
 .pot-info {
@@ -654,7 +662,8 @@
 }
 
 .main-actions-row {
-  display: flex;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
   gap: 12.75px;
   justify-content: center;
 }
@@ -667,8 +676,21 @@
   border-radius: 6.8px;
   cursor: pointer;
   transition: all 0.2s ease;
-  flex: 1;
   text-align: center;
+  min-width: 90px;
+}
+
+/* Position-specific grid placements for action buttons */
+.modern-action-button.fold-button {
+  grid-column: 1;
+}
+
+.modern-action-button.call-button {
+  grid-column: 2;
+}
+
+.modern-action-button.raise-button {
+  grid-column: 3;
 }
 
 .modern-action-button:disabled {
@@ -986,4 +1008,74 @@
   white-space: normal;
   word-wrap: break-word;
   line-height: 1.3;
+}
+
+/* Cardback Selector Button */
+.cardback-selector-btn {
+  position: fixed;
+  bottom: 20px;
+  left: 220px; /* Position to the right of the white info section */
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  border: 3px solid #f8bbd9;
+  background: #fff;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  transition: transform 0.3s ease;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  font-weight: bold;
+  color: #495057;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  outline: none;
+}
+
+.cardback-selector-btn:hover {
+  transform: scale(1.1);
+  border-color: #f8bbd9;
+}
+
+.cardback-selector-btn:active {
+  transform: scale(0.95);
+}
+
+/* Debug Panel */
+.debug-panel {
+  position: fixed;
+  bottom: 10px;
+  left: 10px;
+  background: white;
+  padding: 10px;
+  font-size: 12px;
+  z-index: 1000;
+  border: 1px solid #dee2e6;
+  border-radius: 5px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  min-width: 173px;
+  overflow-y: auto;
+}
+
+.debug-panel-item {
+  margin-bottom: 5px;
+  line-height: 1.3;
+}
+
+.debug-panel-item.bold {
+  font-weight: bold;
+}
+
+.debug-panel-button {
+  margin-top: 5px;
+  padding: 5px 10px;
+  background: #4CAF50;
+  color: white;
+  border: none;
+  border-radius: 3px;
+  cursor: pointer;
+  font-size: 11px;
 }

@@ -9,7 +9,8 @@ const PokerTable = ({
   getPlayerPosition, 
   handOver, 
   evaluateHand, 
-  translateCard 
+  translateCard,
+  selectedCardback 
 }) => {
   if (!gameState) return null;
 
@@ -26,10 +27,10 @@ const PokerTable = ({
                 <span>Stack: ${gameState.players[1]?.stack}</span>
               </div>
               <div className="hand-container">
-                {(showdown ? gameState.players[1]?.hand || ['cardback', 'cardback'] : ['cardback', 'cardback']).map((card, idx) => (
+                {(showdown ? gameState.players[1]?.hand || [selectedCardback, selectedCardback] : [selectedCardback, selectedCardback]).map((card, idx) => (
                   <img 
                     key={idx} 
-                    src={`/cards/${showdown ? translateCard(card) : 'cardback'}.png`} 
+                    src={`/IvoryCards/${showdown ? translateCard(card) : selectedCardback}.png`} 
                     alt="card"
                     className="card"
                   />
@@ -84,7 +85,7 @@ const PokerTable = ({
               {gameState.community.map((card, idx) => (
                 <img 
                   key={idx} 
-                  src={`/cards/${translateCard(card)}.png`} 
+                  src={`/IvoryCards/${translateCard(card)}.png`} 
                   alt="community card"
                   className={`community-card ${dealingCards && newCardIndices.includes(idx) ? 'new-card' : ''}`}
                 />
@@ -117,7 +118,7 @@ const PokerTable = ({
                 {gameState.player_hand?.map((card, idx) => (
                   <img 
                     key={idx} 
-                    src={`/cards/${translateCard(card)}.png`} 
+                    src={`/IvoryCards/${translateCard(card)}.png`} 
                     alt="your card"
                     className="card"
                   />
