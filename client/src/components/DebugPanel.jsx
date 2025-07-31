@@ -20,7 +20,7 @@ const DebugPanel = ({ gameState, handOver, canCheck, canCall, canRaise, processA
       <div className="debug-panel-item">Action Panel Should Show: {(!handOver && gameState.current_player === 0) ? 'YES' : 'NO'}</div>
       {gameState.current_player === 1 && (
         <button 
-          onClick={processAITurn}
+          onClick={() => processAITurn()}
           className="debug-panel-button"
         >
           Force AI Turn

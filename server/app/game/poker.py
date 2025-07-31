@@ -60,6 +60,8 @@ def init_players(num_players=NUM_PLAYERS, stack=STARTING_STACK):
     ]
 
 def start_new_game():
+    import os
+    from datetime import datetime
     deck = create_deck()
     random.shuffle(deck)
     players = init_players()
@@ -68,20 +70,48 @@ def start_new_game():
         players[i]['hand'] = hand
 
     dealer_pos = random.randint(0, NUM_PLAYERS - 1)  # Random starting dealer
+
+    # Create a unique hand history file for this game session
+    hand_history_dir = os.path.join(os.path.dirname(__file__), '../hand_history')
+    os.makedirs(hand_history_dir, exist_ok=True)
+    timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+    hand_history_filename = f"game_session_{timestamp}.txt"
+    hand_history_path = os.path.join(hand_history_dir, hand_history_filename)
     
+    # Create the file (clears previous content if it exists)
+    with open(hand_history_path, 'w') as f:
+        pass  # Just to create the file
+
     game_state = {
         "players": players,
         "deck": deck,
         "community": [],
         "pot": 0,
         "dealer_pos": dealer_pos,
-        "current_player": dealer_pos,  # In heads-up, dealer (SB) acts first preflop
+        "current_player": dealer_pos,
         "betting_round": "preflop",
         "current_bet": 0,
-        "last_bet_amount": 0,  # Track the last bet/raise amount for minimum raise calculation
+        "last_bet_amount": 0,
         "action_history": [],
+        "hand_history_path": hand_history_path,
+        "hand_count": 1,  # Start with hand #1
+        "big_blind": BIG_BLIND,
+        "opponent_model": {
+            'hands_played': 0,
+            'preflop_stats': {
+                'vpip': 0, 'pfr': 0, 'three_bet': 0,
+                'vpip_opportunities': 0, 'pfr_opportunities': 0, 'three_bet_opportunities': 0
+            },
+            'postflop_stats': {
+                'cbet': 0, 'cbet_opportunities': 0,
+                'fold_to_cbet': 0, 'fold_to_cbet_opportunities': 0
+            }
+        }
     }
-
+    
+    # Log the header for the first hand
+    log_hand_start_header(game_state)
+    
     apply_antes(game_state)
     post_blinds(game_state)
     return game_state
@@ -126,6 +156,11 @@ def next_player(game_state):
             return
     print(f"DEBUG: next_player found no active players!")
 
+def log_to_hand_history(game_state, message):
+    """Appends a message to the hand history file."""
+    with open(game_state['hand_history_path'], 'a') as f:
+        f.write(message + '\n')
+
 def apply_action(game_state, action, amount=0):
     """
     action: 'fold', 'call', 'raise', 'check'
@@ -133,55 +168,65 @@ def apply_action(game_state, action, amount=0):
     """
     player = game_state['players'][game_state['current_player']]
     to_call = game_state.get('current_bet', 0) - player['current_bet']
+    log_message = ""
 
     if action == 'fold':
         player['status'] = 'folded'
+        log_message = f"{player['name']}: folds"
     elif action == 'call':
         call_amt = min(to_call, player['stack'])
         player['stack'] -= call_amt
         player['current_bet'] += call_amt
         game_state['pot'] += call_amt
+        log_message = f"{player['name']}: calls ${call_amt:.0f}"
         if player['stack'] == 0:
             player['status'] = 'all-in'
+            log_message += " and is all-in"
     elif action == 'raise':
-        # amount should be the total bet amount, not just the raise
+        # amount is the total bet amount
         total_bet = amount
+        raise_amount = total_bet - to_call - player['current_bet'] # The actual amount of the raise
         additional_bet = total_bet - player['current_bet']
         
-        # Calculate minimum raise based on last bet amount
-        current_bet = game_state.get('current_bet', 0)
-        last_bet_amount = game_state.get('last_bet_amount', 0)
-        
-        if current_bet == 0:
-            # First bet of the round - minimum is big blind
-            min_raise_total = BIG_BLIND
-        else:
-            # Must raise by at least the size of the last bet/raise
-            min_raise_total = current_bet + max(last_bet_amount, BIG_BLIND)
-        
-        if total_bet < min_raise_total:
-            total_bet = min_raise_total
-            additional_bet = total_bet - player['current_bet']
-        
-        # Can't bet more than stack
+        # Clamp to stack size
         additional_bet = min(additional_bet, player['stack'])
-        
+        total_bet = player['current_bet'] + additional_bet
+
         player['stack'] -= additional_bet
         player['current_bet'] += additional_bet
         game_state['pot'] += additional_bet
         
-        # Update last bet amount (the size of this raise)
+        log_message = f"{player['name']}: raises ${raise_amount:.0f} to ${total_bet:.0f}"
+        
+        # Update last bet amount
         previous_bet = game_state.get('current_bet', 0)
         game_state['current_bet'] = player['current_bet']
         game_state['last_bet_amount'] = player['current_bet'] - previous_bet
         
         if player['stack'] == 0:
             player['status'] = 'all-in'
+            log_message += " and is all-in"
     elif action == 'check':
         if to_call != 0:
             raise ValueError("Cannot check when facing a bet")
+        log_message = f"{player['name']}: checks"
+    elif action == 'bet':
+        # This action is for when the first action in a post-flop round is a bet
+        bet_amount = min(amount, player['stack'])
+        player['stack'] -= bet_amount
+        player['current_bet'] += bet_amount
+        game_state['pot'] += bet_amount
+        game_state['current_bet'] = bet_amount
+        game_state['last_bet_amount'] = bet_amount
+        log_message = f"{player['name']}: bets ${bet_amount:.0f}"
+        if player['stack'] == 0:
+            player['status'] = 'all-in'
+            log_message += " and is all-in"
     else:
         raise ValueError("Invalid action")
+
+    if log_message:
+        log_to_hand_history(game_state, log_message)
 
     # Move to next player (handled outside in your round controller)
 
@@ -328,16 +373,26 @@ def advance_round(game_state):
     """
     round = game_state['betting_round']
     if round == 'preflop':
-        game_state['community'].extend([game_state['deck'].pop() for _ in range(3)])
+        flop = [game_state['deck'].pop() for _ in range(3)]
+        game_state['community'].extend(flop)
         game_state['betting_round'] = 'flop'
+        flop_str = " ".join(f"{c}" for c in flop)
+        log_to_hand_history(game_state, f"\n*** FLOP *** [{flop_str}]")
     elif round == 'flop':
-        game_state['community'].append(game_state['deck'].pop())
+        turn = game_state['deck'].pop()
+        game_state['community'].append(turn)
         game_state['betting_round'] = 'turn'
+        turn_str = " ".join(f"{c}" for c in game_state['community'])
+        log_to_hand_history(game_state, f"\n*** TURN *** [{turn_str}]")
     elif round == 'turn':
-        game_state['community'].append(game_state['deck'].pop())
+        river = game_state['deck'].pop()
+        game_state['community'].append(river)
         game_state['betting_round'] = 'river'
+        river_str = " ".join(f"{c}" for c in game_state['community'])
+        log_to_hand_history(game_state, f"\n*** RIVER *** [{river_str}]")
     elif round == 'river':
         game_state['betting_round'] = 'showdown'
+        log_to_hand_history(game_state, "\n*** SHOW DOWN ***")
     reset_bets(game_state)
 
 def deal_remaining_cards(game_state):
@@ -367,214 +422,162 @@ def deal_remaining_cards(game_state):
     # DON'T reset bets here - we need current_bet values for side pot calculation
     # reset_bets(game_state)  # REMOVED: This was wiping out investment info needed for showdown
 
-from .hand_eval_lib import evaluate_hand
+def log_hand_start_header(game_state):
+    """Logs the header for a new hand."""
+    from datetime import datetime
+    hand_history_path = game_state['hand_history_path']
+    hand_count = game_state['hand_count']
+    dealer_pos = game_state['dealer_pos']
+    players = game_state['players']
+    
+    with open(hand_history_path, 'a') as f:
+        if hand_count > 1:
+            f.write("\n\n") # Add spacing for subsequent hands
+            
+        f.write(f"Riposte Hand #{hand_count:05d}:  Hold'em No Limit (${SMALL_BLIND}/${BIG_BLIND}) - {datetime.now().strftime('%Y/%m/%d %H:%M:%S ET')}\n")
+        f.write(f"Table 'Heads-Up' 2-max Seat #{dealer_pos + 1} is the button\n")
+        for i, p in enumerate(players):
+            role = " (button)" if i == dealer_pos else ""
+            f.write(f"Seat {i+1}: {p['name']}{role} (${p['stack']:.0f} in chips)\n")
+
 
 def prepare_next_hand(game_state):
+    # Preserve opponent model across hands and increment hand counter
+    opponent_model = game_state.get('opponent_model', {
+        'hands_played': 0,
+        'preflop_stats': {'vpip': 0, 'pfr': 0, 'three_bet': 0, 'vpip_opportunities': 0, 'pfr_opportunities': 0, 'three_bet_opportunities': 0},
+        'postflop_stats': {'cbet': 0, 'cbet_opportunities': 0, 'fold_to_cbet': 0, 'fold_to_cbet_opportunities': 0}
+    })
+    opponent_model['hands_played'] += 1
+    game_state['hand_count'] += 1
+
     num_players = len(game_state['players'])
-    game_state['dealer_pos'] = (game_state['dealer_pos'] + 1) % num_players
+    dealer_pos = (game_state['dealer_pos'] + 1) % num_players
     deck = create_deck()
     random.shuffle(deck)
     hands = deal_cards(deck, num_players)
-    for i, player in enumerate(game_state['players']):
+    players = game_state['players']
+
+    for i, player in enumerate(players):
         player['hand'] = hands[i]
         player['current_bet'] = 0
         if player['stack'] > 0:
             player['status'] = "active"
         else:
             player['status'] = "out"
-    game_state['deck'] = deck
-    game_state['community'] = []
-    game_state['pot'] = 0
-    game_state['betting_round'] = 'preflop'
-    game_state['current_bet'] = 0
-    game_state['last_bet_amount'] = 0
-    game_state['action_history'] = []
+            
+    game_state.update({
+        "deck": deck,
+        "community": [],
+        "pot": 0,
+        "dealer_pos": dealer_pos,
+        "betting_round": 'preflop',
+        "current_bet": 0,
+        "last_bet_amount": 0,
+        "action_history": [],
+        "opponent_model": opponent_model,
+        "current_player": dealer_pos
+    })
     
-    # In heads-up, dealer (SB) acts first preflop
-    game_state['current_player'] = game_state['dealer_pos']
+    # Log the header for the new hand
+    log_hand_start_header(game_state)
     
-    # Post antes and blinds at the start of each new hand
     apply_antes(game_state)
     post_blinds(game_state)
 
 
 
 def showdown(game_state):
-    """
-    Evaluates all active players' hands, determines the winner(s), and awards the pot with proper side pot logic.
-    When a player goes all-in with fewer chips, they can only win as much as they contributed from each opponent.
-    Returns a list of winner info and their hand classes.
-    """
     community = game_state['community']
-    # Include both active and all-in players in showdown
     players_in_hand = [p for p in game_state['players'] if p['status'] in ['active', 'all-in']]
-
-    # If only one player is left (everyone else folded)
-    if len(players_in_hand) == 1:
-        players_in_hand[0]['stack'] += game_state['pot']
-        # Clear the pot and reset bets since we awarded it
-        game_state['pot'] = 0
-        # Reset current_bet values
-        for player in game_state['players']:
-            player['current_bet'] = 0
-        game_state['current_bet'] = 0
-        return [{
-            'name': players_in_hand[0]['name'],
-            'hand': players_in_hand[0]['hand'],
-            'hand_class': 'No Showdown (everyone else folded)'
-        }]
-
-    # Evaluate hands
+    all_players = game_state['players']
+    winners = []
     player_scores = {}
-    for player in players_in_hand:
-        score, hand_class = evaluate_hand(player['hand'], community)
-        player_scores[player['name']] = (score, hand_class, player)
+    
+    # Store initial state for summary
+    initial_stacks = {p['name']: p['stack'] + p['current_bet'] for p in all_players}
+    
+    # --- Single Winner by Folds ---
+    if len(players_in_hand) == 1:
+        winner = players_in_hand[0]
+        pot_won = game_state['pot']
+        
+        # Return uncalled bet
+        uncalled_bet = pot_won - sum(p['current_bet'] for p in all_players if p != winner)
+        if uncalled_bet > 0:
+            winner['stack'] += uncalled_bet
+            log_to_hand_history(game_state, f"Uncalled bet (${uncalled_bet:.0f}) returned to {winner['name']}")
 
-    # Sort by hand strength (lowest score wins with treys)
-    sorted_hands = sorted(player_scores.values(), key=lambda x: x[0])
-    best_score = sorted_hands[0][0]
-    
-    # For heads-up poker, implement proper all-in side pot logic
-    if len(players_in_hand) == 2:
-        player1, player2 = players_in_hand[0], players_in_hand[1]
+        winnings = pot_won - uncalled_bet
+        winner['stack'] += winnings
+        log_to_hand_history(game_state, f"{winner['name']} collected ${winnings:.0f} from pot")
+        log_to_hand_history(game_state, f"{winner['name']}: doesn't show hand")
+        winners = [{'name': winner['name'], 'hand': winner['hand'], 'hand_class': 'Wins by Fold'}]
         
-        # Find who has the better hand
-        p1_score = player_scores[player1['name']][0]
-        p2_score = player_scores[player2['name']][0]
-        
-        # Get actual investments (current_bet represents total investment this hand)
-        p1_investment = player1['current_bet']
-        p2_investment = player2['current_bet']
-        
-        # Store the total pot before we clear it
-        total_pot = game_state['pot']
-        
-        # Determine winner(s)
-        if p1_score < p2_score:
-            winner, loser = player1, player2
-            winner_investment, loser_investment = p1_investment, p2_investment
-        elif p2_score < p1_score:
-            winner, loser = player2, player1
-            winner_investment, loser_investment = p2_investment, p1_investment
-        else:
-            # Tie - split the actual pot based on investments
-            smaller_investment = min(p1_investment, p2_investment)
-            larger_investment = max(p1_investment, p2_investment)
-            
-            # Calculate main pot and side pot from actual investments
-            if smaller_investment == larger_investment:
-                # Equal investments - split the entire pot
-                each_gets = total_pot // 2
-                player1['stack'] += each_gets
-                player2['stack'] += each_gets
-                # Handle odd chip
-                if total_pot % 2 == 1:
-                    player1['stack'] += 1  # Give odd chip to first player
-            else:
-                # Unequal investments - proper side pot calculation
-                # Main pot is contested by both players
-                main_pot_size = smaller_investment * 2
-                side_pot_size = total_pot - main_pot_size
-                
-                # Split main pot equally
-                each_gets_from_main = main_pot_size // 2
-                player1['stack'] += each_gets_from_main
-                player2['stack'] += each_gets_from_main
-                
-                # Give side pot to whoever invested more
-                if p1_investment > p2_investment:
-                    player1['stack'] += side_pot_size
-                else:
-                    player2['stack'] += side_pot_size
-            
-            # Clear the pot and reset bets
-            game_state['pot'] = 0
-            for player in game_state['players']:
-                player['current_bet'] = 0
-            game_state['current_bet'] = 0
-            
-            return [
-                {
-                    'name': player1['name'],
-                    'hand': player1['hand'],
-                    'hand_class': player_scores[player1['name']][1]
-                },
-                {
-                    'name': player2['name'],
-                    'hand': player2['hand'],
-                    'hand_class': player_scores[player2['name']][1]
-                }
-            ]
-        
-        # Winner takes contested portion, excess goes back to whoever invested it
-        smaller_investment = min(winner_investment, loser_investment)
-        larger_investment = max(winner_investment, loser_investment)
-        
-        if smaller_investment == larger_investment:
-            # Equal investments - winner gets entire pot
-            winner['stack'] += total_pot
-        else:
-            # Unequal investments - calculate main pot and side pot
-            main_pot_size = smaller_investment * 2
-            side_pot_size = total_pot - main_pot_size
-            
-            # Winner gets the main pot (contested portion)
-            winner['stack'] += main_pot_size
-            
-            # Side pot goes to whoever invested more
-            if winner_investment > loser_investment:
-                # Winner invested more, gets side pot too
-                winner['stack'] += side_pot_size
-            else:
-                # Loser invested more, gets side pot back
-                loser['stack'] += side_pot_size
-        
-        # Clear the pot and reset bets
-        game_state['pot'] = 0
-        for player in game_state['players']:
-            player['current_bet'] = 0
-        game_state['current_bet'] = 0
-        
-        return [{
-            'name': winner['name'],
-            'hand': winner['hand'],
-            'hand_class': player_scores[winner['name']][1]
-        }]
-    
+    # --- Showdown with 2+ Players ---
     else:
-        # Multi-player: enhanced logic for side pots
-        # For now, use simplified approach but fix chopped pot
-        winners = [info[2] for info in sorted_hands if info[0] == best_score]
-        
+        for player in players_in_hand:
+            score, hand_class = evaluate_hand(player['hand'], community)
+            player_scores[player['name']] = (score, hand_class, player)
+            log_to_hand_history(game_state, f"{player['name']}: shows [{player['hand'][0]} {player['hand'][1]}] ({hand_class})")
+
+        sorted_hands = sorted(player_scores.values(), key=lambda x: x[0])
+        best_score = sorted_hands[0][0]
+        winner_data = [info for info in sorted_hands if info[0] == best_score]
+        winners = [{'name': w[2]['name'], 'hand': w[2]['hand'], 'hand_class': w[1]} for w in winner_data]
+
         total_pot = game_state['pot']
         
-        if len(winners) == 1:
-            # Single winner gets everything
-            winners[0]['stack'] += total_pot
-        else:
-            # Multiple winners - split pot
-            pot_share = total_pot // len(winners)
-            remainder = total_pot % len(winners)
-            
-            for i, winner in enumerate(winners):
-                winner['stack'] += pot_share
-                # Give remainder to first winner(s)
-                if i < remainder:
-                    winner['stack'] += 1
+        # Simplified pot distribution for now
+        pot_share = total_pot / len(winner_data)
+        for score_info in winner_data:
+            winner_player = score_info[2]
+            winner_player['stack'] += pot_share
+            log_to_hand_history(game_state, f"{winner_player['name']} collected ${pot_share:.0f} from pot")
+
+    # --- Summary Section ---
+    log_to_hand_history(game_state, "*** SUMMARY ***")
+    total_pot_summary = game_state['pot']
+    board_str = " ".join(f"[{c}]" for c in community)
+    log_to_hand_history(game_state, f"Total pot ${total_pot_summary:.0f} | Rake $0.00")
+    if board_str:
+        log_to_hand_history(game_state, f"Board [{board_str}]")
+
+    for i, p in enumerate(all_players):
+        summary_line = f"Seat {i+1}: {p['name']}"
+        if i == game_state['dealer_pos']:
+            summary_line += " (button)"
         
-        # Clear the pot and reset bets
-        game_state['pot'] = 0
-        for player in game_state['players']:
-            player['current_bet'] = 0
-        game_state['current_bet'] = 0
-        
-        winner_info = [{
-            'name': p['name'],
-            'hand': p['hand'],
-            'hand_class': player_scores[p['name']][1]
-        } for p in winners]
-        
-        return winner_info
+        # Find player's result from the winners list
+        player_result = next((w for w in winners if w['name'] == p['name']), None)
+
+        if p['status'] == 'folded':
+            # Find when they folded
+            folded_round = 'before Flop'
+            for action in reversed(game_state.get('action_history', [])):
+                if action.get('player') == p['name'] and action.get('action') == 'fold':
+                    folded_round = f"on the {action.get('round', 'round').capitalize()}"
+                    break
+            summary_line += f" folded {folded_round}"
+            if p['current_bet'] == 0:
+                 summary_line += " (didn't bet)"
+        elif player_result:
+             net_change = (p['stack'] + p['current_bet']) - initial_stacks[p['name']]
+             summary_line += f" collected (${net_change:.0f}) with {player_result['hand_class']}"
+        else: # Lost at showdown
+            hand_class = player_scores.get(p['name'], ('', 'lost'))[1]
+            summary_line += f" lost with {hand_class}"
+
+        log_to_hand_history(game_state, summary_line)
+
+    # Reset for next hand
+    game_state['pot'] = 0
+    for player in all_players:
+        player['current_bet'] = 0
+    game_state['current_bet'] = 0
+    
+    return winners
+
 
 def post_blinds(game_state, small_blind=SMALL_BLIND, big_blind=BIG_BLIND):
     num_players = len(game_state['players'])
@@ -590,18 +593,34 @@ def post_blinds(game_state, small_blind=SMALL_BLIND, big_blind=BIG_BLIND):
         bb_pos = (game_state['dealer_pos'] + 2) % num_players
         first_to_act = (bb_pos + 1) % num_players
 
-    for pos, blind, name in [(sb_pos, small_blind, 'small_blind'), (bb_pos, big_blind, 'big_blind')]:
-        player = game_state['players'][pos]
-        amount = min(player['stack'], blind)
-        player['stack'] -= amount
-        player['current_bet'] += amount
-        game_state['pot'] += amount
-        player['status'] = 'active' if player['stack'] > 0 else 'out'
-        # Optionally log: (player['name'], name, amount)
+    sb_player = game_state['players'][sb_pos]
+    bb_player = game_state['players'][bb_pos]
     
+    # Post SB
+    sb_amount = min(sb_player['stack'], small_blind)
+    sb_player['stack'] -= sb_amount
+    sb_player['current_bet'] += sb_amount
+    game_state['pot'] += sb_amount
+    log_to_hand_history(game_state, f"{sb_player['name']}: posts small blind ${sb_amount:.0f}")
+
+    # Post BB
+    bb_amount = min(bb_player['stack'], big_blind)
+    bb_player['stack'] -= bb_amount
+    bb_player['current_bet'] += bb_amount
+    game_state['pot'] += bb_amount
+    log_to_hand_history(game_state, f"{bb_player['name']}: posts big blind ${bb_amount:.0f}")
+
     game_state['current_bet'] = big_blind
     game_state['last_bet_amount'] = big_blind  # Big blind is the last bet amount
     game_state['current_player'] = first_to_act  # Set correct first player
+    log_to_hand_history(game_state, "\n*** PREFLOP ***")
+    log_to_hand_history(game_state, "*** HOLE CARDS ***")
+    # Log both players' hands
+    hero = game_state['players'][0]
+    villain = game_state['players'][1]
+    log_to_hand_history(game_state, f"Dealt to {hero['name']} [{hero['hand'][0]} {hero['hand'][1]}]")
+    log_to_hand_history(game_state, f"Dealt to {villain['name']} [{villain['hand'][0]} {villain['hand'][1]}]")
+
 
 
 # More functions needed for: betting logic, showdown, winner determination, etc.

@@ -795,7 +795,8 @@ class GTOEnhancedAI:
             if street == 'preflop':
                 if to_call == SMALL_BLIND:
                     # SB RFI when completing blind: raise to 2.3 BB total
-                    total_raise_amount = math.ceil(BIG_BLIND * 2.3)
+                    RFI_multiplyer = random.uniform(2.25,2.5)
+                    total_raise_amount = math.ceil(BIG_BLIND * RFI_multiplyer)
                     raise_size = total_raise_amount - ai_player['current_bet']
                 elif to_call == 0:
                     # Standard SB RFI: bet 2.3 BB rounded up

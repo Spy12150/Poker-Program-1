@@ -7,7 +7,7 @@ from app.game.poker import (
     start_new_game, apply_action, betting_round_over, advance_round, 
     next_player, showdown, prepare_next_hand, deal_remaining_cards
 )
-from app.game.hardcode_ai.ai_gto_enhanced import decide_action_gto
+from app.game.hardcode_ai.ai_Bladework_v2 import decide_action_bladeworkv2
 
 
 class GameService:
@@ -188,7 +188,7 @@ class GameService:
         console_logs.append(f"Should use SB RFI: {should_use_sb_rfi}")
         
         # AI makes decision
-        ai_action, ai_amount = decide_action_gto(game_state)
+        ai_action, ai_amount = decide_action_bladeworkv2(game_state)
         
         console_logs.append(f"AI Action: {ai_action}")
         if ai_amount > 0:
@@ -297,165 +297,53 @@ class GameService:
         return self._serialize_game_state(game_state)
     
     def _process_game_flow(self, game_state: Dict) -> Dict:
-        """
-        Process the game flow after an action
-        
-        Args:
-            game_state: Current game state
-            
-        Returns:
-            Dictionary with flow result and updated state
-        """
         print(f"DEBUG: process_game_flow called, current_player: {game_state.get('current_player')}, betting_round: {game_state.get('betting_round')}")
-        
-        # Flag to track if we advanced to a new round
-        advanced_to_new_round = False
-        
-        # Check if betting round is over and advance rounds as needed
-        while betting_round_over(game_state):
-            print(f"DEBUG: Betting round over, advancing from {game_state.get('betting_round')}")
-            
-            # Check if game is over (only one player left in hand)
-            players_in_hand = [p for p in game_state['players'] if p['status'] in ['active', 'all-in']]
-            active_players = [p for p in game_state['players'] if p['status'] == 'active']
-            
-            if len(players_in_hand) <= 1:
-                # Someone folded or everyone else is eliminated, award pot
-                winners = showdown(game_state)
-                # Clear current player since hand is over
-                game_state['current_player'] = None
-                # Record hand for analytics
-                self.analytics.record_hand(game_state, winners, game_state.get('action_history', []))
-                return {
-                    'game_state': self._serialize_game_state(game_state),
-                    'winners': winners,
-                    'hand_over': True,
-                    'message': f"{winners[0]['name']} wins the pot!"
-                }
-            
-            # Check if no more betting actions are possible (e.g., one player all-in, others called)
-            # Only check this if we have active current_bet values (i.e., before reset_bets is called)
-            current_bet = game_state.get('current_bet', 0)
-            all_in_players = [p for p in game_state['players'] if p['status'] == 'all-in']
-            if len(all_in_players) > 0 and len(players_in_hand) > 1 and current_bet > 0:
-                # Someone is all-in and there's an active bet, check if all others have matched it
-                all_matched = True
-                for player in players_in_hand:
-                    if player['status'] == 'active' and player['current_bet'] != current_bet:
-                        all_matched = False
-                        break
-                if all_matched:
-                    # No more betting possible, go to showdown immediately
-                    print(f"DEBUG: All-in situation detected - going to showdown")
+
+        # Loop to handle cases where a street ends and immediately leads to another (e.g. pre-flop all-in)
+        while True:
+            # First, check if the current betting round is over.
+            if betting_round_over(game_state):
+                print(f"DEBUG: Betting round {game_state['betting_round']} is over.")
+                
+                # Check for hand-ending conditions
+                players_in_hand = [p for p in game_state['players'] if p['status'] in ['active', 'all-in']]
+                active_players = [p for p in players_in_hand if p['status'] == 'active']
+
+                # Condition 1: Only one player left (everyone else folded)
+                if len(players_in_hand) <= 1:
+                    print("DEBUG: Hand ending because only one player remains.")
+                    winners = showdown(game_state)
+                    self.analytics.record_hand(game_state, winners, game_state.get('action_history', []))
+                    return {'game_state': self._serialize_game_state(game_state), 'winners': winners, 'hand_over': True, 'message': f"{winners[0]['name']} wins the pot!"}
+
+                # Condition 2: All remaining players are all-in
+                if not active_players:
+                    print("DEBUG: All players are all-in. Dealing remaining cards for showdown.")
                     deal_remaining_cards(game_state)
                     winners = showdown(game_state)
-                    # Clear current player since hand is over
-                    game_state['current_player'] = None
-                    # Record hand for analytics
                     self.analytics.record_hand(game_state, winners, game_state.get('action_history', []))
-                    return {
-                        'game_state': self._serialize_game_state(game_state),
-                        'winners': winners,
-                        'hand_over': True,
-                        'showdown': True,
-                        'all_in_showdown': True,
-                        'message': f"All-in showdown! Winner(s): {', '.join([w['name'] for w in winners])}"
-                    }
-            
-            # Check if all remaining players are all-in (original logic)
-            if len(active_players) == 0 and len(players_in_hand) > 1:
-                # All players are all-in, deal remaining cards and go to showdown
-                deal_remaining_cards(game_state)
-                winners = showdown(game_state)
-                # Clear current player since hand is over
-                game_state['current_player'] = None
-                # Record hand for analytics
-                self.analytics.record_hand(game_state, winners, game_state.get('action_history', []))
-                return {
-                    'game_state': self._serialize_game_state(game_state),
-                    'winners': winners,
-                    'hand_over': True,
-                    'showdown': True,
-                    'all_in_showdown': True,
-                    'message': f"All-in showdown! Winner(s): {', '.join([w['name'] for w in winners])}"
-                }
-            
-            # If we're at river, go to showdown
-            if game_state['betting_round'] == 'river':
-                winners = showdown(game_state)
-                # Clear current player since hand is over
-                game_state['current_player'] = None
-                # Record hand for analytics
-                self.analytics.record_hand(game_state, winners, game_state.get('action_history', []))
-                return {
-                    'game_state': self._serialize_game_state(game_state),
-                    'winners': winners,
-                    'hand_over': True,
-                    'showdown': True,
-                    'message': f"Showdown! Winner(s): {', '.join([w['name'] for w in winners])}"
-                }
-            elif game_state['betting_round'] == 'showdown':
-                # We've already advanced to showdown, trigger it
-                winners = showdown(game_state)
-                # Clear current player since hand is over
-                game_state['current_player'] = None
-                # Record hand for analytics
-                self.analytics.record_hand(game_state, winners, game_state.get('action_history', []))
-                return {
-                    'game_state': self._serialize_game_state(game_state),
-                    'winners': winners,
-                    'hand_over': True,
-                    'showdown': True,
-                    'message': f"Showdown! Winner(s): {', '.join([w['name'] for w in winners])}"
-                }
-            else:
-                # Advance to next street
+                    return {'game_state': self._serialize_game_state(game_state), 'winners': winners, 'hand_over': True, 'showdown': True, 'all_in_showdown': True, 'message': "All-in showdown!"}
+
+                # Condition 3: River betting is done
+                if game_state['betting_round'] == 'river':
+                    print("DEBUG: River betting is over. Proceeding to showdown.")
+                    winners = showdown(game_state)
+                    self.analytics.record_hand(game_state, winners, game_state.get('action_history', []))
+                    return {'game_state': self._serialize_game_state(game_state), 'winners': winners, 'hand_over': True, 'showdown': True, 'message': "Showdown!"}
+                
+                # If no hand-ending condition is met, advance to the next street.
                 print(f"DEBUG: Advancing to next street from {game_state.get('betting_round')}")
                 advance_round(game_state)
-                print(f"DEBUG: Advanced to {game_state.get('betting_round')}")
-                
-                # Check if we just advanced to showdown
-                if game_state['betting_round'] == 'showdown':
-                    # We advanced from river to showdown, trigger it immediately
-                    winners = showdown(game_state)
-                    # Clear current player since hand is over
-                    game_state['current_player'] = None
-                    # Record hand for analytics
-                    self.analytics.record_hand(game_state, winners, game_state.get('action_history', []))
-                    return {
-                        'game_state': self._serialize_game_state(game_state),
-                        'winners': winners,
-                        'hand_over': True,
-                        'showdown': True,
-                        'message': f"Showdown! Winner(s): {', '.join([w['name'] for w in winners])}"
-                    }
-                
-                # Set current player to first active player after dealer
                 self._set_first_to_act(game_state)
-                print(f"DEBUG: Set first to act: current_player = {game_state.get('current_player')}")
-                advanced_to_new_round = True
-                # Continue the loop to check if this new round is immediately over too
-        
-        # Only move to next player if we're in the middle of a betting round
-        # Don't move to next player if we just advanced to a new round and set first to act
-        betting_over = betting_round_over(game_state)
-        print(f"DEBUG: Before next player check - betting_round_over: {betting_over}, advanced_to_new_round: {advanced_to_new_round}")
-        
-        if not betting_over and not advanced_to_new_round:
-            print(f"DEBUG: Betting round not over, moving to next player from {game_state.get('current_player')}")
-            next_player(game_state)
-            print(f"DEBUG: Next player is now: {game_state.get('current_player')}")
-        elif advanced_to_new_round:
-            print(f"DEBUG: Just advanced to new round, staying with first to act player: {game_state.get('current_player')}")
-        else:
-            print(f"DEBUG: Not moving to next player - betting_over: {betting_over}, advanced_to_new_round: {advanced_to_new_round}")
-        
-        print(f"DEBUG: process_game_flow finished, current_player: {game_state.get('current_player')}, betting_round: {game_state.get('betting_round')}")
-        
-        return {
-            'game_state': self._serialize_game_state(game_state),
-            'hand_over': False
-        }
+                print(f"DEBUG: Advanced to {game_state.get('betting_round')}. New turn for player {game_state['current_player']}")
+                # The loop continues to check the state of the new round.
+
+            else:
+                # If the betting round is NOT over, just find the next player.
+                next_player(game_state)
+                print(f"DEBUG: Betting continues. Next player is {game_state['current_player']}")
+                return {'game_state': self._serialize_game_state(game_state), 'hand_over': False}
+
     
     def _set_first_to_act(self, game_state: Dict) -> None:
         """Set the first active player to act for a new betting round"""

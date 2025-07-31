@@ -74,7 +74,7 @@ const GamePage = () => {
     const lastBetAmount = state.last_bet_amount || 0;
     
     // Minimum raise calculation (matches backend logic)
-    const bigBlind = 20; // From config
+    const bigBlind = state.big_blind || 10;
     let minRaise;
     
     if (currentBet === 0) {

@@ -26,58 +26,71 @@ class PostflopStrategy:
     def __init__(self):
         self.card_values = {'2': 2, '3': 3, '4': 4, '5': 5, '6': 6, '7': 7, 
                            '8': 8, '9': 9, 'T': 10, 'J': 11, 'Q': 12, 'K': 13, 'A': 14}
+        self.inv_card_values = {v: k for k, v in self.card_values.items()}
         
     def calculate_hand_equity(self, hero_hand, board, villain_range=None, num_simulations=1000):
         """
-        Calculate hand equity using Monte Carlo simulation
-        
-        Args:
-            hero_hand: Hero's hole cards
-            board: Community cards dealt so far
-            villain_range: Estimated villain hand range (list of possible hands)
-            num_simulations: Number of Monte Carlo simulations
+        Calculate hand equity using Monte Carlo simulation against a specified villain range.
         """
-        if len(board) == 5:  # River - no more cards to come
+        if len(board) == 5:
             return self.calculate_showdown_equity(hero_hand, board, villain_range)
         
-        # Create deck without known cards
         deck = self.create_deck()
         used_cards = set(hero_hand + board)
-        available_cards = [card for card in deck if card not in used_cards]
         
         wins = 0
-        total_hands = 0
+        total_sims = 0
+
+        # Filter villain_range to only include hands not conflicting with known cards
+        valid_villain_hands = []
+        if villain_range:
+            for hand in villain_range:
+                if not any(card in used_cards for card in hand):
+                    valid_villain_hands.append(hand)
         
-        for _ in range(num_simulations):
-            # Deal remaining board cards
-            remaining_board_cards = 5 - len(board)
-            if remaining_board_cards > 0:
-                board_completion = random.sample(available_cards, remaining_board_cards)
-                full_board = board + board_completion
-                remaining_deck = [card for card in available_cards if card not in board_completion]
-            else:
-                full_board = board
-                remaining_deck = available_cards
+        if not valid_villain_hands:
+            # Fallback: if range is empty or all hands conflict, simulate against any two unknown cards
+            available_cards = [card for card in deck if card not in used_cards]
+            if len(available_cards) < 2: return 0.5
+            valid_villain_hands = list(itertools.combinations(available_cards, 2))
+
+
+        for i in range(num_simulations):
             
-            # Sample villain hand
-            if len(remaining_deck) >= 2:
-                villain_hand = random.sample(remaining_deck, 2)
+            # 1. Sample a random board completion
+            deck_after_hero = [card for card in deck if card not in used_cards]
+            
+            cards_to_deal = 5 - len(board)
+            if len(deck_after_hero) < cards_to_deal: continue
+
+            board_completion = random.sample(deck_after_hero, cards_to_deal)
+            full_board = board + board_completion
+            
+            # 2. Sample a villain hand from their valid range
+            current_used_cards = used_cards.union(board_completion)
+            
+            runout_valid_villain_hands = [h for h in valid_villain_hands if not any(c in current_used_cards for c in h)]
+            if not runout_valid_villain_hands:
+                continue # No valid opponent hands for this runout
+
+            villain_hand = random.choice(runout_valid_villain_hands)
+
+            # 3. Evaluate hands
+            try:
+                hero_score, _ = evaluate_hand(hero_hand, full_board)
+                villain_score, _ = evaluate_hand(list(villain_hand), full_board)
+
+                if hero_score < villain_score:
+                    wins += 1
+                elif hero_score == villain_score:
+                    wins += 0.5
                 
-                # Evaluate both hands
-                try:
-                    hero_score, _ = evaluate_hand(hero_hand, full_board)
-                    villain_score, _ = evaluate_hand(villain_hand, full_board)
-                    
-                    if hero_score < villain_score:  # Lower score wins in treys
-                        wins += 1
-                    elif hero_score == villain_score:
-                        wins += 0.5  # Split pot
-                    
-                    total_hands += 1
-                except:
-                    continue
-        
-        return wins / total_hands if total_hands > 0 else 0.5
+                total_sims += 1
+            except Exception as e:
+                # print(f"DEBUG: Error during equity simulation: {e}")
+                continue
+
+        return wins / total_sims if total_sims > 0 else 0.5
     
     def calculate_showdown_equity(self, hero_hand, board, villain_range=None):
         """
@@ -94,26 +107,23 @@ class PostflopStrategy:
         # Create deck without known cards
         deck = self.create_deck()
         used_cards = set(hero_hand + board)
-        available_cards = [card for card in deck if card not in used_cards]
-        
-        if len(available_cards) < 2:
-            return 0.5  # Not enough cards for opponent
         
         wins = 0
         total_hands = 0
         
         # If villain range is specified, use it; otherwise sample random hands
         if villain_range:
-            villain_hands = villain_range
+            villain_hands = [h for h in villain_range if not any(c in used_cards for c in h)]
         else:
             # Generate all possible villain hands from remaining cards
+            available_cards = [card for card in deck if card not in used_cards]
+            if len(available_cards) < 2: return 0.5
             villain_hands = list(itertools.combinations(available_cards, 2))
         
+        if not villain_hands:
+            return 0.5 # No possible hands for villain
+
         for villain_hand in villain_hands:
-            # Skip if villain hand uses cards we know
-            if any(card in used_cards for card in villain_hand):
-                continue
-                
             try:
                 hero_score, _ = evaluate_hand(hero_hand, board)
                 villain_score, _ = evaluate_hand(list(villain_hand), board)
@@ -145,11 +155,11 @@ class PostflopStrategy:
         for suit in suits:
             suit_counts[suit] = suit_counts.get(suit, 0) + 1
         
-        max_suit_count = max(suit_counts.values())
+        max_suit_count = max(suit_counts.values()) if suit_counts else 0
         flush_draw = max_suit_count == 4
         
         # Straight draw analysis
-        unique_ranks = sorted(set(ranks))
+        unique_ranks = sorted(list(set(ranks)))
         straight_draw = False
         straight_outs = 0
         
@@ -165,7 +175,7 @@ class PostflopStrategy:
             # Check for gutshot straight draws
             if not straight_draw:
                 for i in range(len(unique_ranks) - 2):
-                    if unique_ranks[i+2] - unique_ranks[i] == 4:  # Gap in middle
+                    if unique_ranks[i+2] - unique_ranks[i] == 4 and len(set(unique_ranks[i:i+3])) == 3:  # Gap in middle
                         straight_draw = True
                         straight_outs = 4  # Gutshot
                         break
@@ -174,11 +184,13 @@ class PostflopStrategy:
         outs = 0
         if flush_draw:
             outs += 9  # 9 flush cards remaining
-        outs += straight_outs
+        if straight_draw:
+            outs += straight_outs
         
         # Adjust for potential overlaps (flush + straight)
         if flush_draw and straight_draw:
-            outs = min(outs, 15)  # Maximum realistic outs
+            # A simple approximation
+            outs = 15
         
         return {
             'flush_draw': flush_draw,
@@ -244,7 +256,7 @@ class PostflopStrategy:
         # Count flush blockers
         board_suits = [card[1] for card in board]
         for suit in set(board_suits):
-            if board_suits.count(suit) >= 3:  # Possible flush
+            if board_suits.count(suit) >= 2:  # Potential flush draw on board
                 hand_blockers = sum(1 for card in hand if card[1] == suit)
                 blockers['flush_blockers'] += hand_blockers
         
@@ -278,65 +290,64 @@ class PostflopStrategy:
         suits = ['s', 'h', 'd', 'c']
         ranks = ['2', '3', '4', '5', '6', '7', '8', '9', 'T', 'J', 'Q', 'K', 'A']
         return [r + s for r in ranks for s in suits]
+
+    def convert_range_tuples_to_hands(self, range_tuples):
+        """
+        Converts a list of hand tuples into a list of all possible specific card combinations.
+        e.g., [(7, 7)] -> [['7s', '7h'], ['7s', '7d'], ...]
+        """
+        all_hands = []
+        suits = ['s', 'h', 'd', 'c']
+
+        for hand_tuple in range_tuples:
+            if len(hand_tuple) == 2:  # Pair
+                rank = self.inv_card_values[hand_tuple[0]]
+                all_hands.extend([list(pair) for pair in itertools.combinations([rank + s for s in suits], 2)])
+            else:
+                high_rank_val, low_rank_val, is_suited = hand_tuple
+                high_rank = self.inv_card_values[high_rank_val]
+                low_rank = self.inv_card_values[low_rank_val]
+                
+                if is_suited:
+                    for s in suits:
+                        all_hands.append([high_rank + s, low_rank + s])
+                else: # Offsuit
+                    for s1 in suits:
+                        for s2 in suits:
+                            if s1 != s2:
+                                all_hands.append([high_rank + s1, low_rank + s2])
+        return all_hands
     
     def get_optimal_bet_size(self, hand_strength, board_texture, pot_size, stack_size, street):
         """
         Calculate optimal bet size based on hand strength and board texture
-        
-        Args:
-            hand_strength: 0-1 scale of hand strength
-            board_texture: dict with board analysis
-            pot_size: Current pot size
-            stack_size: Effective stack size
-            street: 'flop', 'turn', or 'river'
         """
         base_bet = pot_size * 0.67  # Standard 2/3 pot bet
         
-        # Adjust based on hand strength
-        if hand_strength >= 0.85:  # Nuts/near-nuts
-            if street == 'river':
-                return min(stack_size, pot_size * 1.0)  # Large value bet
-            else:
-                return min(stack_size, pot_size * 0.75)  # Build pot for later streets
-        
-        elif hand_strength >= 0.65:  # Strong hands
+        if hand_strength >= 0.85:
+            return min(stack_size, pot_size * 0.75 if street != 'river' else pot_size * 1.0)
+        elif hand_strength >= 0.65:
             return min(stack_size, base_bet)
-        
-        elif hand_strength >= 0.35:  # Medium hands
-            return min(stack_size, pot_size * 0.5)  # Smaller value bet/protection
-        
+        elif hand_strength >= 0.35:
+            return min(stack_size, pot_size * 0.5)
         else:  # Bluffs
-            if board_texture.get('wet', False):
-                return min(stack_size, pot_size * 0.75)  # Larger bluff on wet boards
-            else:
-                return min(stack_size, pot_size * 0.5)   # Smaller bluff on dry boards
+            return min(stack_size, pot_size * 0.75 if board_texture.get('wet') else pot_size * 0.5)
     
     def should_bluff(self, hand, board, opponent_stats, pot_size, bet_size, street):
         """
         Determine if this is a good spot to bluff
         """
-        # Basic bluff frequency based on street
         base_bluff_freq = {'flop': 0.25, 'turn': 0.20, 'river': 0.15}
         bluff_freq = base_bluff_freq.get(street, 0.15)
         
-        # Adjust based on board texture
         if len(board) >= 3:
-            board_suits = [card[1] for card in board]
-            board_ranks = [card[0] for card in board]
-            
-            # More bluffing on wet boards
-            if len(set(board_suits)) <= 2:  # Flush possible
+            board_texture = self.analyze_draws(hand, board) # Simplified texture
+            if board_texture['flush_draw'] or board_texture['straight_draw']:
                 bluff_freq *= 1.2
-            
-            # Less bluffing on paired boards
-            if len(set(board_ranks)) < len(board_ranks):
-                bluff_freq *= 0.8
         
-        # Adjust based on opponent tendencies
-        fold_to_bet = opponent_stats.get('fold_to_bet', 0.5)
-        bluff_freq *= (fold_to_bet / 0.5)  # Scale based on opponent's folding frequency
+        fold_to_bet = opponent_stats.get('fold_to_cbet', 0.5)
+        bluff_freq *= (fold_to_bet / 0.5)
         
-        # Blocker considerations
         if self.select_bluff_hands(hand, board):
             bluff_freq *= 1.3
         
@@ -350,20 +361,11 @@ def calculate_equity_simple(hero_hand, board, num_sims=500):
 
 def get_betting_action(hand_strength, equity, pot_odds, board_texture, street):
     """Simplified betting decision"""
-    strategy = PostflopStrategy()
-    
-    # Strong hands - bet for value
     if hand_strength >= 0.7 or equity >= 0.6:
         return 'bet'
-    
-    # Drawing hands with good odds
     elif equity >= 0.35 and pot_odds >= 2.5:
         return 'call'
-    
-    # Medium hands - check or small bet
     elif hand_strength >= 0.4:
         return 'check'
-    
-    # Weak hands - check or fold
     else:
         return 'check'
