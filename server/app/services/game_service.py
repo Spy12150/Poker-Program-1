@@ -405,5 +405,6 @@ class GameService:
             'current_bet': game_state['current_bet'],
             'last_bet_amount': game_state.get('last_bet_amount', 0),
             'action_history': game_state.get('action_history', []),
-            'dealer_pos': game_state['dealer_pos']
+            'dealer_pos': game_state['dealer_pos'],
+            'big_blind': game_state.get('big_blind', 10)  # Include big blind for frontend calculations
         }

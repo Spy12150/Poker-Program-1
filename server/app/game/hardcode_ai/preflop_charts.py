@@ -1,258 +1,508 @@
 """
-Advanced Preflop Charts for Poker AI
+Comprehensive Preflop Charts using 11-tier system from tier_config.py
 
-Implements comprehensive preflop strategy charts based on:
-- Position (Button vs Big Blind in heads-up)
-- Stack depth
-- Action facing (unopened pot vs facing a raise)
-- 3-bet and 4-bet scenarios
+This system provides complete coverage of all heads-up preflop scenarios:
+- SB first action (RFI) with stack depth adjustments
+- BB vs SB limp (check/raise decision)
+- BB vs SB raise (fold/call/3-bet with sizing-dependent ranges)
+- SB vs BB 3-bet (fold/call/4-bet decisions)
+- BB vs SB 4-bet (fold/call/5-bet decisions)
+- SB vs BB 5-bet (fold/call decisions, usually all-in)
+
+The tier system (0-10) allows fine-grained control:
+- Tier 0: Premium hands (AA, KK, QQ, JJ, AKo, AKs, AQs)
+- Tier 1-10: Decreasing hand strength (~10% of combos each)
+
+Each scenario accounts for:
+- Opponent bet sizing (minraise/standard/overbet)
+- Effective stack depth (short/medium/deep)
+- Position-specific adjustments
 """
-
+from typing import List, Tuple, Dict, Optional
+from .tier_config import TIERS, class_lookup
 import random
+
+RANK_TO_INT = {"2": 2, "3": 3, "4": 4, "5": 5, "6": 6, "7": 7,
+               "8": 8, "9": 9, "T": 10, "J": 11, "Q": 12, "K": 13, "A": 14}
+INT_TO_RANK = {v: k for k, v in RANK_TO_INT.items()}
+
+# ---------------------------------------------------------------------------
+# Utility functions
+# ---------------------------------------------------------------------------
+
+def hand_to_tuple(hand: List[str]) -> Tuple[int, int, bool]:
+    """Convert ['Ah','Kd'] → (14, 13, False). Pair → (rank, rank)."""
+    c1, c2 = hand
+    r1, s1 = c1[0], c1[1]
+    r2, s2 = c2[0], c2[1]
+    v1, v2 = RANK_TO_INT[r1], RANK_TO_INT[r2]
+    if v1 == v2:
+        return (v1, v1)
+    return (max(v1, v2), min(v1, v2), s1 == s2)
+
+def categorize_bet_size(bet_size_bb: float, previous_bet_bb: float = 1.0) -> str:
+    """
+    Categorize bet size based on multiple of previous bet
+    
+    Args:
+        bet_size_bb: Current bet size in big blinds
+        previous_bet_bb: Previous bet/raise size in big blinds (default 1.0 for initial raises)
+        
+    Returns:
+        Bet size category: "minraise", "standard", "large", or "overbet"
+    """
+    if previous_bet_bb <= 0:
+        previous_bet_bb = 1.0  # Avoid division by zero
+    
+    # For initial raises (RFI), use absolute BB measurement
+    if previous_bet_bb == 1.0:  # This indicates it's an initial raise from BB
+        if bet_size_bb <= 2.5:
+            return "minraise"
+        elif bet_size_bb <= 3.8:
+            return "standard_low"
+        elif bet_size_bb <= 6:
+            return "standard"
+        elif bet_size_bb <= 12:
+            return "large"
+        else:
+            return "overbet"
+    
+    # For 3-bets, 4-bets, etc., use multiple of previous bet
+    multiple = bet_size_bb / previous_bet_bb
+    
+    if multiple <= 2.5:
+        return "minraise"  # Small 3-bet (e.g., 3bb -> 7.5bb)
+    elif multiple <= 3.8:
+        return "standard_low"  
+    elif multiple <= 6:
+        return "standard"  # Standard 3-bet (e.g., 3bb -> 9-10.5bb)
+    elif multiple <= 12:
+        return "large"     # Large 3-bet (e.g., 3bb -> 15bb)
+    else:
+        return "overbet"   # Huge 3-bet (e.g., 3bb -> 18bb+)
+
+def categorize_stack_depth(stack_bb: int) -> str:
+    """Categorize effective stack depth"""
+    if stack_bb <= 25:
+        return "short"
+    elif stack_bb <= 60:
+        return "medium"
+    else:
+        return "deep"
+
+# ---------------------------------------------------------------------------
+# Main preflop decision engine
+# ---------------------------------------------------------------------------
 
 class PreflopCharts:
     def __init__(self):
-        # Hands are represented as tuples: (high_rank, low_rank, suited)
-        # Ranks: A=14, K=13, Q=12, J=11, T=10, 9=9, etc.
-        
-        # Button Opening Range (heads-up button opens ~45% of hands)
-        self.button_opening_range = {
-            # Premium hands (always raise)
-            'premium': [
-                (14, 14), (13, 13), (12, 12), (11, 11), (10, 10), (9, 9), (8, 8), (7, 7),  # Pairs
-                (14, 13, True), (14, 13, False),  # AK
-                (14, 12, True), (14, 12, False),  # AQ
-                (14, 11, True), (13, 12, True),   # AJ, KQ suited
-            ],
-            
-            # Strong hands (raise most of the time)
-            'strong': [
-                (6, 6), (5, 5), (4, 4), (3, 3), (2, 2),  # Small pairs
-                (14, 10, True), (14, 9, True), (14, 8, True), (14, 7, True),  # Suited aces
-                (13, 11, True), (13, 10, True), (12, 11, True), (12, 10, True),  # Suited broadway
-                (14, 11, False), (14, 10, False),  # AJ, AT offsuit
-                (13, 12, False), (13, 11, False),  # KQ, KJ offsuit
-            ],
-            
-            # Playable hands (mixed strategy - position dependent)
-            'playable': [
-                (14, 6, True), (14, 5, True), (14, 4, True), (14, 3, True), (14, 2, True),  # Suited aces
-                (13, 9, True), (13, 8, True), (12, 9, True), (11, 10, True), (11, 9, True),  # Suited connectors/gappers
-                (10, 9, True), (9, 8, True), (8, 7, True), (7, 6, True), (6, 5, True), (5, 4, True),  # Suited connectors
-                (14, 9, False), (14, 8, False), (13, 10, False), (12, 11, False),  # Offsuit broadway
-                (10, 9, False), (9, 8, False),  # Offsuit connectors
-            ]
+        """Initialize comprehensive preflop strategy charts"""
+        self._build_strategy_tables()
+
+    def _build_strategy_tables(self):
+        """Build all strategy lookup tables"""
+        # SB RFI ranges by stack depth
+        self.sb_rfi_ranges = {
+            "short": 7,    # tiers 0-7 (top ~80%)
+            "medium": 8,   # tiers 0-8 (top ~90%)
+            "deep": 8      # tiers 0-8 (top ~90%)
         }
         
-        # Big Blind Defense Range vs Button Open (defend ~65% vs standard raise)
-        self.bb_defense_range = {
-            'call': [
-                # All pairs
-                (14, 14), (13, 13), (12, 12), (11, 11), (10, 10), (9, 9), (8, 8), (7, 7), (6, 6), (5, 5), (4, 4), (3, 3), (2, 2),
-                # Suited hands
-                (14, 13, True), (14, 12, True), (14, 11, True), (14, 10, True), (14, 9, True), (14, 8, True), (14, 7, True), (14, 6, True), (14, 5, True), (14, 4, True), (14, 3, True), (14, 2, True),
-                (13, 12, True), (13, 11, True), (13, 10, True), (13, 9, True), (13, 8, True), (13, 7, True),
-                (12, 11, True), (12, 10, True), (12, 9, True), (12, 8, True),
-                (11, 10, True), (11, 9, True), (11, 8, True), (10, 9, True), (10, 8, True), (9, 8, True), (9, 7, True), (8, 7, True), (7, 6, True), (6, 5, True), (5, 4, True),
-                # Offsuit hands
-                (14, 13, False), (14, 12, False), (14, 11, False), (14, 10, False), (14, 9, False), (14, 8, False), (14, 7, False),
-                (13, 12, False), (13, 11, False), (13, 10, False), (12, 11, False), (11, 10, False),
-            ],
-            
-            '3bet': [
-                # Premium 3-bet hands
-                (14, 14), (13, 13), (12, 12), (11, 11), (10, 10),  # Top pairs
-                (14, 13, True), (14, 13, False),  # AK
-                (14, 12, True),  # AQ suited
-                # Bluff 3-bets (polarized strategy)
-                (14, 5, True), (14, 4, True), (14, 3, True), (14, 2, True),  # Suited wheel aces
-                (13, 6, True), (13, 5, True), (12, 7, True), (11, 8, True),  # Suited connectors/gappers
-            ]
+        # BB vs SB limp: which hands to raise
+        self.bb_vs_limp_raise_range = 6  # tiers 0-6 (~70%)
+        
+        # BB defense vs SB raise - more granular based on raise size
+        self.bb_defense_ranges = {
+            "minraise": {
+                "call": 7,     # tiers 0-8
+                "3bet": 3      # tiers 0-2 (strongest for value)
+            },
+            "standard_low": {
+                "call": 6,     # tiers 0-6  
+                "3bet": 3      # tiers 0-1 (very strong)
+            },
+            "standard": {
+                "call": 5,     # tiers 0-6  
+                "3bet": 2      # tiers 0-1 (very strong)
+            },
+            "large": {
+                "call": 3,     # tiers 0-4
+                "3bet": 2      # tier 0 only (nuts)
+            },
+            "overbet": {
+                "call": 1,     # tiers 0-2
+                "3bet": 0      # tier 0 only
+            }
         }
         
-        # 4-bet ranges (very tight, polarized)
-        self.four_bet_range = {
-            'value': [(14, 14), (13, 13), (12, 12), (14, 13, True), (14, 13, False)],
-            'bluff': [(14, 5, True), (14, 4, True), (13, 5, True)]
+        # SB vs BB 3-bet responses
+        self.sb_vs_3bet_ranges = {
+            "minraise": {  # BB 3-bet is small
+                "call": 6,     # tiers 0-5
+                "4bet": 3      # tiers 0-1
+            },
+            "standard_low": {
+                "call": 4,     # tiers 0-6  
+                "3bet": 1      # tiers 0-1 (very strong)
+            },
+            "standard": {  # BB 3-bet is standard size
+                "call": 3,     # tiers 0-3  
+                "4bet": 0      # tier 0 only
+            },
+            "large": {     # BB 3-bet is large
+                "call": 1,     # tiers 0-2
+                "4bet": 0      # tier 0 only (nuts)
+            },
+            "overbet": {   # BB 3-bet is huge
+                "call": 1,     # tiers 0-1
+                "4bet": 0      # tier 0 only
+            }
         }
+        
+        # BB vs SB 4-bet responses  
+        self.bb_vs_4bet_ranges = {
+            "standard_low": {
+                "call": 1,     # tiers 0-1
+                "5bet": 0      # tier 0 only (usually all-in)
+            },
+            "standard": {
+                "call": 1,     # tiers 0-1
+                "5bet": 0      # tier 0 only (usually all-in)
+            },
+            "large": {
+                "5bet": 0      # tier 0 only
+            },
+            "overbet": {
+                "5bet": 0      # fold everything except absolute nuts
+            }
+        }
+        
+        # SB vs BB 5-bet responses - sizing dependent
+        self.sb_vs_5bet_ranges = {
+            "minraise": {     # Small 5-bet (2-2.5x)
+                "call": 2     # tiers 0-2 (includes 88, 99, TT)
+            },
+            "standard_low": { # Medium 5-bet (2.6-3.8x)
+                "call": 1     # tiers 0-1 (very strong only)
+            },
+            "standard": {     # Standard 5-bet (3.9-6x)
+                "call": 1     # tiers 0-1 (very strong only)
+            },
+            "large": {        # Large 5-bet (6.1-12x)
+                "call": 0     # tier 0 only (nuts)
+            },
+            "overbet": {      # Massive 5-bet (>12x, usually all-in)
+                "call": 0     # tier 0 only (nuts)
+            }
+        }
+
+    # ---------------------------------------------------------------------------
+    # Public utility methods
+    # ---------------------------------------------------------------------------
     
-    def get_hand_tuple(self, hand):
-        """Convert hand to comparable tuple format"""
-        card1, card2 = hand[0], hand[1]
-        rank1, rank2 = card1[0], card2[0]
-        suited = card1[1] == card2[1]
-        
-        rank_values = {'2': 2, '3': 3, '4': 4, '5': 5, '6': 6, '7': 7, 
-                      '8': 8, '9': 9, 'T': 10, 'J': 11, 'Q': 12, 'K': 13, 'A': 14}
-        val1, val2 = rank_values[rank1], rank_values[rank2]
-        
-        if val1 == val2:  # Pair
-            return (val1, val1)
-        elif suited:
-            return (max(val1, val2), min(val1, val2), True)
-        else:
-            return (max(val1, val2), min(val1, val2), False)
-    
-    def should_open_button(self, hand, stack_bb=100):
-        """Determine if hand should be opened from button"""
-        hand_tuple = self.get_hand_tuple(hand)
-        
-        # Stack depth adjustments
-        if stack_bb < 20:  # Short stack - tighter range
-            return hand_tuple in self.button_opening_range['premium']
-        elif stack_bb < 50:  # Medium stack
-            return (hand_tuple in self.button_opening_range['premium'] or 
-                   hand_tuple in self.button_opening_range['strong'])
-        else:  # Deep stack - full range
-            return (hand_tuple in self.button_opening_range['premium'] or 
-                   hand_tuple in self.button_opening_range['strong'] or 
-                   hand_tuple in self.button_opening_range['playable'])
-    
-    def should_defend_bb(self, hand, raise_size_bb=3, stack_bb=100):
-        """Determine BB defense strategy vs button open"""
-        hand_tuple = self.get_hand_tuple(hand)
-        
-        # Short stack strategy - push/fold with very short stacks
-        if stack_bb <= 15:
-            # Push/fold range - only strong hands
-            push_fold_range = [
-                # Premium pairs and hands
-                (14, 14), (13, 13), (12, 12), (11, 11), (10, 10), (9, 9), (8, 8), (7, 7),
-                (14, 13, True), (14, 13, False), (14, 12, True), (14, 12, False),
-                (14, 11, True), (14, 10, True), (13, 12, True), (13, 11, True),
-                # Some suited connectors and aces
-                (14, 9, True), (14, 8, True), (14, 7, True), (14, 6, True), (14, 5, True),
-                (13, 10, True), (12, 11, True), (11, 10, True)
-            ]
-            if hand_tuple in push_fold_range:
-                return 'call'  # All-in call
-            else:
-                return 'fold'
-        
-        # Adjust defense range based on raise size
-        if raise_size_bb > 4:  # Large raise - much tighter defense
-            if hand_tuple in self.bb_defense_range['3bet']:
-                return '3bet'
-            elif hand_tuple in [(14, 14), (13, 13), (12, 12), (11, 11), (10, 10),
-                               (14, 13, True), (14, 13, False), (14, 12, True)]:
-                return 'call'  # Only premium hands vs large raises
-            else:
-                return 'fold'
-        
-        # Medium stack adjustments (20-40bb)
-        if stack_bb < 40:
-            # Tighter 3-betting, more calling
-            if hand_tuple in self.bb_defense_range['3bet'][:8]:  # Top 3-bet hands only
-                return '3bet'
-            elif hand_tuple in self.bb_defense_range['call']:
-                return 'call'
-            else:
-                return 'fold'
-        
-        # Deep stack normal defense
-        if hand_tuple in self.bb_defense_range['3bet']:
-            # Mix between 3-bet and call for some hands
-            premium_3bets = [(14, 14), (13, 13), (12, 12), (11, 11), (10, 10),
-                           (14, 13, True), (14, 13, False), (14, 12, True)]
-            if hand_tuple in premium_3bets:
-                return '3bet'
-            elif hand_tuple in self.bb_defense_range['3bet']:
-                # Bluff 3-bets - mix strategy
-                return '3bet' if random.random() < 0.7 else 'call'
-            else:
-                return '3bet'
-        elif hand_tuple in self.bb_defense_range['call']:
-            return 'call'
-        else:
-            return 'fold'
-    
-    def get_preflop_action(self, hand, position, action_to_hero, raise_size_bb=0, stack_bb=100):
+    def get_hand_tuple(self, hand: List[str]) -> Tuple:
+        """Convert hand to tuple representation"""
+        return hand_to_tuple(hand)
+
+    def tier_of(self, tup: Tuple) -> int:
+        """Get 0-based tier index for hand tuple"""
+        return class_lookup[tup]
+
+    def get_hand_tier(self, hand: List[str]) -> int:
+        """Get tier index for a hand"""
+        return self.tier_of(self.get_hand_tuple(hand))
+
+    # ---------------------------------------------------------------------------
+    # Scenario-specific decision methods
+    # ---------------------------------------------------------------------------
+
+    def sb_first_action(self, hand: List[str], stack_bb: int = 100) -> str:
         """
-        Comprehensive preflop decision making
+        SB first action (Raise First In)
         
         Args:
-            hand: Player's hole cards
-            position: 'button' or 'bb' (heads-up)
-            action_to_hero: 'none' (unopened), 'raise', '3bet', '4bet'
-            raise_size_bb: Size of raise in big blinds
+            hand: Two-card hand
             stack_bb: Effective stack in big blinds
+            
+        Returns:
+            'raise' or 'fold'
         """
-        hand_tuple = self.get_hand_tuple(hand)
+        tier = self.get_hand_tier(hand)
+        stack_category = categorize_stack_depth(stack_bb)
+        max_tier = self.sb_rfi_ranges[stack_category]
         
-        if position == 'button':
-            if action_to_hero == 'none':
-                # Unopened pot - handled by SB RFI chart, not this function
-                if self.should_open_button(hand, stack_bb):
-                    return 'raise'
-                else:
-                    return 'fold'
-            
-            elif action_to_hero == 'raise':
-                # Button facing BB 3-bet (after our open)
-                # Short stack - simplified ranges
-                if stack_bb <= 15:
-                    nuts_hands = [(14, 14), (13, 13), (12, 12), (14, 13, True), (14, 13, False)]
-                    if hand_tuple in nuts_hands:
-                        return 'call'  # All-in
-                    else:
-                        return 'fold'
-                
-                # Normal 4-bet decision vs 3-bet
-                if hand_tuple in self.four_bet_range['value']:
-                    return '4bet'
-                elif hand_tuple in self.four_bet_range['bluff'] and stack_bb > 50:
-                    return '4bet' if random.random() < 0.3 else 'fold'
-                else:
-                    # Calling range vs 3-bet
-                    call_vs_3bet = [
-                        (11, 11), (10, 10), (9, 9), (8, 8), (7, 7),  # Medium pairs
-                        (14, 12, True), (14, 11, True), (14, 10, True),  # Suited aces
-                        (13, 12, True), (13, 11, True), (12, 11, True)   # Suited broadways
-                    ]
-                    if hand_tuple in call_vs_3bet:
-                        return 'call'
-                    else:
-                        return 'fold'
-            
-            elif action_to_hero == '3bet':
-                # This is actually facing a 3-bet, same as 'raise' case above
-                return self.get_preflop_action(hand, position, 'raise', raise_size_bb, stack_bb)
-            
-            elif action_to_hero == '4bet':
-                # Facing BB 4-bet (after our 3-bet)
-                if hand_tuple in [(14, 14), (13, 13), (14, 13, True)]:  # Only the nuts
-                    return 'call'
-                else:
-                    return 'fold'
+        return "raise" if tier <= max_tier else "fold"
+
+    def bb_vs_sb_limp(self, hand: List[str], stack_bb: int = 100) -> str:
+        """
+        BB response to SB limp
         
-        else:  # Big Blind
-            if action_to_hero == 'raise':
-                # Facing button open - this is the main BB defense case
-                defense = self.should_defend_bb(hand, raise_size_bb, stack_bb)
-                return defense
+        Args:
+            hand: Two-card hand
+            stack_bb: Effective stack in big blinds
             
-            elif action_to_hero == '3bet':
-                # BB facing button 3-bet (after our call/3-bet)
-                if stack_bb <= 15:
-                    # Short stack - call with strong hands only
-                    if hand_tuple in [(14, 14), (13, 13), (12, 12), (14, 13, True)]:
-                        return 'call'
-                    else:
-                        return 'fold'
-                
-                # Normal 4-bet decision
-                if hand_tuple in self.four_bet_range['value']:
-                    return '4bet'
-                elif hand_tuple in [(11, 11), (10, 10), (14, 12, True)]:  # Calling hands
-                    return 'call'
-                else:
-                    return 'fold'
-            
-            elif action_to_hero == '4bet':
-                # Facing button 4-bet (after our 3-bet)
-                if hand_tuple in [(14, 14), (13, 13), (14, 13, True)]:  # Only the nuts
-                    return 'call'
-                else:
-                    return 'fold'
+        Returns:
+            'raise' or 'check'
+        """
+        tier = self.get_hand_tier(hand)
         
-        return 'fold'
+        # With strong hands, raise for value and to take initiative
+        if tier <= self.bb_vs_limp_raise_range:
+            return "raise"
+        else:
+            return "check"
+
+    def bb_vs_sb_raise(self, hand: List[str], raise_size_bb: float, stack_bb: int = 100) -> str:
+        """
+        BB response to SB raise
+        
+        Args:
+            hand: Two-card hand  
+            raise_size_bb: Size of SB's raise in big blinds
+            stack_bb: Effective stack in big blinds
+            
+        Returns:
+            'fold', 'call', or '3bet'
+        """
+        tier = self.get_hand_tier(hand)
+        # For initial raises, previous bet is the BB (1.0)
+        bet_category = categorize_bet_size(raise_size_bb, 1.0)
+        
+        if bet_category not in self.bb_defense_ranges:
+            bet_category = "overbet"
+            
+        ranges = self.bb_defense_ranges[bet_category]
+        
+        # First check if we should 3-bet
+        if tier <= ranges["3bet"]:
+            return "3bet"
+        # Then check if we should call
+        elif tier <= ranges["call"]:
+            return "call"
+        else:
+            return "fold"
+
+    def sb_vs_bb_3bet(self, hand: List[str], threeBet_size_bb: float, original_raise_bb: float, stack_bb: int = 100) -> str:
+        """
+        SB response to BB 3-bet
+        
+        Args:
+            hand: Two-card hand
+            threeBet_size_bb: Size of BB's 3-bet in big blinds  
+            original_raise_bb: Size of original SB raise in big blinds
+            stack_bb: Effective stack in big blinds
+            
+        Returns:
+            'fold', 'call', or '4bet'
+        """
+        tier = self.get_hand_tier(hand)
+        bet_category = categorize_bet_size(threeBet_size_bb, original_raise_bb)
+        
+        if bet_category not in self.sb_vs_3bet_ranges:
+            bet_category = "overbet"
+            
+        ranges = self.sb_vs_3bet_ranges[bet_category]
+        
+        # Check if we should 4-bet
+        if tier <= ranges["4bet"]:
+            return "4bet"
+        # Then check if we should call
+        elif tier <= ranges["call"]:
+            return "call"
+        else:
+            return "fold"
+
+    def bb_vs_sb_4bet(self, hand: List[str], fourBet_size_bb: float, threeBet_size_bb: float, stack_bb: int = 100) -> str:
+        """
+        BB response to SB 4-bet
+        
+        Args:
+            hand: Two-card hand
+            fourBet_size_bb: Size of SB's 4-bet in big blinds
+            threeBet_size_bb: Size of BB's 3-bet in big blinds
+            stack_bb: Effective stack in big blinds
+            
+        Returns:
+            'fold', 'call', or '5bet' (usually all-in)
+        """
+        tier = self.get_hand_tier(hand)
+        bet_category = categorize_bet_size(fourBet_size_bb, threeBet_size_bb)
+        
+        if bet_category not in self.bb_vs_4bet_ranges:
+            bet_category = "overbet"
+            
+        ranges = self.bb_vs_4bet_ranges[bet_category]
+        
+        # Check if we should 5-bet (usually all-in)
+        if tier <= ranges["5bet"]:
+            return "5bet"
+        # Then check if we should call
+        elif tier <= ranges["call"]:
+            return "call"
+        else:
+            return "fold"
+
+    def bb_vs_sb_3bet(self, hand: List[str], threeBet_size_bb: float, original_raise_bb: float, stack_bb: int = 100) -> str:
+        """
+        BB response to SB 3-bet (after BB raised and SB 3-bet)
+        
+        Args:
+            hand: Two-card hand
+            threeBet_size_bb: Size of SB's 3-bet in big blinds
+            original_raise_bb: Size of BB's original raise in big blinds
+            stack_bb: Effective stack in big blinds
+            
+        Returns:
+            'fold', 'call', or '4bet'
+        """
+        tier = self.get_hand_tier(hand)
+        bet_category = categorize_bet_size(threeBet_size_bb, original_raise_bb)
+        
+        # Use the same ranges as SB vs BB 3-bet (symmetric)
+        if bet_category not in self.sb_vs_3bet_ranges:
+            bet_category = "overbet"
+            
+        ranges = self.sb_vs_3bet_ranges[bet_category]
+        
+        # Check if we should 4-bet
+        if tier <= ranges["4bet"]:
+            return "4bet"
+        # Then check if we should call
+        elif tier <= ranges["call"]:
+            return "call"
+        else:
+            return "fold"
+
+    def sb_vs_bb_5bet(self, hand: List[str], fiveBet_size_bb: float, fourBet_size_bb: float, stack_bb: int = 100) -> str:
+        """
+        SB response to BB 5-bet (sizing-dependent ranges)
+        
+        Args:
+            hand: Two-card hand
+            fiveBet_size_bb: Size of BB's 5-bet in big blinds
+            fourBet_size_bb: Size of SB's 4-bet in big blinds
+            stack_bb: Effective stack in big blinds
+            
+        Returns:
+            'fold' or 'call'
+        """
+        tier = self.get_hand_tier(hand)
+        bet_category = categorize_bet_size(fiveBet_size_bb, fourBet_size_bb)
+        
+        if bet_category not in self.sb_vs_5bet_ranges:
+            bet_category = "overbet"
+            
+        call_range = self.sb_vs_5bet_ranges[bet_category]["call"]
+        
+        # Call if our hand is strong enough for this bet size
+        return "call" if tier <= call_range else "fold"
+
+    # ---------------------------------------------------------------------------
+    # Main decision engine
+    # ---------------------------------------------------------------------------
+
+    def get_preflop_action(
+        self,
+        hand: List[str],
+        position: str,
+        action_to_hero: str,
+        raise_size_bb: float = 0,
+        stack_bb: int = 100,
+        pot_bb: float = 0,
+        num_raises: int = 0,
+        bet_history: List[float] = None
+    ) -> str:
+        """
+        Comprehensive preflop decision engine
+        
+        Args:
+            hand: Two-card hand
+            position: 'button' (SB) or 'bb' (BB)
+            action_to_hero: 'none', 'limp', 'raise', '3bet', '4bet', '5bet'
+            raise_size_bb: Size of last raise in big blinds
+            stack_bb: Effective stack in big blinds
+            pot_bb: Current pot size in big blinds
+            num_raises: Number of raises in current betting round
+            bet_history: List of bet sizes in order [original_raise, 3bet, 4bet, ...]
+            
+        Returns:
+            Action string: 'fold', 'check', 'call', 'raise', '3bet', '4bet', '5bet'
+        """
+        
+        if bet_history is None:
+            bet_history = []
+        
+        # SCENARIO 1: SB first action (RFI opportunity)
+        if position == "button" and action_to_hero == "none":
+            return self.sb_first_action(hand, stack_bb)
+        
+        # SCENARIO 2: BB vs SB limp
+        elif position == "bb" and action_to_hero == "limp":
+            return self.bb_vs_sb_limp(hand, stack_bb)
+        
+        # SCENARIO 3: BB vs SB raise (first raise)
+        elif position == "bb" and action_to_hero == "raise" and num_raises == 1:
+            return self.bb_vs_sb_raise(hand, raise_size_bb, stack_bb)
+        
+        # SCENARIO 4A: SB vs BB 3-bet  
+        elif position == "button" and action_to_hero == "raise" and num_raises == 2:
+            # Get original SB raise size from bet history or estimate
+            original_raise_bb = bet_history[0] if bet_history else self._estimate_original_raise(pot_bb, raise_size_bb)
+            return self.sb_vs_bb_3bet(hand, raise_size_bb, original_raise_bb, stack_bb)
+        
+        # SCENARIO 4B: BB vs SB 3-bet (after BB isolated a limper or raised)
+        elif position == "bb" and action_to_hero == "raise" and num_raises == 2:
+            # BB is facing a 3-bet - need to treat this as 3-bet defense, not initial raise defense
+            original_raise_bb = bet_history[0] if bet_history else self._estimate_original_raise(pot_bb, raise_size_bb)
+            return self.bb_vs_sb_3bet(hand, raise_size_bb, original_raise_bb, stack_bb)
+        
+        # SCENARIO 5: BB vs SB 4-bet
+        elif position == "bb" and action_to_hero == "raise" and num_raises == 3:
+            # Get 3-bet size from bet history or estimate
+            threeBet_size_bb = bet_history[1] if len(bet_history) > 1 else self._estimate_previous_3bet(pot_bb, raise_size_bb)
+            return self.bb_vs_sb_4bet(hand, raise_size_bb, threeBet_size_bb, stack_bb)
+        
+        # SCENARIO 6: SB vs BB 5-bet
+        elif position == "button" and action_to_hero == "raise" and num_raises == 4:
+            # Get 4-bet size from bet history or estimate
+            fourBet_size_bb = bet_history[2] if len(bet_history) > 2 else self._estimate_previous_4bet(pot_bb, raise_size_bb)
+            return self.sb_vs_bb_5bet(hand, raise_size_bb, fourBet_size_bb, stack_bb)
+        
+        # FALLBACK: Unknown scenario (6-bet, 7-bet+) - be conservative but aggressive with nuts
+        else:
+            tier = self.get_hand_tier(hand)
+            if tier == 0:  # Tier 0: Shove with absolute premium hands (AA, KK, QQ, JJ, AKs, AKo, AQs)
+                return "raise"  # Go all-in
+            elif tier == 1:  # Tier 1: Call with strong hands (99, TT, AJs, AQo, etc.)
+                return "call" if raise_size_bb > 0 else "check"
+            else:
+                return "fold"
+    
+    def _estimate_original_raise(self, pot_bb: float, threeBet_size_bb: float) -> float:
+        """Estimate original raise size from pot and 3-bet size"""
+        # Rough estimation: if pot is X and 3-bet is Y, original raise was likely (pot - 1.5) / 2
+        # This is imperfect but better than nothing
+        estimated = max(2.0, (pot_bb - 1.5) / 2)
+        return min(estimated, threeBet_size_bb / 2.5)  # Cap at reasonable multiple
+    
+    def _estimate_previous_3bet(self, pot_bb: float, fourBet_size_bb: float) -> float:
+        """Estimate 3-bet size from pot and 4-bet size"""
+        # Rough estimation based on typical 4-bet sizing relative to 3-bet
+        return max(6.0, fourBet_size_bb / 2.5)
+    
+    def _estimate_previous_4bet(self, pot_bb: float, fiveBet_size_bb: float) -> float:
+        """Estimate 4-bet size from pot and 5-bet size"""
+        # Rough estimation - 5-bets are usually 2-3x the 4-bet
+        return max(15.0, fiveBet_size_bb / 2.5)
+
+    # ---------------------------------------------------------------------------
+    # Legacy methods (for backward compatibility)
+    # ---------------------------------------------------------------------------
+
+    def should_open_button(self, hand: List[str], stack_bb: int = 100) -> bool:
+        """Legacy method - use sb_first_action instead"""
+        return self.sb_first_action(hand, stack_bb) == "raise"
+
+    def should_defend_bb(self, hand: List[str], raise_size_bb: float = 3, stack_bb: int = 100) -> str:
+        """Legacy method - use bb_vs_sb_raise instead"""
+        return self.bb_vs_sb_raise(hand, raise_size_bb, stack_bb)

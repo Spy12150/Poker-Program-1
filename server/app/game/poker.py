@@ -536,7 +536,7 @@ def showdown(game_state):
             log_to_hand_history(game_state, f"{winner_player['name']} collected ${pot_share:.0f} from pot")
 
     # --- Summary Section ---
-    log_to_hand_history(game_state, "*** SUMMARY ***")
+    log_to_hand_history(game_state, "\n*** SUMMARY ***")
     total_pot_summary = game_state['pot']
     board_str = " ".join(f"[{c}]" for c in community)
     log_to_hand_history(game_state, f"Total pot ${total_pot_summary:.0f} | Rake $0.00")

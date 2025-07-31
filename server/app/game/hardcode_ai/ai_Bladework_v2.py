@@ -8,21 +8,17 @@ It also tracks opponent behaviour through statistics like VPIP or PFR rate.
 
 import random
 import math
-import json
-import os
 from ..hand_eval_lib import evaluate_hand
 from ..config import BIG_BLIND, SMALL_BLIND
 from .preflop_charts import PreflopCharts
 from .postflop_strategy import PostflopStrategy
+from .tier_config import TIERS
 
 class GTOEnhancedAI:
     def __init__(self):
         # Initialize strategy components
         self.preflop_charts = PreflopCharts()
         self.postflop_strategy = PostflopStrategy()
-        
-        # Load heads-up charts
-        self.sb_rfi_chart = self.load_sb_rfi_chart()
         
         # GTO parameters remain, but opponent_model is now dynamic
         self.gto_parameters = {
@@ -33,9 +29,28 @@ class GTOEnhancedAI:
             'donk_bet_frequency': 0.05
         }
 
+        # Global opponent model (persists across hands)
+        self.opponent_model = {
+            'hands_played': 0,
+            'preflop_stats': {
+                'vpip': 0,
+                'vpip_opportunities': 0,
+                'pfr': 0,
+                'pfr_opportunities': 0
+            },
+            'postflop_stats': {
+                'cbet_frequency': 0,
+                'cbet_opportunities': 0,
+                'fold_to_cbet': 0,
+                'fold_to_cbet_opportunities': 0
+            },
+            'recent_actions': [],
+            'showdown_hands': []
+        }
+
     def estimate_opponent_preflop_range(self, game_state):
         """
-        Estimates the opponent's hand range based on their preflop actions.
+        Estimates the opponent's hand range based on their preflop actions using tier system.
         Returns a list of hand tuples, e.g., [(14, 13, True), (10, 10)].
         """
         action_history = game_state.get('action_history', [])
@@ -48,31 +63,42 @@ class GTOEnhancedAI:
         # Determine the pre-flop scenario
         ai_opened = any(a['action'] == 'raise' for a in ai_actions)
         human_opened = any(a['action'] == 'raise' for a in human_actions)
+        raises = sum(1 for a in preflop_actions if a.get('action') == 'raise')
 
         if ai_opened:
             # AI opened, Human (in BB) responded
             human_action = human_actions[-1]['action'] if human_actions else 'fold'
             if human_action == 'call':
-                opponent_range_tuples = self.preflop_charts.bb_defense_range['call']
+                # Human called our open - estimate BB calling range (tiers 0-6)
+                for tier_idx in range(7):  # tiers 0-6
+                    if tier_idx < len(TIERS):
+                        opponent_range_tuples.extend(TIERS[tier_idx])
             elif human_action == 'raise':  # 3-bet
-                opponent_range_tuples = self.preflop_charts.bb_defense_range['3bet']
+                if raises == 2:  # Standard 3-bet
+                    # Human 3-bet - estimate 3-betting range (tiers 0-2)
+                    for tier_idx in range(3):  # tiers 0-2
+                        if tier_idx < len(TIERS):
+                            opponent_range_tuples.extend(TIERS[tier_idx])
+                else:  # 4-bet or higher
+                    # Very tight range (tier 0 only)
+                    if len(TIERS) > 0:
+                        opponent_range_tuples.extend(TIERS[0])
         elif human_opened:
-            # Human opened (from SB), AI is defending
-            # Human's range is the RFI chart
-            for hand_str, actions in self.sb_rfi_chart.items():
-                # We'll assume if they can raise, it's in their opening range
-                if actions.get('raise', 0) > 0:
-                    opponent_range_tuples.append(self.hand_str_to_tuple(hand_str))
-        else: # Limped pot or other scenario
-            # Fallback to a wide, passive range (less likely to contain premium hands)
-            opponent_range_tuples = self.preflop_charts.bb_defense_range['call']
+            # Human opened (from SB), estimate SB RFI range (tiers 0-8)
+            for tier_idx in range(9):  # tiers 0-8  
+                if tier_idx < len(TIERS):
+                    opponent_range_tuples.extend(TIERS[tier_idx])
+        else: 
+            # Limped pot - estimate wide passive range (tiers 0-7)
+            for tier_idx in range(8):  # tiers 0-7
+                if tier_idx < len(TIERS):
+                    opponent_range_tuples.extend(TIERS[tier_idx])
 
-
-        # If for some reason the range is empty, use a default wide range
+        # If for some reason the range is empty, use a default medium range
         if not opponent_range_tuples:
-            opponent_range_tuples = self.preflop_charts.button_opening_range['premium'] + \
-                                    self.preflop_charts.button_opening_range['strong'] + \
-                                    self.preflop_charts.button_opening_range['playable']
+            for tier_idx in range(6):  # tiers 0-5 as fallback
+                if tier_idx < len(TIERS):
+                    opponent_range_tuples.extend(TIERS[tier_idx])
 
         return self.postflop_strategy.convert_range_tuples_to_hands(opponent_range_tuples)
     
@@ -96,83 +122,9 @@ class GTOEnhancedAI:
             return (high_rank, low_rank, False)
 
     
-    def load_sb_rfi_chart(self):
-        """Load the small blind raise-first-in chart"""
-        try:
-            chart_path = os.path.join(os.path.dirname(__file__), 'poker_charts', 'headsup_SBRFI.json')
-            print(f"DEBUG: Loading SB RFI chart from: {chart_path}")
-            with open(chart_path, 'r') as f:
-                chart = json.load(f)
-            print(f"DEBUG: SB RFI chart loaded successfully, contains {len(chart)} hands")
-            return chart
-        except Exception as e:
-            print(f"ERROR: Failed to load SB RFI chart: {e}")
-            return {}
+
     
-    def hand_to_string(self, hand):
-        """Convert hand format to chart format (e.g., ['2h', '3s'] -> '23o')"""
-        if len(hand) != 2:
-            return None
-        
-        # Extract ranks and suits
-        rank1, suit1 = hand[0][0], hand[0][1]
-        rank2, suit2 = hand[1][0], hand[1][1]
-        
-        # Convert rank characters
-        rank_order = {'2': 2, '3': 3, '4': 4, '5': 5, '6': 6, '7': 7, '8': 8, 
-                     '9': 9, 'T': 10, 'J': 11, 'Q': 12, 'K': 13, 'A': 14}
-        
-        if rank1 not in rank_order or rank2 not in rank_order:
-            return None
-        
-        # Sort by rank (higher first)
-        if rank_order[rank1] > rank_order[rank2]:
-            high_rank, low_rank = rank1, rank2
-            high_suit, low_suit = suit1, suit2
-        else:
-            high_rank, low_rank = rank2, rank1
-            high_suit, low_suit = suit2, suit1
-        
-        # Handle pairs
-        if high_rank == low_rank:
-            return high_rank + low_rank
-        
-        # Handle suited/offsuit
-        if high_suit == low_suit:
-            return high_rank + low_rank + 's'
-        else:
-            return high_rank + low_rank + 'o'
-    
-    def sb_first_action(self, hand):
-        """Get action from SB RFI chart"""
-        print(f"DEBUG: sb_first_action called with hand: {hand}")
-        hand_str = self.hand_to_string(hand)
-        print(f"DEBUG: Hand converted to string: {hand_str}")
-        
-        if not hand_str:
-            print("DEBUG: hand_str is None, returning fold")
-            return 'fold'
-            
-        if hand_str not in self.sb_rfi_chart:
-            print(f"DEBUG: Hand {hand_str} not found in SB RFI chart, returning fold")
-            return 'fold'
-        
-        chart_entry = self.sb_rfi_chart[hand_str]
-        print(f"DEBUG: Chart entry for {hand_str}: {chart_entry}")
-        
-        # Use probabilities to determine action
-        rand = random.random()
-        print(f"DEBUG: Random number: {rand}")
-        
-        if rand < chart_entry['raise']:
-            print("DEBUG: Action chosen: raise")
-            return 'raise'
-        elif rand < chart_entry['raise'] + chart_entry['call']:
-            print("DEBUG: Action chosen: call")
-            return 'call'
-        else:
-            print("DEBUG: Action chosen: fold")
-            return 'fold'
+
     
     def decide_action(self, game_state):
         """
@@ -188,9 +140,8 @@ class GTOEnhancedAI:
         pot = game_state['pot']
         betting_round = game_state['betting_round']
         
-        # Update opponent model at the start of our turn if it's a new hand
-        if not game_state['action_history']:
-             self.update_opponent_model(game_state)
+        # Update opponent model each decision
+        self.update_opponent_model(game_state)
 
         # Calculate key metrics
         effective_stack = min(ai_player['stack'], human_player['stack'])
@@ -218,39 +169,90 @@ class GTOEnhancedAI:
             return 'ip' if ai_idx == dealer_pos else 'oop'
 
     def preflop_decision(self, hand, to_call, pot, ai_player, stack_bb, position, game_state):
+        """
+        Comprehensive preflop decision using the tier-based preflop charts system
+        """
+        print(f"DEBUG: Preflop decision - Hand: {hand}, Position: {position}, To call: {to_call}")
+        
         action_history = game_state.get('action_history', [])
         preflop_actions = [a for a in action_history if a.get('round') == 'preflop']
+        raises = sum(1 for a in preflop_actions if a.get('action') == 'raise')
         
-        # Scenario 1: AI is SB and can Raise-First-In
-        is_rfi_situation = position == 'button' and not any(a.get('action') == 'raise' for a in preflop_actions)
-        if is_rfi_situation:
-            chart_action = self.sb_first_action(hand)
+        # Extract bet history for proper sizing analysis
+        bet_history = self._extract_bet_history(preflop_actions)
+        print(f"DEBUG: Bet history: {bet_history}, Raises: {raises}")
         
-        # Scenario 2: AI is BB and is facing a limp (can check or raise)
-        elif position == 'bb' and to_call == 0:
-             chart_action = self.preflop_charts.get_preflop_action(
-                hand, position, 'limp', 0, stack_bb
-            )
+        # Convert amounts to big blinds
+        raise_size_bb = to_call / BIG_BLIND if BIG_BLIND > 0 else 0
+        pot_bb = pot / BIG_BLIND if BIG_BLIND > 0 else 0
         
-        # Scenario 3: AI is facing a raise
+        # Determine the action facing the AI
+        if position == 'button' and raises == 0:
+            action_to_hero = 'none'  # SB first action
+        elif position == 'bb' and to_call == 0 and raises == 0:
+            action_to_hero = 'limp'  # SB limped
+        elif to_call > 0:
+            action_to_hero = 'raise'  # Facing a raise (could be 1st raise, 3-bet, 4-bet, etc.)
         else:
-            raises = sum(1 for a in preflop_actions if a.get('action') == 'raise')
-            action_to_hero = 'none'
-            if to_call > 0: # Facing a bet
-                if raises == 1:
-                    action_to_hero = 'raise'
-                elif raises == 2:
-                    action_to_hero = '3bet'
-                else:
-                    action_to_hero = '4bet'
-            
-            raise_size_bb = to_call / BIG_BLIND if BIG_BLIND > 0 else 0
+            action_to_hero = 'none'  # Fallback
+        
+        print(f"DEBUG: Action to hero: {action_to_hero}, Raise size: {raise_size_bb}bb")
+        
+        # Get chart-based decision using comprehensive system
+        try:
             chart_action = self.preflop_charts.get_preflop_action(
-                hand, position, action_to_hero, raise_size_bb, stack_bb
+                hand=hand,
+                position=position,
+                action_to_hero=action_to_hero,
+                raise_size_bb=raise_size_bb,
+                stack_bb=stack_bb,
+                pot_bb=pot_bb,
+                num_raises=raises,
+                bet_history=bet_history
             )
-
+            print(f"DEBUG: Chart action: {chart_action}")
+        except Exception as e:
+            print(f"ERROR: Preflop charts failed: {e}")
+            # Fallback to conservative play
+            tier = self.preflop_charts.get_hand_tier(hand)
+            if tier <= 1:
+                chart_action = 'call' if to_call > 0 else 'raise'
+            else:
+                chart_action = 'fold'
+        
+        # Apply opponent adjustments
         adjusted_action = self.adjust_for_opponent_preflop(chart_action, hand, to_call, pot, ai_player, position, game_state)
-        return self.convert_action_to_game_format(adjusted_action, to_call, pot, ai_player, 'preflop', game_state)
+        print(f"DEBUG: Adjusted action: {adjusted_action}")
+        
+        # Convert to game format
+        result = self.convert_action_to_game_format(adjusted_action, to_call, pot, ai_player, 'preflop', game_state)
+        print(f"DEBUG: Final preflop result: {result}")
+        return result
+    
+    def _extract_bet_history(self, preflop_actions):
+        """
+        Extract bet sizes from preflop action history for proper bet sizing analysis
+        Returns list of bet sizes in big blinds: [original_raise, 3bet, 4bet, ...]
+        """
+        bet_history = []
+        
+        for action in preflop_actions:
+            if action.get('action') == 'raise':
+                # Extract bet amount from action
+                amount = action.get('amount', 0)
+                if amount > 0:
+                    amount_bb = amount / BIG_BLIND if BIG_BLIND > 0 else 0
+                    bet_history.append(amount_bb)
+                elif action.get('raise_to'):
+                    # Some action formats use 'raise_to'
+                    amount_bb = action['raise_to'] / BIG_BLIND if BIG_BLIND > 0 else 0
+                    bet_history.append(amount_bb)
+                else:
+                    # Fallback estimation based on position in sequence
+                    estimated_amount = 3.0 * (2 ** len(bet_history))  # 3bb, 6bb, 12bb, 24bb...
+                    bet_history.append(estimated_amount)
+        
+        return bet_history
 
     def adjust_for_opponent_preflop(self, chart_action, hand, to_call, pot, ai_player, position, game_state):
         """
@@ -315,14 +317,22 @@ class GTOEnhancedAI:
             return self.decide_call_raise_fold(hand_strength, equity, pot_odds, to_call, pot, ai_player, position, street, game_state)
 
     def decide_check_or_bet(self, hand_strength, equity, pot, ai_player, position, street, game_state):
-        if hand_strength >= 0.75: # Value bet
-            bet_size = self.calculate_value_bet_size(hand_strength, pot, ai_player['stack'], street)
+        board_texture = self.analyze_board_texture_advanced(game_state.get('community', []))
+
+        # Value betting
+        if hand_strength >= 0.75:
+            if board_texture.get('dry'):
+                bet_size = min(ai_player['stack'], round(pot * 0.33))
+            else:
+                bet_size = self.calculate_value_bet_size(hand_strength, pot, ai_player['stack'], street)
             return ('bet', bet_size)
-        
-        if equity > 0.6 and street != 'river': # Semi-bluff with strong draws
-            bet_size = round(pot * 0.7)
+
+        # Semi-bluffing with strong equity hands/draws
+        if equity > 0.6 and street != 'river':
+            sizing = 0.5 if board_texture.get('dry') else 0.7
+            bet_size = round(pot * sizing)
             return ('bet', min(bet_size, ai_player['stack']))
-            
+
         return ('check', 0)
 
     def decide_call_raise_fold(self, hand_strength, equity, pot_odds, to_call, pot, ai_player, position, street, game_state):
@@ -369,30 +379,68 @@ class GTOEnhancedAI:
         if bet_to_call <= 0: return float('inf')
         return pot_size / bet_to_call
 
+    # ----- Advanced board texture analysis (imported from GTO Enhanced AI) -----
+    def analyze_board_texture_advanced(self, community):
+        """Return simple texture flags for sizing decisions."""
+        if len(community) < 3:
+            return {'type': 'preflop'}
+
+        ranks = [card[0] for card in community]
+        suits = [card[1] for card in community]
+
+        suit_counts = {}
+        for s in suits:
+            suit_counts[s] = suit_counts.get(s, 0) + 1
+        max_suit = max(suit_counts.values())
+
+        rank_values = {'2': 2, '3': 3, '4': 4, '5': 5, '6': 6, '7': 7, '8': 8, '9': 9,
+                       'T': 10, 'J': 11, 'Q': 12, 'K': 13, 'A': 14}
+        values = sorted([rank_values[r] for r in ranks])
+
+        straight_draw = False
+        if len(set(values)) >= 3:
+            for i in range(len(values) - 2):
+                if values[i+2] - values[i] <= 4:
+                    straight_draw = True
+                    break
+
+        paired = len(set(ranks)) < len(ranks)
+
+        return {
+            'dry': max_suit <= 2 and not straight_draw and not paired,
+            'wet': max_suit >= 3 or straight_draw,
+            'paired': paired,
+            'flush_draw': max_suit >= 3,
+            'straight_draw': straight_draw
+        }
+
     def update_opponent_model(self, game_state):
         """
-        Update opponent model based on the hand history of the *previous* hand.
-        Note: This is a simplified implementation. It processes the entire preflop history
-        at the start of a new hand, which is not ideal but works for this structure.
+        Lightweight opponent model tracking across hands. Only a few basic stats are
+        collected for now but this can be extended later.
         """
-        model = game_state.get('opponent_model')
-        history = game_state.get('action_history', [])
-        
-        if not model or not history: return
+        action_history = game_state.get('action_history', [])
+        if not action_history:
+            return
 
-        human_player_name = "Player 1"
-        preflop_actions = [a for a in history if a.get('round') == 'preflop']
-        human_actions = [a for a in preflop_actions if a['player'] == human_player_name]
+        # Increment hands played only when a new hand starts. We infer this from a
+        # preflop 'deal' action if your engine emits one, otherwise this will just
+        # count every decision which is harmless.
+        self.opponent_model['hands_played'] += 1
 
-        if not human_actions: return
+        last_action = action_history[-1]
+        if len(self.opponent_model['recent_actions']) >= 10:
+            self.opponent_model['recent_actions'].pop(0)
+        self.opponent_model['recent_actions'].append(last_action)
 
-        model['preflop_stats']['vpip_opportunities'] += 1
-        if any(a['action'] in ['call', 'raise'] for a in human_actions):
-            model['preflop_stats']['vpip'] += 1
-        
-        model['preflop_stats']['pfr_opportunities'] += 1
-        if any(a['action'] == 'raise' for a in human_actions):
-            model['preflop_stats']['pfr'] += 1
+        # Simple VPIP / PFR tracking for Player 1 (human)
+        if last_action.get('round') == 'preflop' and last_action.get('player') == 'Player 1':
+            self.opponent_model['preflop_stats']['vpip_opportunities'] += 1
+            if last_action.get('action') in ['call', 'raise']:
+                self.opponent_model['preflop_stats']['vpip'] += 1
+            if last_action.get('action') == 'raise':
+                self.opponent_model['preflop_stats']['pfr'] += 1
+                self.opponent_model['preflop_stats']['pfr_opportunities'] += 1
 
     def convert_action_to_game_format(self, chart_action, to_call, pot, ai_player, street, game_state):
         if chart_action == 'fold':
@@ -407,17 +455,29 @@ class GTOEnhancedAI:
                 preflop_actions = [a for a in game_state.get('action_history', []) if a.get('round') == 'preflop']
                 is_rfi = not any(a.get('action') == 'raise' for a in preflop_actions)
 
+                effective_stack = min(ai_player['stack'], game_state['players'][0]['stack'])
+                stack_bb = effective_stack / BIG_BLIND if BIG_BLIND else 100
+
                 if is_rfi:
-                    # RFI: raise to 2.5x BB
-                    total_bet_amount = BIG_BLIND * 2.5
+                    # Stack-aware open sizing
+                    if stack_bb < 20:
+                        total_bet_amount = BIG_BLIND * 2.2
+                    elif stack_bb < 40:
+                        total_bet_amount = BIG_BLIND * 2.3
+                    else:
+                        total_bet_amount = BIG_BLIND * 2.5
                 else:
-                    # 3-bet or 4-bet+: standard sizing
-                    # Raise is 3x the previous bet/raise on top
-                    total_bet_amount = game_state['current_bet'] + (game_state['last_bet_amount'] * 3)
+                    # Facing a raise – 3-bet / 4-bet sizing at 4.5x opponent's last bet
+                    if stack_bb < 25:
+                        total_bet_amount = ai_player['current_bet'] + effective_stack  # shove
+                    else:
+                        # Use 4.5x multiplier for all stack depths
+                        multiplier = 4.5
+                        total_bet_amount = game_state['current_bet'] + (game_state['last_bet_amount'] * multiplier)
             
-            else: # Postflop
-                # Bet 2/3 pot
-                total_bet_amount = pot * 0.67
+            else:  # Postflop
+                board_texture = self.analyze_board_texture_advanced(game_state.get('community', []))
+                total_bet_amount = pot * (0.33 if board_texture.get('dry') else 0.67)
 
             # Ensure the amount is an integer and doesn't exceed the player's stack
             final_amount = min(ai_player['stack'] + ai_player['current_bet'], round(total_bet_amount))

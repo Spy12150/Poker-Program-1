@@ -280,10 +280,14 @@ class GTOEnhancedAI:
         print(f"DEBUG: Using preflop charts - action_to_hero: {action_to_hero}, raise_size_bb: {raise_size_bb}")
         print(f"DEBUG: Hand: {hand}, Position: {position}, Stack BB: {stack_bb}")
         
+        # Count total raises to pass to the comprehensive system
+        total_raises = sum(1 for a in preflop_actions if a.get('action') == 'raise')
+        pot_bb = pot / BIG_BLIND if BIG_BLIND > 0 else 0
+        
         # Get chart-based decision
         try:
             chart_action = self.preflop_charts.get_preflop_action(
-                hand, position, action_to_hero, raise_size_bb, stack_bb
+                hand, position, action_to_hero, raise_size_bb, stack_bb, pot_bb, total_raises
             )
             print(f"DEBUG: Chart action: {chart_action}")
         except Exception as e:

@@ -147,30 +147,38 @@ const ActionPanel = ({
       {/* Quick Bet Buttons - Conditional based on betting round */}
       <div className="quick-bet-row">
         {gameState.betting_round === 'preflop' ? (
-          // Preflop buttons: 2.5x (50), 3x (60), Pot, All-in
+          // Preflop buttons: 2.5x BB, 3x BB, Pot, All-in
           <>
-            {minBet <= 50 && (
-              <button 
-                className="quick-bet-button bet-2-5x"
-                onClick={() => {
-                  setBetSliderValue(50);
-                  setRaiseAmount('50');
-                }}
-              >
-                2.5x
-              </button>
-            )}
-            {minBet <= 60 && (
-              <button 
-                className="quick-bet-button bet-3x"
-                onClick={() => {
-                  setBetSliderValue(60);
-                  setRaiseAmount('60');
-                }}
-              >
-                3x
-              </button>
-            )}
+            {(() => {
+              const bigBlind = gameState.big_blind || 10;
+              const bet25x = Math.round(bigBlind * 2.5);
+              return minBet <= bet25x ? (
+                <button 
+                  className="quick-bet-button bet-2-5x"
+                  onClick={() => {
+                    setBetSliderValue(bet25x);
+                    setRaiseAmount(bet25x.toString());
+                  }}
+                >
+                  2.5x
+                </button>
+              ) : null;
+            })()}
+            {(() => {
+              const bigBlind = gameState.big_blind || 10;
+              const bet3x = bigBlind * 3;
+              return minBet <= bet3x ? (
+                <button 
+                  className="quick-bet-button bet-3x"
+                  onClick={() => {
+                    setBetSliderValue(bet3x);
+                    setRaiseAmount(bet3x.toString());
+                  }}
+                >
+                  3x
+                </button>
+              ) : null;
+            })()}
             {(() => {
               const callAmount = getCallAmount();
               const currentPot = gameState.pot;
