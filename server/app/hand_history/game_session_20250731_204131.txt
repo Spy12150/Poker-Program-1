@@ -1,0 +1,106 @@
+Riposte Hand #00001:  Hold'em No Limit ($5/$10) - 2025/07/31 20:41:31 ET
+Table 'Heads-Up' 2-max Seat #1 is the button
+Seat 1: Player 1 (button) ($1000 in chips)
+Seat 2: Player 2 ($1000 in chips)
+Player 1: posts small blind $5
+Player 2: posts big blind $10
+
+*** PREFLOP ***
+*** HOLE CARDS ***
+Dealt to Player 1 [Ts Qc]
+Dealt to Player 2 [4c Tc]
+Player 1: raises $15 to $25
+Player 2: calls $15
+
+*** FLOP *** [Kh 6h 7c]
+Player 2: checks
+Player 1: raises $17 to $17
+Player 2: calls $17
+
+*** TURN *** [Kh 6h 7c Qd]
+Player 2: checks
+Player 1: raises $42 to $42
+Player 2: folds
+Uncalled bet ($126) returned to Player 1
+Player 1 collected $0 from pot
+Player 1: doesn't show hand
+
+*** SUMMARY ***
+Total pot $126 | Rake $0.00
+Board [[Kh] [6h] [7c] [Qd]]
+Seat 1: Player 1 (button) collected ($126) with Wins by Fold
+Seat 2: Player 2 folded on the Turn (didn't bet)
+
+
+Riposte Hand #00002:  Hold'em No Limit ($5/$10) - 2025/07/31 20:42:09 ET
+Table 'Heads-Up' 2-max Seat #2 is the button
+Seat 1: Player 1 ($1042 in chips)
+Seat 2: Player 2 (button) ($958 in chips)
+Player 2: posts small blind $5
+Player 1: posts big blind $10
+
+*** PREFLOP ***
+*** HOLE CARDS ***
+Dealt to Player 1 [6c 4s]
+Dealt to Player 2 [Kd Qh]
+Player 2: raises $15 to $25
+Player 1: raises $15 to $40
+Player 2: raises $68 to $108
+Player 1: folds
+Uncalled bet ($108) returned to Player 2
+Player 2 collected $40 from pot
+Player 2: doesn't show hand
+
+*** SUMMARY ***
+Total pot $148 | Rake $0.00
+Seat 1: Player 1 folded on the Preflop
+Seat 2: Player 2 (button) collected ($148) with Wins by Fold
+
+
+Riposte Hand #00003:  Hold'em No Limit ($5/$10) - 2025/07/31 20:42:32 ET
+Table 'Heads-Up' 2-max Seat #1 is the button
+Seat 1: Player 1 (button) ($1002 in chips)
+Seat 2: Player 2 ($998 in chips)
+Player 1: posts small blind $5
+Player 2: posts big blind $10
+
+*** PREFLOP ***
+*** HOLE CARDS ***
+Dealt to Player 1 [Qs Td]
+Dealt to Player 2 [Ad 5h]
+Player 1: raises $15 to $25
+Player 2: raises $67 to $92
+Player 1: calls $67
+
+*** FLOP *** [Th 3d 2h]
+Player 2: checks
+Player 1: raises $62 to $62
+Player 2: calls $62
+
+*** TURN *** [Th 3d 2h 6s]
+Player 2: checks
+Player 1: raises $154 to $154
+Player 2: folds
+Uncalled bet ($462) returned to Player 1
+Player 1 collected $0 from pot
+Player 1: doesn't show hand
+
+*** SUMMARY ***
+Total pot $462 | Rake $0.00
+Board [[Th] [3d] [2h] [6s]]
+Seat 1: Player 1 (button) collected ($462) with Wins by Fold
+Seat 2: Player 2 folded on the Turn (didn't bet)
+
+
+Riposte Hand #00004:  Hold'em No Limit ($5/$10) - 2025/07/31 20:42:55 ET
+Table 'Heads-Up' 2-max Seat #2 is the button
+Seat 1: Player 1 ($1156 in chips)
+Seat 2: Player 2 (button) ($844 in chips)
+Player 2: posts small blind $5
+Player 1: posts big blind $10
+
+*** PREFLOP ***
+*** HOLE CARDS ***
+Dealt to Player 1 [Jh 7h]
+Dealt to Player 2 [7s Td]
+Player 2: raises $15 to $25

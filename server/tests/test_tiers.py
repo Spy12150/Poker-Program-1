@@ -4,7 +4,7 @@ Test file to display all hand tiers from tier_config.py
 """
 import sys
 import os
-sys.path.append(os.path.join(os.path.dirname(__file__), 'server', 'app', 'game'))
+sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'app', 'game'))
 
 from hardcode_ai.tier_config import TIERS, INT_TO_RANK
 

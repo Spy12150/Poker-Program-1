@@ -1,0 +1,106 @@
+Riposte Hand #00001:  Hold'em No Limit ($5/$10) - 2025/07/31 20:52:47 ET
+Table 'Heads-Up' 2-max Seat #1 is the button
+Seat 1: Player 1 (button) ($1000 in chips)
+Seat 2: Player 2 ($1000 in chips)
+Player 1: posts small blind $5
+Player 2: posts big blind $10
+
+*** PREFLOP ***
+*** HOLE CARDS ***
+Dealt to Player 1 [9d Ks]
+Dealt to Player 2 [6d 3h]
+Player 1: raises $10 to $20
+Player 2: folds
+Uncalled bet ($20) returned to Player 1
+Player 1 collected $10 from pot
+Player 1: doesn't show hand
+
+*** SUMMARY ***
+Total pot $30 | Rake $0.00
+Seat 1: Player 1 (button) collected ($30) with Wins by Fold
+Seat 2: Player 2 folded on the Preflop
+
+
+Riposte Hand #00002:  Hold'em No Limit ($5/$10) - 2025/07/31 20:52:51 ET
+Table 'Heads-Up' 2-max Seat #2 is the button
+Seat 1: Player 1 ($1010 in chips)
+Seat 2: Player 2 (button) ($990 in chips)
+Player 2: posts small blind $5
+Player 1: posts big blind $10
+
+*** PREFLOP ***
+*** HOLE CARDS ***
+Dealt to Player 1 [Kh 7d]
+Dealt to Player 2 [Jc 3d]
+Player 2: raises $15 to $25
+Player 1: raises $15 to $40
+Player 2: folds
+Uncalled bet ($40) returned to Player 1
+Player 1 collected $25 from pot
+Player 1: doesn't show hand
+
+*** SUMMARY ***
+Total pot $65 | Rake $0.00
+Seat 1: Player 1 collected ($65) with Wins by Fold
+Seat 2: Player 2 (button) folded on the Preflop
+
+
+Riposte Hand #00003:  Hold'em No Limit ($5/$10) - 2025/07/31 20:52:55 ET
+Table 'Heads-Up' 2-max Seat #1 is the button
+Seat 1: Player 1 (button) ($1035 in chips)
+Seat 2: Player 2 ($965 in chips)
+Player 1: posts small blind $5
+Player 2: posts big blind $10
+
+*** PREFLOP ***
+*** HOLE CARDS ***
+Dealt to Player 1 [As Ah]
+Dealt to Player 2 [6s 8d]
+Player 1: raises $15 to $25
+Player 2: folds
+Uncalled bet ($25) returned to Player 1
+Player 1 collected $10 from pot
+Player 1: doesn't show hand
+
+*** SUMMARY ***
+Total pot $35 | Rake $0.00
+Seat 1: Player 1 (button) collected ($35) with Wins by Fold
+Seat 2: Player 2 folded on the Preflop
+
+
+Riposte Hand #00004:  Hold'em No Limit ($5/$10) - 2025/07/31 20:53:00 ET
+Table 'Heads-Up' 2-max Seat #2 is the button
+Seat 1: Player 1 ($1045 in chips)
+Seat 2: Player 2 (button) ($955 in chips)
+Player 2: posts small blind $5
+Player 1: posts big blind $10
+
+*** PREFLOP ***
+*** HOLE CARDS ***
+Dealt to Player 1 [9s 7c]
+Dealt to Player 2 [Qd 6c]
+Player 2: raises $15 to $25
+Player 1: raises $15 to $40
+Player 2: calls $15
+
+*** FLOP *** [4h 3h 6d]
+Player 1: checks
+Player 2: checks
+
+*** TURN *** [4h 3h 6d 5c]
+Player 1: raises $40 to $40
+Player 2: raises $128 to $168
+Player 1: calls $128
+
+*** RIVER *** [4h 3h 6d 5c 8s]
+Player 1: checks
+Player 2: checks
+Player 1: shows [9s 7c] (Straight)
+Player 2: shows [Qd 6c] (Pair)
+Player 1 collected $416 from pot
+
+*** SUMMARY ***
+Total pot $416 | Rake $0.00
+Board [[4h] [3h] [6d] [5c] [8s]]
+Seat 1: Player 1 collected ($416) with Straight
+Seat 2: Player 2 (button) lost with Pair

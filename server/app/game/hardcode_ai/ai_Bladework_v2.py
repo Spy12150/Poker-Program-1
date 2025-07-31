@@ -337,17 +337,66 @@ class GTOEnhancedAI:
 
     def decide_call_raise_fold(self, hand_strength, equity, pot_odds, to_call, pot, ai_player, position, street, game_state):
         required_equity = to_call / (pot + to_call)
+        bet_size_ratio = to_call / pot if pot > 0 else 0
+        
+        # Identify strong draws early (used throughout function)
+        is_strong_draw = equity >= 0.32 and street != 'river'  # Strong draws get special treatment
+        
+        # CRITICAL FIX: Add hand strength filters for big bets
+        min_hand_strength_thresholds = {
+            # Bet size ratio -> minimum hand strength to call
+            0.0:  0.10,   # Small bets: can call with weak hands
+            0.33: 0.15,   # 1/3 pot: need some strength  
+            0.5:  0.20,   # 1/2 pot: need decent strength (pairs OK)
+            0.67: 0.30,   # 2/3 pot: need good strength
+            1.0:  0.45,   # Pot bet: need strong hand
+            1.5:  0.65,   # 1.5x pot: need very strong hand
+            2.0:  0.80,   # 2x pot: need nuts/near-nuts
+        }
+        
+        # Find the appropriate threshold based on bet size
+        min_strength = 0.10
+        for threshold_ratio in sorted(min_hand_strength_thresholds.keys()):
+            if bet_size_ratio >= threshold_ratio:
+                min_strength = min_hand_strength_thresholds[threshold_ratio]
+        
+        # CRITICAL CHECK: Don't call big bets with weak hands (BUT allow strong draws)
+        if hand_strength < min_strength and not is_strong_draw:
+            print(f"DEBUG: Folding weak hand (strength {hand_strength:.3f} < required {min_strength:.3f}) vs {bet_size_ratio:.1f}x pot bet")
+            return ('fold', 0)
+        elif is_strong_draw and hand_strength < min_strength:
+            print(f"DEBUG: Allowing draw (strength {hand_strength:.3f}, equity {equity:.3f}) vs {bet_size_ratio:.1f}x pot bet")
+
+        # Adjust required equity based on bet size (bigger bets need higher equity)
+        bet_size_adjustment = min(0.15, bet_size_ratio * 0.05)  # Up to 15% increase
+        
+        # Be more lenient with equity requirements for strong draws (implied odds)
+        if is_strong_draw:
+            bet_size_adjustment *= 0.5  # Reduce adjustment for draws
+            
+        adjusted_required_equity = required_equity + bet_size_adjustment
 
         if hand_strength >= 0.85: # Raise for value with the nuts
              raise_size = self.calculate_value_raise_size(hand_strength, to_call, pot, ai_player['stack'], street)
              return ('raise', ai_player['current_bet'] + to_call + raise_size)
 
-        if equity > required_equity:
+        if equity > adjusted_required_equity:
             # Consider raising with strong hands/draws, especially in position
-            if equity > 0.7 and position == 'ip':
-                if random.random() < 0.4: # Mix up strategy
-                    raise_size = self.calculate_value_raise_size(hand_strength, to_call, pot, ai_player['stack'], street)
-                    return ('raise', ai_player['current_bet'] + to_call + raise_size)
+            should_raise = False
+            
+            # Raise with very strong made hands
+            if equity > 0.7 and position == 'ip' and hand_strength > 0.6:
+                should_raise = random.random() < 0.4
+            
+            # Also raise with monster draws (combo draws, strong flush draws)
+            elif equity >= 0.42 and is_strong_draw and position == 'ip' and street != 'river':
+                should_raise = random.random() < 0.3  # Semi-bluff raise with strong draws
+                print(f"DEBUG: Considering semi-bluff raise with draw (equity {equity:.3f})")
+            
+            if should_raise:
+                raise_size = self.calculate_value_raise_size(hand_strength, to_call, pot, ai_player['stack'], street)
+                return ('raise', ai_player['current_bet'] + to_call + raise_size)
+            
             return ('call', 0)
         
         return ('fold', 0)
@@ -364,16 +413,19 @@ class GTOEnhancedAI:
         if not community: return self.get_simple_hand_strength(hand)
         try:
             score, _ = evaluate_hand(hand, community)
-            if score <= 10: return 0.99
-            elif score <= 166: return 0.95
-            elif score <= 322: return 0.90
-            elif score <= 1599: return 0.85
-            elif score <= 1609: return 0.80
-            elif score <= 2467: return 0.65
-            elif score <= 3325: return 0.50
-            elif score <= 6185: return 0.35
-            else: return 0.15
-        except: return 0.2
+            # More conservative hand strength scaling
+            if score <= 10: return 0.99      # Royal flush, straight flush
+            elif score <= 166: return 0.94   # Four of a kind  
+            elif score <= 322: return 0.88   # Full house
+            elif score <= 1599: return 0.80  # Flush
+            elif score <= 1609: return 0.72  # Straight
+            elif score <= 2467: return 0.55  # Three of a kind
+            elif score <= 3325: return 0.40  # Two pair
+            elif score <= 6185: return 0.25  # One pair
+            else: return 0.10                # High card (was 0.15, now more realistic)
+        except: 
+            # More conservative fallback for errors
+            return 0.10
 
     def calculate_pot_odds(self, bet_to_call, pot_size):
         if bet_to_call <= 0: return float('inf')
