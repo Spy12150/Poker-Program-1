@@ -186,6 +186,7 @@ const GamePage = () => {
   const startGame = async () => {
     setLoading(true);
     try {
+      console.log('API URL:', import.meta.env.VITE_API_URL); // Debug log
       const res = await fetch(`${import.meta.env.VITE_API_URL}/start-game`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' }
