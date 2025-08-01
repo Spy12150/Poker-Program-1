@@ -29,15 +29,19 @@ def start_game():
     if request.method == 'OPTIONS':
         # Handle preflight request
         return '', 200
+    
     try:
         game_id, response = game_service.create_new_game()
         return jsonify(response)
     except Exception as e:
         return jsonify({'error': f'Failed to start game: {str(e)}'}), 500
 
-@bp.route('/player-action', methods=['POST'])
+@bp.route('/player-action', methods=['POST', 'OPTIONS'])
 def player_action():
     """Handle player action and process game flow"""
+    if request.method == 'OPTIONS':
+        return '', 200
+        
     data = request.json
     game_id = data.get('game_id')
     action = data.get('action')
@@ -79,9 +83,12 @@ def get_game_state(game_id):
     
     return jsonify(game_state)
 
-@bp.route('/process-ai-turn', methods=['POST'])
+@bp.route('/process-ai-turn', methods=['POST', 'OPTIONS'])
 def process_ai_turn():
     """Process AI turn and continue game flow"""
+    if request.method == 'OPTIONS':
+        return '', 200
+        
     print(f"DEBUG: process-ai-turn route called")
     data = request.json
     game_id = data.get('game_id')
@@ -104,9 +111,12 @@ def process_ai_turn():
         print(f"DEBUG: Exception in execute_ai_turn: {e}")
         return jsonify({'error': 'Internal server error'}), 500
 
-@bp.route('/new-hand', methods=['POST'])
+@bp.route('/new-hand', methods=['POST', 'OPTIONS'])
 def new_hand():
     """Start a new hand in existing game"""
+    if request.method == 'OPTIONS':
+        return '', 200
+        
     data = request.json
     game_id = data.get('game_id')
     
@@ -122,9 +132,12 @@ def new_hand():
     except Exception as e:
         return jsonify({'error': 'Internal server error'}), 500
 
-@bp.route('/new-round', methods=['POST'])
+@bp.route('/new-round', methods=['POST', 'OPTIONS'])
 def new_round():
     """Start a new round in existing game (reset chip stacks)"""
+    if request.method == 'OPTIONS':
+        return '', 200
+        
     data = request.json
     game_id = data.get('game_id')
     
