@@ -8,21 +8,18 @@ bp = Blueprint('api', __name__)
 # Initialize services with error handling
 try:
     game_service = GameService()
-    print("GameService initialized successfully")
 except Exception as e:
     print(f"Failed to initialize GameService: {e}")
     game_service = None
 
 try:
     analytics_service = AnalyticsService()
-    print("AnalyticsService initialized successfully")
 except Exception as e:
     print(f"Failed to initialize AnalyticsService: {e}")
     analytics_service = None
 
 try:
     validation_service = ValidationService()
-    print("ValidationService initialized successfully")
 except Exception as e:
     print(f"Failed to initialize ValidationService: {e}")
     validation_service = None
