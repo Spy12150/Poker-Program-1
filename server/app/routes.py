@@ -5,10 +5,27 @@ from app.services.validation_service import ValidationService
 
 bp = Blueprint('api', __name__)
 
-# Initialize services
-game_service = GameService()
-analytics_service = AnalyticsService()
-validation_service = ValidationService()
+# Initialize services with error handling
+try:
+    game_service = GameService()
+    print("GameService initialized successfully")
+except Exception as e:
+    print(f"Failed to initialize GameService: {e}")
+    game_service = None
+
+try:
+    analytics_service = AnalyticsService()
+    print("AnalyticsService initialized successfully")
+except Exception as e:
+    print(f"Failed to initialize AnalyticsService: {e}")
+    analytics_service = None
+
+try:
+    validation_service = ValidationService()
+    print("ValidationService initialized successfully")
+except Exception as e:
+    print(f"Failed to initialize ValidationService: {e}")
+    validation_service = None
 
 @bp.after_request
 def after_request(response):
@@ -21,7 +38,16 @@ def after_request(response):
 @bp.route('/', methods=['GET'])
 def health_check():
     """Simple health check endpoint"""
-    return jsonify({'status': 'OK', 'message': 'Flask app is running!'})
+    status = {
+        'status': 'OK', 
+        'message': 'Flask app is running!',
+        'services': {
+            'game_service': game_service is not None,
+            'analytics_service': analytics_service is not None,
+            'validation_service': validation_service is not None
+        }
+    }
+    return jsonify(status)
 
 @bp.route('/start-game', methods=['POST', 'OPTIONS'])
 def start_game():
