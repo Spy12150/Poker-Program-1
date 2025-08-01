@@ -186,7 +186,7 @@ const GamePage = () => {
   const startGame = async () => {
     setLoading(true);
     try {
-      const res = await fetch('http://localhost:5001/start-game', {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/start-game`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' }
       });
@@ -236,7 +236,7 @@ const GamePage = () => {
     
     console.log('Sending request to process-ai-turn endpoint');
     try {
-      const res = await fetch('http://localhost:5001/process-ai-turn', {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/process-ai-turn`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ game_id: currentGameId })
@@ -321,7 +321,7 @@ const GamePage = () => {
     
     setLoading(true);
     try {
-      const res = await fetch('http://localhost:5001/player-action', {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/player-action`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -375,7 +375,7 @@ const GamePage = () => {
     
     setLoading(true);
     try {
-      const res = await fetch('http://localhost:5001/new-hand', {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/new-hand`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ game_id: gameId })
@@ -412,7 +412,7 @@ const GamePage = () => {
     
     setLoading(true);
     try {
-      const res = await fetch('http://localhost:5001/new-round', {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/new-round`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ game_id: gameId })
