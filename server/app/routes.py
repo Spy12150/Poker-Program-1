@@ -10,14 +10,25 @@ game_service = GameService()
 analytics_service = AnalyticsService()
 validation_service = ValidationService()
 
+@bp.after_request
+def after_request(response):
+    """Add CORS headers to all responses"""
+    response.headers.add('Access-Control-Allow-Origin', '*')
+    response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization')
+    response.headers.add('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS')
+    return response
+
 @bp.route('/', methods=['GET'])
 def health_check():
     """Simple health check endpoint"""
     return jsonify({'status': 'OK', 'message': 'Flask app is running!'})
 
-@bp.route('/start-game', methods=['POST'])
+@bp.route('/start-game', methods=['POST', 'OPTIONS'])
 def start_game():
     """Start a new game session"""
+    if request.method == 'OPTIONS':
+        # Handle preflight request
+        return '', 200
     try:
         game_id, response = game_service.create_new_game()
         return jsonify(response)
