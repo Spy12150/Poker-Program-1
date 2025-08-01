@@ -1,17 +1,17 @@
 {
-  "total_hands": 649,
+  "total_hands": 650,
   "player_wins": 422,
-  "ai_wins": 227,
+  "ai_wins": 228,
   "showdowns": 103,
   "player_stats": {
-    "vpip": 0.0030816640986132513,
+    "vpip": 0.0,
     "pfr": 0.0,
     "fold_to_bet": 0.0,
     "avg_bet_size": 0.0,
     "total_winnings": 0
   },
   "ai_stats": {
-    "vpip": 0.0015408320493066256,
+    "vpip": 0.0,
     "pfr": 0.0,
     "fold_to_bet": 0.0,
     "avg_bet_size": 0.0,
@@ -27250,6 +27250,29 @@
           "round": "river",
           "pot_after": 1870.0,
           "amount": 338.0
+        }
+      ]
+    },
+    {
+      "timestamp": "2025-08-01T18:38:52.020591",
+      "winner": "Player 2",
+      "pot_size": 0,
+      "showdown": false,
+      "player_hand": [
+        "9d",
+        "Qh"
+      ],
+      "ai_hand": [
+        "Kd",
+        "2d"
+      ],
+      "community": [],
+      "actions": [
+        {
+          "player": "Player 1",
+          "action": "fold",
+          "round": "preflop",
+          "pot_after": 15
         }
       ]
     }

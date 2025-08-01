@@ -10,6 +10,11 @@ game_service = GameService()
 analytics_service = AnalyticsService()
 validation_service = ValidationService()
 
+@bp.route('/', methods=['GET'])
+def health_check():
+    """Simple health check endpoint"""
+    return jsonify({'status': 'OK', 'message': 'Flask app is running!'})
+
 @bp.route('/start-game', methods=['POST'])
 def start_game():
     """Start a new game session"""
