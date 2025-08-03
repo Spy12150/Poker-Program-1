@@ -12,8 +12,9 @@ def create_app():
     CORS(app, origins="*", methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"], 
          allow_headers=["Content-Type", "Authorization"])
     
-    # Initialize SocketIO with CORS support
-    socketio.init_app(app, cors_allowed_origins="*", async_mode='threading')
+    # Initialize SocketIO with CORS support and production-ready async mode
+    async_mode = 'eventlet' if 'eventlet' in __import__('sys').modules else 'threading'
+    socketio.init_app(app, cors_allowed_origins="*", async_mode=async_mode)
     
     from .routes import bp
     app.register_blueprint(bp)
