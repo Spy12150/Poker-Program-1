@@ -1,10 +1,21 @@
 import React from 'react';
 
-const DebugPanel = ({ gameState, handOver, canCheck, canCall, canRaise, processAITurn }) => {
+const DebugPanel = ({ gameState, handOver, canCheck, canCall, canRaise, processAITurn, selectedAIType }) => {
   if (!gameState) return null;
 
-  // Get AI info from game state (sent from backend)
-  const aiInfo = gameState.ai_info || { name: 'Unknown AI', logic: 'Unknown' };
+  // Define AI info based on selectedAIType
+  const aiInfoMap = {
+    'bladework_v2': {
+      name: 'Bladework v2',
+      logic: 'Hard Coded'
+    },
+    'froggie': {
+      name: 'Froggie',
+      logic: 'Random'
+    }
+  };
+
+  const aiInfo = aiInfoMap[selectedAIType] || aiInfoMap['bladework_v2'];
   const aiName = aiInfo.name;
   const aiLogic = aiInfo.logic;
 

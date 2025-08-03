@@ -1,3 +1,35 @@
+/* Connection Status Indicator */
+.connection-status {
+  position: fixed;
+  top: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 5px 12px;
+  border-radius: 15px;
+  font-size: 12px;
+  font-weight: bold;
+  z-index: 1000;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.connection-status.connected {
+  background: rgba(76, 175, 80, 0.9);
+  color: white;
+  border: 2px solid #4CAF50;
+}
+
+.connection-status.connecting {
+  background: rgba(255, 193, 7, 0.9);
+  color: white;
+  border: 2px solid #FFC107;
+}
+
+.connection-status.error {
+  background: rgba(244, 67, 54, 0.9);
+  color: white;
+  border: 2px solid #f44336;
+}
+
 .game-container {
   min-height: 100vh;
   padding: 0;
@@ -107,7 +139,7 @@
   font-weight: bold;
   z-index: 1001;
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
-  border: 1px solid rgba(255, 255, 255, 0.3);
+  border: 3px solid rgba(52, 58, 64, 0.95);
   color: white;
 }
 
@@ -626,7 +658,10 @@
   border-radius: 8px;
   font-size: 14px;
   font-weight: 500;
-  white-space: nowrap;
+  white-space: normal;
+  width: 200px;
+  text-align: center;
+  line-height: 1.3;
   
   z-index: 1002;
   margin-bottom: 8px;
@@ -1153,7 +1188,7 @@
   position: absolute;
   top: 100%;
   right: 0;
-  margin-top: 10px;
+  margin-top: 13px;
   background: rgba(255, 255, 255, 0.95);
   padding: 6px 10px;
   border-radius: 10px;
@@ -1720,7 +1755,7 @@
   .custom-tooltip {
     font-size: 11px;
     white-space: normal;
-    max-width: 180px;
+    width: 100px;
     text-align: center;
     line-height: 1.3;
     padding: 5px 8px;

@@ -72,15 +72,21 @@ def start_new_game():
     dealer_pos = random.randint(0, NUM_PLAYERS - 1)  # Random starting dealer
 
     # Create a unique hand history file for this game session
-    hand_history_dir = os.path.join(os.path.dirname(__file__), '../hand_history')
-    os.makedirs(hand_history_dir, exist_ok=True)
-    timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-    hand_history_filename = f"game_session_{timestamp}.txt"
-    hand_history_path = os.path.join(hand_history_dir, hand_history_filename)
-    
-    # Create the file (clears previous content if it exists)
-    with open(hand_history_path, 'w') as f:
-        pass  # Just to create the file
+    # Try to create hand history directory and file (may fail in read-only environments)
+    hand_history_path = None
+    try:
+        hand_history_dir = os.path.join(os.path.dirname(__file__), '../hand_history')
+        os.makedirs(hand_history_dir, exist_ok=True)
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        hand_history_filename = f"game_session_{timestamp}.txt"
+        hand_history_path = os.path.join(hand_history_dir, hand_history_filename)
+        
+        # Create the file (clears previous content if it exists)
+        with open(hand_history_path, 'w') as f:
+            pass  # Just to create the file
+    except (OSError, PermissionError) as e:
+        print(f"Warning: Could not create hand history file: {e}")
+        hand_history_path = None
 
     game_state = {
         "players": players,
@@ -158,8 +164,13 @@ def next_player(game_state):
 
 def log_to_hand_history(game_state, message):
     """Appends a message to the hand history file."""
-    with open(game_state['hand_history_path'], 'a') as f:
-        f.write(message + '\n')
+    if game_state.get('hand_history_path'):
+        try:
+            with open(game_state['hand_history_path'], 'a') as f:
+                f.write(message + '\n')
+        except (OSError, PermissionError):
+            # Silently skip logging if file operations fail
+            pass
 
 def apply_action(game_state, action, amount=0):
     """
@@ -430,15 +441,20 @@ def log_hand_start_header(game_state):
     dealer_pos = game_state['dealer_pos']
     players = game_state['players']
     
-    with open(hand_history_path, 'a') as f:
-        if hand_count > 1:
-            f.write("\n\n") # Add spacing for subsequent hands
-            
-        f.write(f"Riposte Hand #{hand_count:05d}:  Hold'em No Limit (${SMALL_BLIND}/${BIG_BLIND}) - {datetime.now().strftime('%Y/%m/%d %H:%M:%S ET')}\n")
-        f.write(f"Table 'Heads-Up' 2-max Seat #{dealer_pos + 1} is the button\n")
-        for i, p in enumerate(players):
-            role = " (button)" if i == dealer_pos else ""
-            f.write(f"Seat {i+1}: {p['name']}{role} (${p['stack']:.0f} in chips)\n")
+    try:
+        with open(hand_history_path, 'a') as f:
+            if hand_count > 1:
+                f.write("\n\n") # Add spacing for subsequent hands
+                
+            f.write(f"Riposte Hand #{hand_count:05d}:  Hold'em No Limit (${SMALL_BLIND}/${BIG_BLIND}) - {datetime.now().strftime('%Y/%m/%d %H:%M:%S ET')}\n")
+            f.write(f"Table 'Heads-Up' 2-max Seat #{dealer_pos + 1} is the button\n")
+            for i, p in enumerate(players):
+                role = " (button)" if i == dealer_pos else ""
+                f.write(f"Seat {i+1}: {p['name']}{role} (${p['stack']:.0f} in chips)\n")
+    except Exception as e:
+        print(f"Warning: Could not write hand history header: {e}")
+        # Continue without hand history logging
+        return
 
 
 def prepare_next_hand(game_state):

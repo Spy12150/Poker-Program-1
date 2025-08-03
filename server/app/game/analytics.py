@@ -11,6 +11,7 @@ class GameAnalytics:
     def __init__(self, data_file="game_stats.json"):
         self.data_file = data_file
         self.session_stats = self.load_stats()
+        self.read_only_mode = False
     
     def load_stats(self) -> Dict:
         """Load existing statistics from file"""
@@ -18,7 +19,9 @@ class GameAnalytics:
             try:
                 with open(self.data_file, 'r') as f:
                     return json.load(f)
-            except:
+            except (IOError, PermissionError, json.JSONDecodeError):
+                # Handle file system issues gracefully
+                print(f"Warning: Could not read {self.data_file}, using default stats")
                 pass
         
         # Default stats structure

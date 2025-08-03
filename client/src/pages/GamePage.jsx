@@ -38,6 +38,7 @@ const GamePage = () => {
   const [minBet, setMinBet] = useState(0);
   const [maxBet, setMaxBet] = useState(0);
   const [dealingCards, setDealingCards] = useState(false);
+  const [selectedAIType, setSelectedAIType] = useState('bladework_v2');
   const [previousCommunityLength, setPreviousCommunityLength] = useState(0);
   const [newCardIndices, setNewCardIndices] = useState([]);
   const [selectedCardback, setSelectedCardback] = useState('Cardback17');
@@ -185,6 +186,7 @@ const GamePage = () => {
 
   const startGame = async (selectedAI = 'bladework_v2') => {
     setLoading(true);
+    setSelectedAIType(selectedAI); // Store the selected AI type
     try {
       console.log('API URL:', import.meta.env.VITE_API_URL); // Debug log
       console.log('Making request to:', `${import.meta.env.VITE_API_URL}/start-game`);
@@ -535,6 +537,7 @@ const GamePage = () => {
             canCall={canCallWrapper}
             canRaise={canRaiseWrapper}
             processAITurn={processAITurn}
+            selectedAIType={selectedAIType}
           />
 
           <HandOverPanel 

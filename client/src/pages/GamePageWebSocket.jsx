@@ -1,0 +1,464 @@
+import React, { useState, useEffect } from 'react';
+import './GamePage.css';
+
+// Components
+import GameHeader from '../components/GameHeader';
+import GameMessage from '../components/GameMessage';
+import StartGameButton from '../components/StartGameButton';
+import PokerTable from '../components/PokerTable';
+import ActionPanel from '../components/ActionPanel';
+import HandOverPanel from '../components/HandOverPanel';
+import HandHistory from '../components/HandHistory';
+import DebugPanel from '../components/DebugPanel';
+
+// Utilities
+import { evaluateHand, translateCard } from '../utils/handEvaluation';
+import { 
+  betToSliderPosition, 
+  sliderPositionToBet, 
+  getCallAmount, 
+  getActualCallAmount, 
+  canCheck, 
+  canCall, 
+  canRaise, 
+  getPlayerPosition, 
+  hasPlayerChecked 
+} from '../utils/gameUtils';
+
+// WebSocket hook
+import { useSocket } from '../hooks/useSocket';
+
+const GamePage = () => {
+  const [gameState, setGameState] = useState(null);
+  const [gameId, setGameId] = useState(null);
+  const [message, setMessage] = useState('');
+  const [winners, setWinners] = useState([]);
+  const [handOver, setHandOver] = useState(false);
+  const [showdown, setShowdown] = useState(false);
+  const [raiseAmount, setRaiseAmount] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [betSliderValue, setBetSliderValue] = useState(0);
+  const [minBet, setMinBet] = useState(0);
+  const [maxBet, setMaxBet] = useState(0);
+  const [dealingCards, setDealingCards] = useState(false);
+  const [selectedAIType, setSelectedAIType] = useState('bladework_v2');
+  const [previousCommunityLength, setPreviousCommunityLength] = useState(0);
+  const [newCardIndices, setNewCardIndices] = useState([]);
+  const [selectedCardback, setSelectedCardback] = useState('Cardback17');
+
+  // WebSocket connection
+  const socket = useSocket(import.meta.env.VITE_API_URL || 'http://localhost:5001');
+
+  // Array of all available cardbacks from IvoryCards folder
+  const cardbacks = [
+    'Cardback17', 'Cardback18', 'Cardback3', 'Cardback4', 'Cardback5',
+    'Cardback6', 'Cardback7', 'Cardback8', 'Cardback9', 'Cardback10',
+    'Cardback11', 'Cardback12', 'Cardback13', 'Cardback14', 
+    'Cardback16', 'Cardback2', 'Cardback1', 'Cardback19'
+  ];
+
+  const cycleCardback = () => {
+    const currentIndex = cardbacks.indexOf(selectedCardback);
+    const nextIndex = (currentIndex + 1) % cardbacks.length;
+    setSelectedCardback(cardbacks[nextIndex]);
+  };
+
+  // Function definitions (moved above useEffect to avoid reference errors)
+  const getCallAmountWrapper = () => getCallAmount(gameState);
+  const getActualCallAmountWrapper = () => getActualCallAmount(gameState);
+  const canCheckWrapper = () => canCheck(gameState);
+  const canCallWrapper = () => canCall(gameState);
+  const canRaiseWrapper = () => canRaise(gameState);
+  const getPlayerPositionWrapper = (playerIndex) => getPlayerPosition(gameState, playerIndex);
+  const hasPlayerCheckedWrapper = (playerIndex) => hasPlayerChecked(gameState, playerIndex);
+
+  const updateBetLimits = (state) => {
+    if (!state || !state.players || state.current_player !== 0) return;
+    
+    const player = state.players[0];
+    const currentBet = state.current_bet || 0;
+    const playerCurrentBet = player.current_bet || 0;
+    const lastBetAmount = state.last_bet_amount || 0;
+    
+    // Minimum raise calculation (matches backend logic)
+    const bigBlind = state.big_blind || 10;
+    let minRaise;
+    
+    if (currentBet === 0) {
+      // First bet of the round - minimum is big blind
+      minRaise = bigBlind;
+    } else {
+      // Must raise by at least the size of the last bet/raise
+      minRaise = currentBet + Math.max(lastBetAmount, bigBlind);
+    }
+    
+    // Maximum bet: all-in
+    const maxBetAmount = player.stack + playerCurrentBet;
+    
+    // Ensure min bet doesn't exceed max bet
+    const finalMinBet = Math.min(minRaise, maxBetAmount);
+    
+    setMinBet(finalMinBet);
+    setMaxBet(maxBetAmount);
+    // Always default to minimum bet for new actions
+    setBetSliderValue(finalMinBet);
+    setRaiseAmount(finalMinBet.toString());
+  };
+
+  // WebSocket event handlers
+  useEffect(() => {
+    if (!socket.isConnected) return;
+
+    // Handle game start
+    socket.on('game_start', (data) => {
+      console.log('Game started via WebSocket');
+      setGameId(data.game_id);
+      setGameState(data);
+      setHandOver(false);
+      setShowdown(false);
+      setWinners([]);
+      setMessage('Game started! Good luck!');
+      updateBetLimits(data);
+      setLoading(false);
+    });
+
+    // Handle player action results
+    socket.on('action_result', (data) => {
+      console.log('Action result received');
+      if (data.game_state) {
+        setGameState(data.game_state);
+        updateBetLimits(data.game_state);
+      }
+
+      if (data.winners) {
+        setWinners(data.winners);
+        setHandOver(true);
+        if (data.showdown) {
+          setShowdown(true);
+        }
+      }
+
+      if (data.message) {
+        setMessage(data.message);
+      }
+
+      setLoading(false);
+    });
+
+    // Handle AI actions
+    socket.on('ai_action', (data) => {
+      console.log('AI action received');
+      if (data.game_state) {
+        setGameState(data.game_state);
+        updateBetLimits(data.game_state);
+      }
+
+      if (data.message) {
+        setMessage(data.message);
+      }
+
+      if (data.winners) {
+        setWinners(data.winners);
+        setHandOver(true);
+        if (data.showdown) {
+          setShowdown(true);
+        }
+      }
+    });
+
+    // Handle hand over
+    socket.on('hand_over', (data) => {
+      console.log('Hand over received');
+      if (data.winners) {
+        setWinners(data.winners);
+        setHandOver(true);
+        if (data.showdown) {
+          setShowdown(true);
+        }
+      }
+      if (data.message) {
+        setMessage(data.message);
+      }
+    });
+
+    // Handle new hand
+    socket.on('new_hand', (data) => {
+      console.log('New hand started via WebSocket');
+      setGameState(data);
+      setHandOver(false);
+      setShowdown(false);
+      setWinners([]);
+      setMessage('New hand started!');
+      updateBetLimits(data);
+      setLoading(false);
+    });
+
+    // Handle new round
+    socket.on('new_round', (data) => {
+      console.log('New round started via WebSocket');
+      setGameState(data);
+      setHandOver(false);
+      setShowdown(false);
+      setWinners([]);
+      setMessage('New round started! Stacks reset.');
+      updateBetLimits(data);
+      setLoading(false);
+    });
+
+    // Handle errors
+    socket.on('error', (data) => {
+      console.error('WebSocket error:', data.message);
+      setMessage(`Error: ${data.message}`);
+      setLoading(false);
+    });
+
+    // Handle server messages
+    socket.on('message', (data) => {
+      setMessage(data.message);
+    });
+
+    // Handle connection status changes
+    if (socket.connectionError) {
+      setMessage(`Connection error: ${socket.connectionError}`);
+    }
+
+    // Cleanup function
+    return () => {
+      socket.off('game_start');
+      socket.off('action_result');
+      socket.off('ai_action');
+      socket.off('hand_over');
+      socket.off('new_hand');
+      socket.off('new_round');
+      socket.off('error');
+      socket.off('message');
+    };
+  }, [socket.isConnected, socket.connectionError]);
+
+  // Card dealing animation effect
+  useEffect(() => {
+    if (!gameState || !gameState.community) return;
+
+    const currentLength = gameState.community.length;
+    
+    if (currentLength > previousCommunityLength) {
+      setDealingCards(true);
+      
+      // Calculate which cards are new
+      const newIndices = [];
+      for (let i = previousCommunityLength; i < currentLength; i++) {
+        newIndices.push(i);
+      }
+      setNewCardIndices(newIndices);
+      
+      // Remove dealing animation after animation completes
+      setTimeout(() => {
+        setDealingCards(false);
+        setNewCardIndices([]);
+      }, 1000);
+    }
+    
+    setPreviousCommunityLength(currentLength);
+  }, [gameState?.community?.length]);
+
+  // Game action functions using WebSocket
+  const startGame = (selectedAI = 'bladework_v2') => {
+    if (!socket.isConnected) {
+      setMessage('Not connected to server. Please refresh the page.');
+      return;
+    }
+
+    setLoading(true);
+    setSelectedAIType(selectedAI);
+    setMessage('Starting game...');
+    
+    console.log('Starting game with AI:', selectedAI);
+    socket.startGame(selectedAI);
+  };
+
+  const makeAction = (action, amount = 0) => {
+    if (!gameId || handOver || loading || !socket.isConnected) return;
+    
+    setLoading(true);
+    setMessage(`Making ${action}...`);
+    
+    console.log(`Making action: ${action}`, { gameId, action, amount });
+    socket.makeAction(gameId, action, amount);
+  };
+
+  const newHand = () => {
+    if (!gameId || loading || !socket.isConnected) return;
+    
+    setLoading(true);
+    setMessage('Starting new hand...');
+    
+    console.log('Starting new hand for game:', gameId);
+    socket.startNewHand(gameId);
+  };
+
+  const newRound = () => {
+    if (!gameId || loading || !socket.isConnected) return;
+    
+    setLoading(true);
+    setMessage('Starting new round...');
+    
+    console.log('Starting new round for game:', gameId);
+    socket.startNewRound(gameId);
+  };
+
+  // Action helper functions
+  const handleFold = () => makeAction('fold');
+  const handleCheck = () => makeAction('check');
+  const handleCall = () => makeAction('call');
+  const handleRaise = () => {
+    const amount = parseInt(raiseAmount) || minBet;
+    makeAction('raise', amount);
+  };
+
+  // Bet slider functions
+  const handleSliderChange = (e) => {
+    const position = parseInt(e.target.value);
+    setBetSliderValue(position);
+    const betValue = sliderPositionToBet(position, minBet, maxBet);
+    setRaiseAmount(betValue.toString());
+  };
+
+  const updateSliderFromAmount = (amount) => {
+    const numAmount = parseInt(amount) || minBet;
+    const clampedAmount = Math.max(minBet, Math.min(maxBet, numAmount));
+    const position = betToSliderPosition(clampedAmount, minBet, maxBet);
+    setBetSliderValue(position);
+    setRaiseAmount(clampedAmount.toString());
+  };
+
+  const handleBetPreset = (preset) => {
+    let amount;
+    const pot = gameState?.pot || 0;
+    const playerStack = gameState?.players[0]?.stack || 0;
+    const playerCurrentBet = gameState?.players[0]?.current_bet || 0;
+    const maxAllIn = playerStack + playerCurrentBet;
+
+    switch (preset) {
+      case '1/3':
+        amount = Math.ceil(pot / 3);
+        break;
+      case '1/2':
+        amount = Math.ceil(pot / 2);
+        break;
+      case 'pot':
+        amount = pot;
+        break;
+      case 'all-in':
+        amount = maxAllIn;
+        break;
+      case '2.5x':
+        const currentBet = gameState?.current_bet || 0;
+        amount = Math.ceil(currentBet * 2.5);
+        break;
+      case '3x':
+        const currentBet3x = gameState?.current_bet || 0;
+        amount = Math.ceil(currentBet3x * 3);
+        break;
+      default:
+        amount = minBet;
+    }
+
+    amount = Math.max(minBet, Math.min(maxAllIn, amount));
+    updateSliderFromAmount(amount);
+  };
+
+  // Connection status display - only show when there's an issue or connecting
+  const connectionStatus = () => {
+    if (socket.connectionError) {
+      return <div className="connection-status error">Connection Error</div>;
+    } else if (!socket.isConnected) {
+      return <div className="connection-status connecting">Connecting...</div>;
+    }
+    // Return null when connected successfully - no status indicator needed
+    return null;
+  };
+
+  if (!gameState) {
+    return (
+      <div className="game-container">
+        <GameHeader />
+        {connectionStatus()}
+        <StartGameButton 
+          startGame={startGame}
+          selectedAIType={selectedAIType}
+          setSelectedAIType={setSelectedAIType}
+          loading={loading}
+        />
+        {message && <GameMessage message={message} />}
+      </div>
+    );
+  }
+
+  return (
+    <div className="game-container">
+      <GameHeader gameState={gameState} />
+      {connectionStatus()}
+      
+      <PokerTable 
+        gameState={gameState}
+        selectedCardback={selectedCardback}
+        dealingCards={dealingCards}
+        newCardIndices={newCardIndices}
+        evaluateHand={evaluateHand}
+        translateCard={translateCard}
+        getPlayerPosition={getPlayerPositionWrapper}
+        hasPlayerChecked={hasPlayerCheckedWrapper}
+      />
+      
+      <ActionPanel
+        gameState={gameState}
+        handOver={handOver}
+        loading={loading}
+        canCheck={canCheckWrapper}
+        canCall={canCallWrapper}
+        canRaise={canRaiseWrapper}
+        getCallAmount={getCallAmountWrapper}
+        getActualCallAmount={getActualCallAmountWrapper}
+        onFold={handleFold}
+        onCheck={handleCheck}
+        onCall={handleCall}
+        onRaise={handleRaise}
+        raiseAmount={raiseAmount}
+        setRaiseAmount={setRaiseAmount}
+        betSliderValue={betSliderValue}
+        onSliderChange={handleSliderChange}
+        onBetPreset={handleBetPreset}
+        minBet={minBet}
+        maxBet={maxBet}
+        updateSliderFromAmount={updateSliderFromAmount}
+      />
+      
+      {message && <GameMessage message={message} />}
+      
+      <HandHistory gameState={gameState} />
+      
+      <DebugPanel 
+        gameState={gameState}
+        minBet={minBet}
+        maxBet={maxBet}
+        betSliderValue={betSliderValue}
+      />
+      
+      <button className="cardback-selector-btn" onClick={cycleCardback}>
+        🎴
+      </button>
+      
+      {handOver && (
+        <HandOverPanel
+          winners={winners}
+          showdown={showdown}
+          onNewHand={newHand}
+          onNewRound={newRound}
+          loading={loading}
+        />
+      )}
+    </div>
+  );
+};
+
+export default GamePage;
