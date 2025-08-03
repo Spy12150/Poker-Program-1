@@ -7,8 +7,21 @@ from app.game.poker import (
     start_new_game, apply_action, betting_round_over, advance_round, 
     next_player, showdown, prepare_next_hand, deal_remaining_cards
 )
-from app.game.hardcode_ai.ai_bladework_v2 import decide_action_bladeworkv2
-from app.game.hardcode_ai.ai_froggie import decide_action as decide_action_froggie
+
+# Import AI modules with error handling for deployment
+try:
+    from app.game.hardcode_ai.ai_bladework_v2 import decide_action_bladeworkv2
+except ImportError as e:
+    print(f"Warning: Could not import ai_bladework_v2: {e}")
+    def decide_action_bladeworkv2(*args, **kwargs):
+        return "fold", 0  # Fallback action
+
+try:
+    from app.game.hardcode_ai.ai_froggie import decide_action as decide_action_froggie
+except ImportError as e:
+    print(f"Warning: Could not import ai_froggie: {e}")
+    def decide_action_froggie(*args, **kwargs):
+        return "fold", 0  # Fallback action
 
 
 class GameService:
