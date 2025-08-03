@@ -1,4 +1,4 @@
-Riposte Hand #00001:  Hold'em No Limit ($5/$10) - 2025/07/31 20:58:20 ET
+Riposte Hand #00001:  Hold'em No Limit ($5/$10) - 2025/08/03 13:47:04 ET
 Table 'Heads-Up' 2-max Seat #1 is the button
 Seat 1: Player 1 (button) ($1000 in chips)
 Seat 2: Player 2 ($1000 in chips)
@@ -7,5 +7,5 @@ Player 2: posts big blind $10
 
 *** PREFLOP ***
 *** HOLE CARDS ***
-Dealt to Player 1 [Kd Jd]
-Dealt to Player 2 [8c 4s]
+Dealt to Player 1 [Ts 8c]
+Dealt to Player 2 [Ah 6c]

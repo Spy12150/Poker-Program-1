@@ -54,7 +54,9 @@ def start_game():
         return '', 200
     
     try:
-        game_id, response = game_service.create_new_game()
+        data = request.json or {}
+        ai_type = data.get('ai_type', 'bladework_v2')  # Default to bladework_v2
+        game_id, response = game_service.create_new_game(ai_type)
         return jsonify(response)
     except Exception as e:
         return jsonify({'error': f'Failed to start game: {str(e)}'}), 500

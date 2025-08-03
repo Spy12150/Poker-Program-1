@@ -10,8 +10,22 @@ const PokerTable = ({
   handOver, 
   evaluateHand, 
   translateCard,
-  selectedCardback 
+  selectedCardback,
+  isBackground = false
 }) => {
+  // Show empty table in background mode
+  if (isBackground) {
+    return (
+      <div className="table-container background-table">
+        <div className="poker-table">
+          <div className="table-inner">
+            {/* Empty table for background */}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   if (!gameState) return null;
 
   return (
@@ -151,14 +165,14 @@ const PokerTable = ({
                   Your turn
                 </div>
               )}
-            </div>
 
-            {/* Hand Evaluation Display */}
-            {gameState.player_hand && (
-              <div className="hand-evaluation">
-                {evaluateHand(gameState.player_hand, gameState.community || [])}
-              </div>
-            )}
+              {/* Hand Evaluation Display */}
+              {gameState.player_hand && (
+                <div className="hand-evaluation">
+                  {evaluateHand(gameState.player_hand, gameState.community || [])}
+                </div>
+              )}
+            </div>
           </div>
 
         </div>

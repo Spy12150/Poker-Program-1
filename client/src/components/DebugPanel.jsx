@@ -3,10 +3,10 @@ import React from 'react';
 const DebugPanel = ({ gameState, handOver, canCheck, canCall, canRaise, processAITurn }) => {
   if (!gameState) return null;
 
-  // Determine AI info based on current setup
-  // Currently using ai_gto_enhanced.py, so showing "Bladework v1"
-  const aiName = "Bladework v1";
-  const aiLogic = "Hard Coded";
+  // Get AI info from game state (sent from backend)
+  const aiInfo = gameState.ai_info || { name: 'Unknown AI', logic: 'Unknown' };
+  const aiName = aiInfo.name;
+  const aiLogic = aiInfo.logic;
 
   return (
     <div className="debug-panel">

@@ -7,7 +7,8 @@ from app.game.poker import (
     start_new_game, apply_action, betting_round_over, advance_round, 
     next_player, showdown, prepare_next_hand, deal_remaining_cards
 )
-from app.game.hardcode_ai.ai_Bladework_v2 import decide_action_bladeworkv2
+from app.game.hardcode_ai.ai_bladework_v2 import decide_action_bladeworkv2
+from app.game.hardcode_ai.ai_froggie import decide_action as decide_action_froggie
 
 
 class GameService:
@@ -22,15 +23,49 @@ class GameService:
         else:
             self.analytics = analytics_service
     
-    def create_new_game(self) -> Tuple[str, Dict]:
+    def _get_ai_function(self, ai_type: str):
+        """Get the appropriate AI decision function based on type"""
+        ai_functions = {
+            'bladework_v2': decide_action_bladeworkv2,
+            'froggie': decide_action_froggie
+        }
+        return ai_functions.get(ai_type, decide_action_bladeworkv2)  # Default to bladework_v2
+    
+    def create_new_game(self, ai_type: str = 'bladework_v2') -> Tuple[str, Dict]:
         """
         Create a new poker game session
+        
+        Args:
+            ai_type: Type of AI to use ('bladework_v2' or 'froggie')
         
         Returns:
             Tuple of (game_id, game_state_with_metadata)
         """
         game_id = str(uuid.uuid4())
         game_state = start_new_game()
+        
+        # Store AI type in game state for later use
+        game_state['ai_type'] = ai_type
+        
+        # Update AI player name and logic based on selected AI type
+        ai_info = {
+            'froggie': {
+                'name': 'Froggie',
+                'logic': 'Random'
+            },
+            'bladework_v2': {
+                'name': 'Bladework v2',
+                'logic': 'Hard Coded'
+            }
+        }
+        
+        selected_ai_info = ai_info.get(ai_type, ai_info['bladework_v2'])
+        game_state['players'][1]['name'] = selected_ai_info['name']
+        game_state['ai_info'] = {
+            'name': selected_ai_info['name'],
+            'logic': selected_ai_info['logic'],
+            'type': ai_type
+        }
         
         self.game_sessions[game_id] = game_state
         
@@ -187,8 +222,10 @@ class GameService:
         should_use_sb_rfi = ai_is_dealer and debug_info['to_call'] == 0 and is_first_action
         console_logs.append(f"Should use SB RFI: {should_use_sb_rfi}")
         
-        # AI makes decision
-        ai_action, ai_amount = decide_action_bladeworkv2(game_state)
+        # AI makes decision using the selected AI type
+        ai_type = game_state.get('ai_type', 'bladework_v2')
+        ai_decision_func = self._get_ai_function(ai_type)
+        ai_action, ai_amount = ai_decision_func(game_state)
         
         console_logs.append(f"AI Action: {ai_action}")
         if ai_amount > 0:
@@ -406,5 +443,6 @@ class GameService:
             'last_bet_amount': game_state.get('last_bet_amount', 0),
             'action_history': game_state.get('action_history', []),
             'dealer_pos': game_state['dealer_pos'],
-            'big_blind': game_state.get('big_blind', 10)  # Include big blind for frontend calculations
+            'big_blind': game_state.get('big_blind', 10),  # Include big blind for frontend calculations
+            'ai_info': game_state.get('ai_info', {'name': 'Bladework v2', 'logic': 'Hard Coded', 'type': 'bladework_v2'})
         }

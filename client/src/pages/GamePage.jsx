@@ -40,11 +40,11 @@ const GamePage = () => {
   const [dealingCards, setDealingCards] = useState(false);
   const [previousCommunityLength, setPreviousCommunityLength] = useState(0);
   const [newCardIndices, setNewCardIndices] = useState([]);
-  const [selectedCardback, setSelectedCardback] = useState('Cardback18');
+  const [selectedCardback, setSelectedCardback] = useState('Cardback17');
 
   // Array of all available cardbacks from IvoryCards folder
   const cardbacks = [
-    'Cardback18', 'Cardback17', 'Cardback3', 'Cardback4', 'Cardback5',
+    'Cardback17', 'Cardback18', 'Cardback3', 'Cardback4', 'Cardback5',
     'Cardback6', 'Cardback7', 'Cardback8', 'Cardback9', 'Cardback10',
     'Cardback11', 'Cardback12', 'Cardback13', 'Cardback14', 
     'Cardback16', 'Cardback2', 'Cardback1', 'Cardback19'
@@ -183,7 +183,7 @@ const GamePage = () => {
     return () => document.removeEventListener('keypress', handleKeyPress);
   }, [gameState, handOver, loading]);
 
-  const startGame = async () => {
+  const startGame = async (selectedAI = 'bladework_v2') => {
     setLoading(true);
     try {
       console.log('API URL:', import.meta.env.VITE_API_URL); // Debug log
@@ -191,7 +191,8 @@ const GamePage = () => {
       
       const res = await fetch(`${import.meta.env.VITE_API_URL}/start-game`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' }
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ai_type: selectedAI })
       });
       
       console.log('Response status:', res.status);
@@ -460,6 +461,24 @@ const GamePage = () => {
     makeAction('raise', amount);
   };
 
+  const handleMenuClick = () => {
+    // Reset all game state to return to start menu
+    setGameState(null);
+    setGameId(null);
+    setMessage('');
+    setWinners([]);
+    setHandOver(false);
+    setShowdown(false);
+    setRaiseAmount('');
+    setLoading(false);
+    setBetSliderValue(0);
+    setMinBet(0);
+    setMaxBet(0);
+    setDealingCards(false);
+    setPreviousCommunityLength(0);
+    setNewCardIndices([]);
+  };
+
   return (
     <div className="game-container">
       <GameHeader />
@@ -470,23 +489,26 @@ const GamePage = () => {
         loading={loading} 
       />
 
+      {gameState && <button className="menu-button" onClick={handleMenuClick}>MAIN MENU</button>}
       <GameMessage message={message} />
+
+      {/* Always show poker table - active game or background for start screen */}
+      <PokerTable
+        gameState={gameState}
+        showdown={showdown}
+        dealingCards={dealingCards}
+        newCardIndices={newCardIndices}
+        hasPlayerChecked={hasPlayerCheckedWrapper}
+        getPlayerPosition={getPlayerPositionWrapper}
+        handOver={handOver}
+        evaluateHand={evaluateHand}
+        translateCard={translateCard}
+        selectedCardback={selectedCardback}
+        isBackground={!gameState} // New prop to indicate background mode
+      />
 
       {gameState && (
         <>
-          <PokerTable
-            gameState={gameState}
-            showdown={showdown}
-            dealingCards={dealingCards}
-            newCardIndices={newCardIndices}
-            hasPlayerChecked={hasPlayerCheckedWrapper}
-            getPlayerPosition={getPlayerPositionWrapper}
-            handOver={handOver}
-            evaluateHand={evaluateHand}
-            translateCard={translateCard}
-            selectedCardback={selectedCardback}
-          />
-
           <ActionPanel
             gameState={gameState}
             handOver={handOver}

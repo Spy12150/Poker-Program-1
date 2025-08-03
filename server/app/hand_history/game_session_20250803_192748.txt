@@ -1,0 +1,94 @@
+Riposte Hand #00001:  Hold'em No Limit ($5/$10) - 2025/08/03 19:27:48 ET
+Table 'Heads-Up' 2-max Seat #1 is the button
+Seat 1: Player 1 (button) ($1000 in chips)
+Seat 2: Player 2 ($1000 in chips)
+Player 1: posts small blind $5
+Player 2: posts big blind $10
+
+*** PREFLOP ***
+*** HOLE CARDS ***
+Dealt to Player 1 [2c 8s]
+Dealt to Player 2 [7d 9h]
+Player 1: calls $5
+Player 2: checks
+
+*** FLOP *** [6h 7s Qh]
+Player 2: bets $10
+Player 1: calls $10
+
+*** TURN *** [6h 7s Qh Ks]
+Player 2: checks
+Player 1: checks
+
+*** RIVER *** [6h 7s Qh Ks 8c]
+Player 2: checks
+Player 1: checks
+Player 1: shows [2c 8s] (Pair)
+Player 2: shows [7d 9h] (Pair)
+Player 1 collected $40 from pot
+
+*** SUMMARY ***
+Total pot $40 | Rake $0.00
+Board [[6h] [7s] [Qh] [Ks] [8c]]
+Seat 1: Player 1 (button) collected ($40) with Pair
+Seat 2: Player 2 lost with Pair
+
+
+Riposte Hand #00002:  Hold'em No Limit ($5/$10) - 2025/08/03 19:34:14 ET
+Table 'Heads-Up' 2-max Seat #2 is the button
+Seat 1: Player 1 ($1020 in chips)
+Seat 2: Player 2 (button) ($980 in chips)
+Player 2: posts small blind $5
+Player 1: posts big blind $10
+
+*** PREFLOP ***
+*** HOLE CARDS ***
+Dealt to Player 1 [7s Kd]
+Dealt to Player 2 [3d Kh]
+Player 2: raises $15 to $25
+Player 1: calls $15
+
+*** FLOP *** [9s 5d 4d]
+Player 1: checks
+Player 2: checks
+
+*** TURN *** [9s 5d 4d 5s]
+Player 1: checks
+Player 2: checks
+
+*** RIVER *** [9s 5d 4d 5s 8d]
+Player 1: checks
+Player 2: checks
+Player 1: shows [7s Kd] (Pair)
+Player 2: shows [3d Kh] (Pair)
+Player 1 collected $25 from pot
+Player 2 collected $25 from pot
+
+*** SUMMARY ***
+Total pot $50 | Rake $0.00
+Board [[9s] [5d] [4d] [5s] [8d]]
+Seat 1: Player 1 collected ($25) with Pair
+Seat 2: Player 2 (button) collected ($25) with Pair
+
+
+Riposte Hand #00003:  Hold'em No Limit ($5/$10) - 2025/08/03 19:39:23 ET
+Table 'Heads-Up' 2-max Seat #1 is the button
+Seat 1: Player 1 (button) ($1020 in chips)
+Seat 2: Player 2 ($980 in chips)
+Player 1: posts small blind $5
+Player 2: posts big blind $10
+
+*** PREFLOP ***
+*** HOLE CARDS ***
+Dealt to Player 1 [Ac 8h]
+Dealt to Player 2 [Qh 5c]
+Player 1: calls $5
+Player 2: raises $15 to $25
+Player 1: calls $15
+
+*** FLOP *** [Ah 6h Qc]
+Player 2: bets $25
+Player 1: calls $25
+
+*** TURN *** [Ah 6h Qc Ks]
+Player 2: checks
