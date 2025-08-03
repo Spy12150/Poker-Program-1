@@ -14,7 +14,7 @@ from app.game.hardcode_ai.ai_froggie import decide_action as decide_action_frogg
 class GameService:
     """Service class for managing poker game logic and state"""
     
-    def __init__(self, analytics_service=None):
+    def __init__(self, analytics_service=None, websocket_service=None):
         self.game_sessions: Dict[str, Dict] = {}
         # Import here to avoid circular imports
         if analytics_service is None:
@@ -22,6 +22,9 @@ class GameService:
             self.analytics = analytics
         else:
             self.analytics = analytics_service
+        
+        # Store websocket service for real-time updates
+        self.websocket_service = websocket_service
     
     def _get_ai_function(self, ai_type: str):
         """Get the appropriate AI decision function based on type"""
@@ -423,7 +426,7 @@ class GameService:
     
     def _serialize_game_state(self, game_state: Dict) -> Dict:
         """Convert game state to JSON-safe format for frontend"""
-        return {
+        serialized = {
             'game_id': game_state.get('game_id'),
             'player_hand': game_state['players'][0]['hand'],
             'community': game_state['community'],
@@ -446,3 +449,5 @@ class GameService:
             'big_blind': game_state.get('big_blind', 10),  # Include big blind for frontend calculations
             'ai_info': game_state.get('ai_info', {'name': 'Bladework v2', 'logic': 'Hard Coded', 'type': 'bladework_v2'})
         }
+        
+        return serialized
