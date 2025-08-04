@@ -19,12 +19,29 @@ const PokerTable = ({
     // Debug logging
     console.log('CardImage called with:', { card, isCardback, typeof_card: typeof card });
     
+    // Additional validation to prevent invalid cards
+    if (!isCardback && (!card || typeof card !== 'string' || card.length < 2)) {
+      console.error('CardImage received invalid card, using fallback:', card);
+      isCardback = true;
+      card = selectedCardback;
+    }
+    
     let cardSrc;
     try {
-      cardSrc = useCardImage(isCardback ? selectedCardback : translateCard(card));
+      if (isCardback) {
+        cardSrc = useCardImage(selectedCardback);
+      } else {
+        const translatedCard = translateCard(card);
+        if (translatedCard === 'Cardback1') {
+          // translateCard returned fallback, use cardback instead
+          cardSrc = useCardImage(selectedCardback);
+        } else {
+          cardSrc = useCardImage(translatedCard);
+        }
+      }
     } catch (error) {
       console.error('Error in CardImage with card:', card, 'error:', error);
-      cardSrc = useCardImage('Cardback1'); // Fallback
+      cardSrc = useCardImage(selectedCardback); // Use selected cardback as fallback
     }
     
     const handleImageError = (e) => {

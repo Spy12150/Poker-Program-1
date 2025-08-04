@@ -453,9 +453,12 @@ const GamePage = () => {
       
       <DebugPanel 
         gameState={gameState}
-        minBet={minBet}
-        maxBet={maxBet}
-        betSliderValue={betSliderValue}
+        handOver={handOver}
+        isCheckAllowed={canCheckWrapper}
+        isCallAllowed={canCallWrapper}
+        isRaiseAllowed={canRaiseWrapper}
+        processAITurn={() => {}} // Not available in WebSocket version
+        selectedAIType={selectedAIType}
       />
       
       <button className="cardback-selector-btn" onClick={cycleCardback}>
