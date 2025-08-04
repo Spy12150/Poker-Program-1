@@ -1,14 +1,14 @@
 import React from 'react';
-import GamePage from './pages/GamePage';
+// import GamePage from './pages/GamePage';
+import GamePageWebSocket from './pages/GamePageWebSocket';  // Optimized version with WebP support
 import { useImagePreloader } from './hooks/useImagePreloader';
-// import GamePageWebSocket from './pages/GamePageWebSocket';  // Available for production/hosting
 
 function App() {
   // Preload card images for better performance
   useImagePreloader();
   
-  return <GamePage />;
-  // For WebSocket version (production): return <GamePageWebSocket />;
+  return <GamePageWebSocket />;
+  // For HTTP version (local dev): return <GamePage />;
 }
 
 export default App;
