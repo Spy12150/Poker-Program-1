@@ -16,7 +16,16 @@ const PokerTable = ({
 }) => {
   // Card image component with WebP support and error handling
   const CardImage = ({ card, isCardback = false, className = "card", alt = "card" }) => {
-    const cardSrc = useCardImage(isCardback ? selectedCardback : translateCard(card));
+    // Debug logging
+    console.log('CardImage called with:', { card, isCardback, typeof_card: typeof card });
+    
+    let cardSrc;
+    try {
+      cardSrc = useCardImage(isCardback ? selectedCardback : translateCard(card));
+    } catch (error) {
+      console.error('Error in CardImage with card:', card, 'error:', error);
+      cardSrc = useCardImage('Cardback1'); // Fallback
+    }
     
     const handleImageError = (e) => {
       // If WebP fails, try PNG fallback
