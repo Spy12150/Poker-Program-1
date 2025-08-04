@@ -23,6 +23,45 @@ print("🔍 DEBUG: Starting AI module imports...")
 
 try:
     print("🔍 DEBUG: Attempting to import ai_bladework_v2...")
+    
+    # Test each dependency individually
+    print("🔍 DEBUG: Testing hand_eval_lib import...")
+    try:
+        from app.game.hand_eval_lib import evaluate_hand
+        print("✅ DEBUG: hand_eval_lib imported successfully")
+    except Exception as e:
+        print(f"❌ DEBUG: hand_eval_lib failed: {e}")
+    
+    print("🔍 DEBUG: Testing config import...")
+    try:
+        from app.game.config import BIG_BLIND, SMALL_BLIND
+        print("✅ DEBUG: config imported successfully")
+    except Exception as e:
+        print(f"❌ DEBUG: config failed: {e}")
+    
+    print("🔍 DEBUG: Testing preflop_charts import...")
+    try:
+        from app.game.hardcode_ai.preflop_charts import PreflopCharts
+        print("✅ DEBUG: preflop_charts imported successfully")
+    except Exception as e:
+        print(f"❌ DEBUG: preflop_charts failed: {e}")
+    
+    print("🔍 DEBUG: Testing postflop_strategy import...")
+    try:
+        from app.game.hardcode_ai.postflop_strategy import PostflopStrategy
+        print("✅ DEBUG: postflop_strategy imported successfully")
+    except Exception as e:
+        print(f"❌ DEBUG: postflop_strategy failed: {e}")
+    
+    print("🔍 DEBUG: Testing tier_config import...")
+    try:
+        from app.game.hardcode_ai.tier_config import TIERS
+        print("✅ DEBUG: tier_config imported successfully")
+    except Exception as e:
+        print(f"❌ DEBUG: tier_config failed: {e}")
+    
+    # Now try the full import
+    print("🔍 DEBUG: Testing full ai_bladework_v2 import...")
     from app.game.hardcode_ai.ai_bladework_v2 import decide_action_bladeworkv2
     print("✅ DEBUG: Successfully imported ai_bladework_v2")
     print(f"🔍 DEBUG: decide_action_bladeworkv2 function: {decide_action_bladeworkv2}")
