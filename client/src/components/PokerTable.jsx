@@ -76,15 +76,18 @@ const PokerTable = ({
                 <span>Stack: ${gameState.players[1]?.stack}</span>
               </div>
               <div className="hand-container">
-                {(showdown ? gameState.players[1]?.hand || [selectedCardback, selectedCardback] : [selectedCardback, selectedCardback]).map((card, idx) => (
-                  <CardImage
-                    key={idx}
-                    card={card}
-                    isCardback={!showdown}
-                    className="card"
-                    alt="card"
-                  />
-                ))}
+                {(() => {
+                  const playerHand = showdown ? gameState.players[1]?.hand || [selectedCardback, selectedCardback] : [selectedCardback, selectedCardback];
+                  return playerHand.map((cardData, idx) => (
+                    <CardImage
+                      key={idx}
+                      card={cardData}
+                      isCardback={!showdown}
+                      className="card"
+                      alt="card"
+                    />
+                  ));
+                })()}
               </div>
               
               {/* Position Indicators */}
@@ -132,10 +135,10 @@ const PokerTable = ({
               POT: ${gameState.pot}
             </div>
             <div className={`community-cards ${dealingCards ? 'dealing-animation' : ''}`}>
-              {gameState.community.map((card, idx) => (
+              {gameState.community.map((communityCard, idx) => (
                 <CardImage
                   key={idx}
-                  card={card}
+                  card={communityCard}
                   className={`community-card ${dealingCards && newCardIndices.includes(idx) ? 'new-card' : ''}`}
                   alt="community card"
                 />
@@ -165,10 +168,10 @@ const PokerTable = ({
                 <span>Stack: ${gameState.players[0]?.stack}</span>
               </div>
               <div className="hand-container">
-                {gameState.player_hand?.map((card, idx) => (
+                {gameState.player_hand?.map((playerCard, idx) => (
                   <CardImage
                     key={idx}
-                    card={card}
+                    card={playerCard}
                     className="card"
                     alt="your card"
                   />
