@@ -5,9 +5,9 @@ const ActionPanel = ({
   handOver,
   loading,
   makeAction,
-  canCheck,
-  canCall,
-  canRaise,
+  isCheckAllowed,
+  isCallAllowed,
+  isRaiseAllowed,
   getActualCallAmount,
   betSliderValue,
   setBetSliderValue,
@@ -26,7 +26,7 @@ const ActionPanel = ({
     <div className="modern-action-panel">
       {/* Main Action Buttons Row */}
       <div className="main-actions-row">
-        {!canCheck() && (
+        {!isCheckAllowed() && (
           <button
             onClick={() => makeAction('fold')}
             disabled={loading}
@@ -37,16 +37,16 @@ const ActionPanel = ({
         )}
         
         <button
-          onClick={() => makeAction(canCheck() ? 'check' : 'call')}
-          disabled={loading || (!canCheck() && !canCall())}
+          onClick={() => makeAction(isCheckAllowed() ? 'check' : 'call')}
+          disabled={loading || (!isCheckAllowed() && !isCallAllowed())}
           className="modern-action-button call-button"
         >
-          {canCheck() ? 'CHECK' : `CALL ${getActualCallAmount() > 0 ? '$' + getActualCallAmount() : ''}`}
+          {isCheckAllowed() ? 'CHECK' : `CALL ${getActualCallAmount() > 0 ? '$' + getActualCallAmount() : ''}`}
         </button>
         
         <button
           onClick={() => makeAction('raise', betSliderValue)}
-          disabled={loading || !canRaise() || betSliderValue === '' || betSliderValue < minBet || betSliderValue > maxBet}
+          disabled={loading || !isRaiseAllowed() || betSliderValue === '' || betSliderValue < minBet || betSliderValue > maxBet}
           className="modern-action-button raise-button"
         >
           RAISE TO<br/>${betSliderValue || 0}
