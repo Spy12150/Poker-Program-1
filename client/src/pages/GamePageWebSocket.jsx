@@ -136,6 +136,13 @@ const GamePage = () => {
     // Handle player action results
     socket.on('action_result', (data) => {
       console.log('Action result received');
+      
+      // Clear any pending action timeout
+      if (window.actionTimeoutId) {
+        clearTimeout(window.actionTimeoutId);
+        window.actionTimeoutId = null;
+      }
+      
       if (data.game_state) {
         setGameState(data.game_state);
         updateBetLimits(data.game_state);
@@ -225,6 +232,13 @@ const GamePage = () => {
     // Handle errors
     socket.on('error', (data) => {
       console.error('WebSocket error:', data.message);
+      
+      // Clear any pending action timeout
+      if (window.actionTimeoutId) {
+        clearTimeout(window.actionTimeoutId);
+        window.actionTimeoutId = null;
+      }
+      
       setMessage(`Error: ${data.message}`);
       setLoading(false);
     });
@@ -237,6 +251,8 @@ const GamePage = () => {
     // Handle connection status changes
     if (socket.connectionError) {
       setMessage(`Connection error: ${socket.connectionError}`);
+      // Clear loading state if there's a persistent connection error
+      setLoading(false);
     }
 
     // Cleanup function
@@ -250,7 +266,7 @@ const GamePage = () => {
       socket.off('error');
       socket.off('message');
     };
-  }, [socket.isConnected, socket.connectionError]);
+  }, [socket.connectionError]);
 
   // Card dealing animation effect
   useEffect(() => {
@@ -290,8 +306,9 @@ const GamePage = () => {
 
   // Game action functions using WebSocket - memoized for performance
   const startGame = useCallback((selectedAI = 'bladework_v2') => {
-    if (!socket.isConnected) {
-      setMessage('Not connected to server. Please refresh the page.');
+    // Only check for persistent connection errors, not brief disconnections
+    if (socket.connectionError) {
+      setMessage('Connection error. Please refresh the page.');
       return;
     }
 
@@ -301,37 +318,63 @@ const GamePage = () => {
     
     console.log('Starting game with AI:', selectedAI);
     socket.startGame(selectedAI);
-  }, [socket.isConnected, socket.startGame]);
+  }, [socket.connectionError, socket.startGame]);
 
   const makeAction = useCallback((action, amount = 0) => {
-    if (!gameId || handOver || loading || !socket.isConnected) return;
+    if (!gameId || handOver || loading) return;
+    
+    // Don't block actions for brief disconnections - let socket.io handle reconnection
+    if (socket.connectionError) {
+      setMessage('Connection error. Please try again.');
+      return;
+    }
     
     setLoading(true);
     setMessage(`Making ${action}...`);
     
+    // Safety timeout to prevent UI from getting stuck
+    const timeoutId = setTimeout(() => {
+      console.warn('Action timeout - resetting loading state');
+      setLoading(false);
+      setMessage('Action timed out. Please try again.');
+    }, 15000); // 15 second timeout
+    
     console.log(`Making action: ${action}`, { gameId, action, amount });
     socket.makeAction(gameId, action, amount);
-  }, [gameId, handOver, loading, socket.isConnected, socket.makeAction]);
+    
+    // Store timeout ID for potential cleanup (though it will be cleared by response handlers)
+    window.actionTimeoutId = timeoutId;
+  }, [gameId, handOver, loading, socket.connectionError, socket.makeAction]);
 
   const newHand = useCallback(() => {
-    if (!gameId || loading || !socket.isConnected) return;
+    if (!gameId || loading) return;
+    
+    if (socket.connectionError) {
+      setMessage('Connection error. Please try again.');
+      return;
+    }
     
     setLoading(true);
     setMessage('Starting new hand...');
     
     console.log('Starting new hand for game:', gameId);
     socket.startNewHand(gameId);
-  }, [gameId, loading, socket.isConnected, socket.startNewHand]);
+  }, [gameId, loading, socket.connectionError, socket.startNewHand]);
 
   const newRound = useCallback(() => {
-    if (!gameId || loading || !socket.isConnected) return;
+    if (!gameId || loading) return;
+    
+    if (socket.connectionError) {
+      setMessage('Connection error. Please try again.');
+      return;
+    }
     
     setLoading(true);
     setMessage('Starting new round...');
     
     console.log('Starting new round for game:', gameId);
     socket.startNewRound(gameId);
-  }, [gameId, loading, socket.isConnected, socket.startNewRound]);
+  }, [gameId, loading, socket.connectionError, socket.startNewRound]);
 
   // Action helper functions - memoized to prevent unnecessary re-renders
   const handleFold = useCallback(() => makeAction('fold'), [makeAction]);
@@ -458,16 +501,16 @@ const GamePage = () => {
     updateSliderFromAmount(amount);
   }, [gameState, minBet, updateSliderFromAmount]);
 
-  // Connection status display - only show when there's an issue or connecting - memoized
+  // Connection status display - only show when there's a persistent issue
   const connectionStatus = useCallback(() => {
+    // Only show connection error for actual errors, not brief disconnections
     if (socket.connectionError) {
-      return <div className="connection-status error">Connection Error</div>;
-    } else if (!socket.isConnected) {
-      return <div className="connection-status connecting">Connecting...</div>;
+      return <div className="connection-status error">Connection Error - Please refresh</div>;
     }
-    // Return null when connected successfully - no status indicator needed
+    // Don't show "Connecting..." during brief network hiccups - it's confusing and causes UI issues
+    // The socket will automatically reconnect, and actions will queue/retry
     return null;
-  }, [socket.connectionError, socket.isConnected]);
+  }, [socket.connectionError]);
 
   // Memoize complex prop objects to prevent unnecessary re-renders
   const pokerTableProps = useMemo(() => ({

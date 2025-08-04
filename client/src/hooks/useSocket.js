@@ -13,15 +13,16 @@ export const useSocket = (serverUrl) => {
   const eventListenersRef = useRef({});
 
   useEffect(() => {
-    // Initialize socket connection with optimized settings
+    // Initialize socket connection with optimized settings for stability
     socketRef.current = io(serverUrl, {
       transports: ['websocket', 'polling'],
       upgrade: true,
-      // Remove forceNew for better connection reuse
-      timeout: 5000,
+      timeout: 10000, // Increase timeout for better stability
       reconnection: true,
-      reconnectionDelay: 1000,
-      reconnectionAttempts: 3,
+      reconnectionDelay: 500, // Faster initial reconnection
+      reconnectionDelayMax: 5000,
+      maxReconnectionAttempts: 10, // More attempts
+      randomizationFactor: 0.2,
       // Optimize for low latency
       forceJSONP: false,
       jsonp: false,
