@@ -47,7 +47,7 @@ const GamePage = () => {
   const [selectedCardback, setSelectedCardback] = useState('Cardback17');
 
   // WebSocket connection
-  const socket = useSocket(import.meta.env.VITE_API_URL || 'http://localhost:5001');
+  const socket = useSocket(import.meta.env.VITE_API_URL || 'https://poker-program-1-production.up.railway.app');
 
   // Memoize cardbacks array to prevent recreation on every render
   const cardbacks = useMemo(() => [
@@ -405,27 +405,22 @@ const GamePage = () => {
     gameState,
     handOver,
     loading,
+    makeAction,
     canCheck: canCheckWrapper,
     canCall: canCallWrapper,
     canRaise: canRaiseWrapper,
     getCallAmount: getCallAmountWrapper,
     getActualCallAmount: getActualCallAmountWrapper,
-    onFold: handleFold,
-    onCheck: handleCheck,
-    onCall: handleCall,
-    onRaise: handleRaise,
-    raiseAmount,
-    setRaiseAmount,
     betSliderValue,
-    onSliderChange: handleSliderChange,
-    onBetPreset: handleBetPreset,
+    setBetSliderValue,
+    setRaiseAmount,
     minBet,
     maxBet,
-    updateSliderFromAmount
-  }), [gameState, handOver, loading, canCheckWrapper, canCallWrapper, canRaiseWrapper, 
-       getCallAmountWrapper, getActualCallAmountWrapper, handleFold, handleCheck, 
-       handleCall, handleRaise, raiseAmount, betSliderValue, handleSliderChange, 
-       handleBetPreset, minBet, maxBet, updateSliderFromAmount]);
+    betToSliderPosition,
+    sliderPositionToBet
+  }), [gameState, handOver, loading, makeAction, canCheckWrapper, canCallWrapper, canRaiseWrapper, 
+       getCallAmountWrapper, getActualCallAmountWrapper, betSliderValue, 
+       minBet, maxBet]);
 
   if (!gameState) {
     return (

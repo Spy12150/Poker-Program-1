@@ -108,14 +108,26 @@ export const useSocket = (serverUrl) => {
 
   // Poker-specific helper functions
   const joinGame = (gameId) => {
+    if (!gameId) {
+      console.warn('Cannot join game: gameId is required');
+      return;
+    }
     emit('join_game', { game_id: gameId });
   };
 
   const startGame = (aiType = 'bladework_v2') => {
+    if (!aiType) {
+      console.warn('Cannot start game: aiType is required');
+      return;
+    }
     emit('start_game', { ai_type: aiType });
   };
 
   const makeAction = (gameId, action, amount = 0) => {
+    if (!gameId || !action) {
+      console.warn('Cannot make action: gameId and action are required');
+      return;
+    }
     emit('player_action', { 
       game_id: gameId, 
       action: action, 
@@ -124,10 +136,18 @@ export const useSocket = (serverUrl) => {
   };
 
   const startNewHand = (gameId) => {
+    if (!gameId) {
+      console.warn('Cannot start new hand: gameId is required');
+      return;
+    }
     emit('new_hand', { game_id: gameId });
   };
 
   const startNewRound = (gameId) => {
+    if (!gameId) {
+      console.warn('Cannot start new round: gameId is required');
+      return;
+    }
     emit('new_round', { game_id: gameId });
   };
 

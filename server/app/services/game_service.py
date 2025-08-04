@@ -2,28 +2,64 @@
 Game Service - Handles all game-related business logic
 """
 import uuid
+import sys
+import os
 from typing import Dict, Tuple, Optional, Any
 from app.game.poker import (
     start_new_game, apply_action, betting_round_over, advance_round, 
     next_player, showdown, prepare_next_hand, deal_remaining_cards
 )
 
+# Debug system information
+print("🔍 DEBUG: Python executable:", sys.executable)
+print("🔍 DEBUG: Python version:", sys.version)
+print("🔍 DEBUG: Current working directory:", os.getcwd())
+print("🔍 DEBUG: Python path:")
+for i, path in enumerate(sys.path):
+    print(f"  {i}: {path}")
+
 # Import AI modules with error handling for deployment
+print("🔍 DEBUG: Starting AI module imports...")
+
 try:
+    print("🔍 DEBUG: Attempting to import ai_bladework_v2...")
     from app.game.hardcode_ai.ai_bladework_v2 import decide_action_bladeworkv2
+    print("✅ DEBUG: Successfully imported ai_bladework_v2")
+    print(f"🔍 DEBUG: decide_action_bladeworkv2 function: {decide_action_bladeworkv2}")
 except ImportError as e:
-    print(f"Warning: Could not import ai_bladework_v2: {e}")
+    print(f"❌ ERROR: Could not import ai_bladework_v2: {e}")
+    print(f"🔍 DEBUG: Import error type: {type(e)}")
+    print(f"🔍 DEBUG: Import error args: {e.args}")
+    def decide_action_bladeworkv2(*args, **kwargs):
+        print("⚠️ USING FALLBACK BLADEWORK AI (always folds)")
+        return "fold", 0  # Fallback action
+except Exception as e:
+    print(f"❌ UNEXPECTED ERROR importing ai_bladework_v2: {e}")
+    print(f"🔍 DEBUG: Unexpected error type: {type(e)}")
     def decide_action_bladeworkv2(*args, **kwargs):
         print("⚠️ USING FALLBACK BLADEWORK AI (always folds)")
         return "fold", 0  # Fallback action
 
 try:
+    print("🔍 DEBUG: Attempting to import ai_froggie...")
     from app.game.hardcode_ai.ai_froggie import decide_action as decide_action_froggie
+    print("✅ DEBUG: Successfully imported ai_froggie")
+    print(f"🔍 DEBUG: decide_action_froggie function: {decide_action_froggie}")
 except ImportError as e:
-    print(f"Warning: Could not import ai_froggie: {e}")
+    print(f"❌ ERROR: Could not import ai_froggie: {e}")
+    print(f"🔍 DEBUG: Import error type: {type(e)}")
+    print(f"🔍 DEBUG: Import error args: {e.args}")
     def decide_action_froggie(*args, **kwargs):
         print("⚠️ USING FALLBACK FROGGIE AI (always checks/calls)")
         return "check", 0  # Different fallback action
+except Exception as e:
+    print(f"❌ UNEXPECTED ERROR importing ai_froggie: {e}")
+    print(f"🔍 DEBUG: Unexpected error type: {type(e)}")
+    def decide_action_froggie(*args, **kwargs):
+        print("⚠️ USING FALLBACK FROGGIE AI (always checks/calls)")
+        return "check", 0  # Different fallback action
+
+print("🔍 DEBUG: AI module import process completed.")
 
 
 class GameService:
@@ -43,11 +79,22 @@ class GameService:
     
     def _get_ai_function(self, ai_type: str):
         """Get the appropriate AI decision function based on type"""
+        print(f"🔍 DEBUG: _get_ai_function called with ai_type: {ai_type}")
+        
         ai_functions = {
             'bladework_v2': decide_action_bladeworkv2,
             'froggie': decide_action_froggie
         }
-        return ai_functions.get(ai_type, decide_action_bladeworkv2)  # Default to bladework_v2
+        
+        print(f"🔍 DEBUG: Available AI functions: {list(ai_functions.keys())}")
+        print(f"🔍 DEBUG: bladework_v2 function: {ai_functions['bladework_v2']}")
+        print(f"🔍 DEBUG: froggie function: {ai_functions['froggie']}")
+        
+        selected_function = ai_functions.get(ai_type, decide_action_bladeworkv2)
+        print(f"🔍 DEBUG: Selected function: {selected_function}")
+        print(f"🔍 DEBUG: Selected function name: {selected_function.__name__}")
+        
+        return selected_function
     
     def create_new_game(self, ai_type: str = 'bladework_v2') -> Tuple[str, Dict]:
         """
@@ -243,9 +290,28 @@ class GameService:
         # AI makes decision using the selected AI type
         ai_type = game_state.get('ai_type', 'bladework_v2')
         console_logs.append(f"AI TYPE: {ai_type}")
+        
+        print(f"🔍 DEBUG: About to get AI function for type: {ai_type}")
         ai_decision_func = self._get_ai_function(ai_type)
+        print(f"🔍 DEBUG: Got AI function: {ai_decision_func}")
+        print(f"🔍 DEBUG: AI function name: {ai_decision_func.__name__}")
+        print(f"🔍 DEBUG: AI function module: {getattr(ai_decision_func, '__module__', 'Unknown')}")
+        
         console_logs.append(f"AI FUNCTION: {ai_decision_func.__name__}")
-        ai_action, ai_amount = ai_decision_func(game_state)
+        
+        print(f"🔍 DEBUG: About to call AI function with game_state")
+        print(f"🔍 DEBUG: Game state keys: {list(game_state.keys())}")
+        
+        try:
+            ai_action, ai_amount = ai_decision_func(game_state)
+            print(f"✅ DEBUG: AI function returned - action: {ai_action}, amount: {ai_amount}")
+        except Exception as e:
+            print(f"❌ ERROR: AI function failed: {e}")
+            print(f"🔍 DEBUG: AI function error type: {type(e)}")
+            print(f"🔍 DEBUG: AI function error args: {e.args}")
+            # Fallback to fold
+            ai_action, ai_amount = "fold", 0
+            console_logs.append(f"AI ERROR: {str(e)} - defaulting to fold")
         
         console_logs.append(f"AI Action: {ai_action}")
         if ai_amount > 0:
