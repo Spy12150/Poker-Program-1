@@ -60,8 +60,20 @@ try:
     except Exception as e:
         print(f"❌ DEBUG: tier_config failed: {e}")
     
+    # Test importing just the module (not the function)
+    print("🔍 DEBUG: Testing ai_bladework_v2 module import...")
+    try:
+        import app.game.hardcode_ai.ai_bladework_v2 as bladework_module
+        print("✅ DEBUG: ai_bladework_v2 module imported successfully")
+        print(f"🔍 DEBUG: Module attributes: {dir(bladework_module)}")
+    except Exception as e:
+        print(f"❌ DEBUG: ai_bladework_v2 module failed: {e}")
+        print(f"🔍 DEBUG: Module error type: {type(e)}")
+        import traceback
+        print(f"🔍 DEBUG: Full traceback: {traceback.format_exc()}")
+    
     # Now try the full import
-    print("🔍 DEBUG: Testing full ai_bladework_v2 import...")
+    print("🔍 DEBUG: Testing full ai_bladework_v2 function import...")
     from app.game.hardcode_ai.ai_bladework_v2 import decide_action_bladeworkv2
     print("✅ DEBUG: Successfully imported ai_bladework_v2")
     print(f"🔍 DEBUG: decide_action_bladeworkv2 function: {decide_action_bladeworkv2}")
@@ -69,12 +81,16 @@ except ImportError as e:
     print(f"❌ ERROR: Could not import ai_bladework_v2: {e}")
     print(f"🔍 DEBUG: Import error type: {type(e)}")
     print(f"🔍 DEBUG: Import error args: {e.args}")
+    import traceback
+    print(f"🔍 DEBUG: Full import traceback: {traceback.format_exc()}")
     def decide_action_bladeworkv2(*args, **kwargs):
         print("⚠️ USING FALLBACK BLADEWORK AI (always folds)")
         return "fold", 0  # Fallback action
 except Exception as e:
     print(f"❌ UNEXPECTED ERROR importing ai_bladework_v2: {e}")
     print(f"🔍 DEBUG: Unexpected error type: {type(e)}")
+    import traceback
+    print(f"🔍 DEBUG: Full unexpected traceback: {traceback.format_exc()}")
     def decide_action_bladeworkv2(*args, **kwargs):
         print("⚠️ USING FALLBACK BLADEWORK AI (always folds)")
         return "fold", 0  # Fallback action
