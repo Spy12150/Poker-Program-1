@@ -14,6 +14,9 @@ class ErrorBoundary extends React.Component {
   componentDidCatch(error, errorInfo) {
     // Log the error
     console.error('React Error Boundary caught an error:', error, errorInfo);
+    console.error('Error stack:', error.stack);
+    console.error('Component stack:', errorInfo ? errorInfo.componentStack : 'No component stack available');
+    
     this.setState({
       error: error,
       errorInfo: errorInfo
@@ -30,7 +33,7 @@ class ErrorBoundary extends React.Component {
             <summary>Error Details (click to expand)</summary>
             {this.state.error && this.state.error.toString()}
             <br />
-            {this.state.errorInfo.componentStack}
+            {this.state.errorInfo && this.state.errorInfo.componentStack}
           </details>
           <button 
             onClick={() => window.location.reload()} 
