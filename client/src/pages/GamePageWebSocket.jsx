@@ -326,6 +326,25 @@ const GamePage = () => {
     makeAction('raise', amount);
   }, [makeAction, raiseAmount, minBet]);
 
+  // Main menu handler - resets all game state
+  const handleMenuClick = useCallback(() => {
+    // Reset all game state to return to start menu
+    setGameState(null);
+    setGameId(null);
+    setMessage('');
+    setWinners([]);
+    setHandOver(false);
+    setShowdown(false);
+    setRaiseAmount('');
+    setLoading(false);
+    setBetSliderValue(0);
+    setMinBet(0);
+    setMaxBet(0);
+    setDealingCards(false);
+    setPreviousCommunityLength(0);
+    setNewCardIndices([]);
+  }, []);
+
   // Bet slider functions - memoized for performance
   const handleSliderChange = useCallback((e) => {
     const position = parseInt(e.target.value);
@@ -392,14 +411,17 @@ const GamePage = () => {
   // Memoize complex prop objects to prevent unnecessary re-renders
   const pokerTableProps = useMemo(() => ({
     gameState,
+    showdown,
     selectedCardback,
     dealingCards,
     newCardIndices,
+    handOver,
     evaluateHand,
     translateCard,
     getPlayerPosition: getPlayerPositionWrapper,
-    hasPlayerChecked: hasPlayerCheckedWrapper
-  }), [gameState, selectedCardback, dealingCards, newCardIndices, getPlayerPositionWrapper, hasPlayerCheckedWrapper]);
+    hasPlayerChecked: hasPlayerCheckedWrapper,
+    isBackground: !gameState // New prop to indicate background mode
+  }), [gameState, showdown, selectedCardback, dealingCards, newCardIndices, handOver, getPlayerPositionWrapper, hasPlayerCheckedWrapper]);
 
   const actionPanelProps = useMemo(() => ({
     gameState,
@@ -442,36 +464,51 @@ const GamePage = () => {
       <GameHeader gameState={gameState} />
       {connectionStatus()}
       
-      <PokerTable {...pokerTableProps} />
-      
-      <ActionPanel {...actionPanelProps} />
+      {/* Main Menu Button - only show when game is active */}
+      {gameState && <button className="menu-button" onClick={handleMenuClick}>MAIN MENU</button>}
       
       {message && <GameMessage message={message} />}
       
-      <HandHistory gameState={gameState} />
+      {/* Always show poker table - active game or background for start screen */}
+      <PokerTable {...pokerTableProps} />
       
-      <DebugPanel 
-        gameState={gameState}
-        handOver={handOver}
-        isCheckAllowed={canCheckWrapper}
-        isCallAllowed={canCallWrapper}
-        isRaiseAllowed={canRaiseWrapper}
-        processAITurn={() => {}} // Not available in WebSocket version
-        selectedAIType={selectedAIType}
-      />
-      
-      <button className="cardback-selector-btn" onClick={cycleCardback}>
-        🎴
-      </button>
-      
-      {handOver && (
-        <HandOverPanel
-          winners={winners}
-          showdown={showdown}
-          onNewHand={newHand}
-          onNewRound={newRound}
-          loading={loading}
-        />
+      {gameState && (
+        <>
+          <ActionPanel {...actionPanelProps} />
+          
+          <DebugPanel 
+            gameState={gameState}
+            handOver={handOver}
+            isCheckAllowed={canCheckWrapper}
+            isCallAllowed={canCallWrapper}
+            isRaiseAllowed={canRaiseWrapper}
+            processAITurn={() => {}} // Not available in WebSocket version
+            selectedAIType={selectedAIType}
+          />
+          
+          <HandHistory gameState={gameState} />
+
+          {/* Cardback Selector Button - only show during active game */}
+          <button 
+            className="cardback-selector-btn"
+            onClick={cycleCardback}
+            title={`Current: ${selectedCardback}`}
+          >
+            CB
+          </button>
+          
+          {handOver && (
+            <HandOverPanel
+              handOver={handOver}
+              showdown={showdown}
+              winners={winners}
+              onNewHand={newHand}
+              onNewRound={newRound}
+              loading={loading}
+              gameState={gameState}
+            />
+          )}
+        </>
       )}
     </div>
   );
