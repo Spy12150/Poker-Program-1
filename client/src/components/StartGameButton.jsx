@@ -6,7 +6,7 @@ const StartGameButton = ({ gameState, startGame, loading }) => {
 
   if (gameState) return null;
 
-  const aiOptions = [
+  const aiOptionsList = [
     {
       id: 'froggie',
       name: 'Froggie',
@@ -28,24 +28,24 @@ const StartGameButton = ({ gameState, startGame, loading }) => {
       <div className="ai-selection">
         <h3>Choose your opponent:</h3>
         <div className="ai-buttons">
-          {aiOptions.map((ai) => (
-            <div key={ai.id} className="ai-option">
+          {aiOptionsList.map((aiOption) => (
+            <div key={aiOption.id} className="ai-option">
               <button
-                onClick={() => setSelectedAI(ai.id)}
-                className={`ai-button ${selectedAI === ai.id ? 'selected' : ''}`}
+                onClick={() => setSelectedAI(aiOption.id)}
+                className={selectedAI === aiOption.id ? 'ai-button selected' : 'ai-button'}
                 disabled={loading}
               >
-                {ai.name}
+                {aiOption.name}
               </button>
               <div 
                 className="info-icon"
-                onMouseEnter={() => setHoveredAI(ai.id)}
+                onMouseEnter={() => setHoveredAI(aiOption.id)}
                 onMouseLeave={() => setHoveredAI(null)}
               >
                 <img src="/infoicon.webp" alt="Info" className="info-icon-img" />
-                {hoveredAI === ai.id && (
+                {hoveredAI === aiOption.id && (
                   <div className="custom-tooltip">
-                    {ai.description}
+                    {aiOption.description}
                   </div>
                 )}
               </div>
