@@ -63,18 +63,6 @@ const GamePage = () => {
     setSelectedCardback(cardbacks[nextIndex]);
   }, [selectedCardback, cardbacks]);
 
-  const handleSliderRaise = useCallback(() => {
-    if (betSliderValue < minBet) {
-      setMessage(`Minimum bet is $${minBet}`);
-      return;
-    }
-    if (betSliderValue > maxBet) {
-      setMessage(`Maximum bet is $${maxBet}`);
-      return;
-    }
-    makeAction('raise', betSliderValue);
-  }, [betSliderValue, minBet, maxBet, makeAction]);
-
   // Memoize function wrappers to prevent recreation on every render
   const gameUtils = useMemo(() => ({
     getCallAmount: () => getCallAmount(gameState),
@@ -386,6 +374,18 @@ const GamePage = () => {
     const amount = parseInt(raiseAmount) || minBet;
     makeAction('raise', amount);
   }, [makeAction, raiseAmount, minBet]);
+
+  const handleSliderRaise = useCallback(() => {
+    if (betSliderValue < minBet) {
+      setMessage(`Minimum bet is $${minBet}`);
+      return;
+    }
+    if (betSliderValue > maxBet) {
+      setMessage(`Maximum bet is $${maxBet}`);
+      return;
+    }
+    makeAction('raise', betSliderValue);
+  }, [betSliderValue, minBet, maxBet, makeAction]);
 
   // Main menu handler - resets all game state
   const handleMenuClick = useCallback(() => {
