@@ -14,10 +14,30 @@ const PokerTable = ({
   selectedCardback,
   isBackground = false
 }) => {
-  // Card image component with WebP support
+  // Card image component with WebP support and error handling
   const CardImage = ({ card, isCardback = false, className = "card", alt = "card" }) => {
     const cardSrc = useCardImage(isCardback ? selectedCardback : translateCard(card));
-    return <img src={cardSrc} alt={alt} className={className} />;
+    
+    const handleImageError = (e) => {
+      // If WebP fails, try PNG fallback
+      const currentSrc = e.target.src;
+      if (currentSrc.includes('.webp')) {
+        e.target.src = currentSrc.replace('.webp', '.png');
+      } else {
+        // If both fail, show a placeholder
+        e.target.style.display = 'none';
+        console.warn('Failed to load card image:', currentSrc);
+      }
+    };
+    
+    return (
+      <img 
+        src={cardSrc} 
+        alt={alt} 
+        className={className} 
+        onError={handleImageError}
+      />
+    );
   };
   // Show empty table in background mode
   if (isBackground) {

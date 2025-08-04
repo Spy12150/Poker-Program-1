@@ -318,13 +318,13 @@ const GamePage = () => {
   }, [gameId, loading, socket.isConnected, socket.startNewRound]);
 
   // Action helper functions - memoized to prevent unnecessary re-renders
-  const handleFold = useCallback(() => makeAction('fold'), []);
-  const handleCheck = useCallback(() => makeAction('check'), []);
-  const handleCall = useCallback(() => makeAction('call'), []);
+  const handleFold = useCallback(() => makeAction('fold'), [makeAction]);
+  const handleCheck = useCallback(() => makeAction('check'), [makeAction]);
+  const handleCall = useCallback(() => makeAction('call'), [makeAction]);
   const handleRaise = useCallback(() => {
     const amount = parseInt(raiseAmount) || minBet;
     makeAction('raise', amount);
-  }, [raiseAmount, minBet]);
+  }, [makeAction, raiseAmount, minBet]);
 
   // Bet slider functions - memoized for performance
   const handleSliderChange = useCallback((e) => {

@@ -71,16 +71,19 @@ export const useImagePreloader = () => {
 };
 
 /**
- * Hook for optimized card image loading with WebP only
+ * Hook for optimized card image loading with WebP and fallback
  */
 export const useCardImage = (card) => {
   const getCardImageSrc = (cardCode) => {
-    if (!cardCode || cardCode.length < 2) return '/IvoryCards/Cardback1.webp';
+    if (!cardCode || cardCode.length < 2) {
+      // Try WebP first, fallback to PNG
+      return '/IvoryCards/Cardback1.webp';
+    }
     
     const rank = cardCode[0];
     const suit = cardCode[1];
     
-    // Use WebP only since we converted all PNG files
+    // Try WebP first since we converted all files
     return `/IvoryCards/${rank}${suit}.webp`;
   };
   
