@@ -288,39 +288,6 @@ const GamePage = () => {
     setPreviousCommunityLength(currentLength);
   }, [gameState?.community?.length, previousCommunityLength]);
 
-  // Keyboard shortcuts
-  useEffect(() => {
-    const handleKeyPress = (event) => {
-      if (!gameState || handOver || gameState.current_player !== 0 || loading) return;
-
-      switch (event.key.toLowerCase()) {
-        case 'f':
-          if (event.ctrlKey || event.metaKey) return; // Don't interfere with browser shortcuts
-          makeAction('fold');
-          break;
-        case 'c':
-          if (event.ctrlKey || event.metaKey) return;
-          if (canCheckWrapper()) {
-            makeAction('check');
-          } else if (canCallWrapper()) {
-            makeAction('call');
-          }
-          break;
-        case 'r':
-          if (event.ctrlKey || event.metaKey) return;
-          if (canRaiseWrapper()) {
-            handleSliderRaise();
-          }
-          break;
-        default:
-          break;
-      }
-    };
-
-    document.addEventListener('keypress', handleKeyPress);
-    return () => document.removeEventListener('keypress', handleKeyPress);
-  }, [gameState, handOver, loading, makeAction, canCheckWrapper, canCallWrapper, canRaiseWrapper, handleSliderRaise]);
-
   // Game action functions using WebSocket - memoized for performance
   const startGame = useCallback((selectedAI = 'bladework_v2') => {
     if (!socket.isConnected) {
@@ -386,6 +353,39 @@ const GamePage = () => {
     }
     makeAction('raise', betSliderValue);
   }, [betSliderValue, minBet, maxBet, makeAction]);
+
+  // Keyboard shortcuts - moved after makeAction and handleSliderRaise are defined
+  useEffect(() => {
+    const handleKeyPress = (event) => {
+      if (!gameState || handOver || gameState.current_player !== 0 || loading) return;
+
+      switch (event.key.toLowerCase()) {
+        case 'f':
+          if (event.ctrlKey || event.metaKey) return; // Don't interfere with browser shortcuts
+          makeAction('fold');
+          break;
+        case 'c':
+          if (event.ctrlKey || event.metaKey) return;
+          if (canCheckWrapper()) {
+            makeAction('check');
+          } else if (canCallWrapper()) {
+            makeAction('call');
+          }
+          break;
+        case 'r':
+          if (event.ctrlKey || event.metaKey) return;
+          if (canRaiseWrapper()) {
+            handleSliderRaise();
+          }
+          break;
+        default:
+          break;
+      }
+    };
+
+    document.addEventListener('keypress', handleKeyPress);
+    return () => document.removeEventListener('keypress', handleKeyPress);
+  }, [gameState, handOver, loading, makeAction, canCheckWrapper, canCallWrapper, canRaiseWrapper, handleSliderRaise]);
 
   // Main menu handler - resets all game state
   const handleMenuClick = useCallback(() => {

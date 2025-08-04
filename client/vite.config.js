@@ -5,8 +5,8 @@ import react from '@vitejs/plugin-react'
 export default defineConfig({
   plugins: [react()],
   build: {
-    // Re-enable minification for production performance
-    minify: 'esbuild', // or 'terser' for more aggressive minification
+    // Disable minification for debugging
+    minify: false,
     // Keep sourcemaps for debugging in production if needed
     sourcemap: true,
     rollupOptions: {
