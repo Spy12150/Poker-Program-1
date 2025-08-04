@@ -443,6 +443,9 @@ class GameService:
     
     def _serialize_game_state(self, game_state: Dict) -> Dict:
         """Convert game state to JSON-safe format for frontend"""
+        # Validate card data before serialization
+        self._validate_card_data(game_state)
+        
         serialized = {
             'game_id': game_state.get('game_id'),
             'player_hand': game_state['players'][0]['hand'],
@@ -468,3 +471,27 @@ class GameService:
         }
         
         return serialized
+
+    def _validate_card_data(self, game_state: Dict) -> None:
+        """Validate that all card data follows the correct format (rank+suit)"""
+        valid_ranks = {'2', '3', '4', '5', '6', '7', '8', '9', 'T', 'J', 'Q', 'K', 'A'}
+        valid_suits = {'s', 'h', 'd', 'c'}
+        
+        def validate_card(card: str, context: str) -> None:
+            if not isinstance(card, str) or len(card) != 2:
+                raise ValueError(f"Invalid card format in {context}: {card}")
+            
+            rank, suit = card[0], card[1]
+            if rank not in valid_ranks:
+                raise ValueError(f"Invalid card rank in {context}: {rank} (card: {card})")
+            if suit not in valid_suits:
+                raise ValueError(f"Invalid card suit in {context}: {suit} (card: {card})")
+        
+        # Validate community cards
+        for i, card in enumerate(game_state.get('community', [])):
+            validate_card(card, f"community[{i}]")
+        
+        # Validate player hands
+        for player_idx, player in enumerate(game_state.get('players', [])):
+            for card_idx, card in enumerate(player.get('hand', [])):
+                validate_card(card, f"player[{player_idx}].hand[{card_idx}]")

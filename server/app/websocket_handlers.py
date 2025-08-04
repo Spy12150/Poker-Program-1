@@ -51,7 +51,17 @@ def register_websocket_handlers(socketio: SocketIO):
         """Handle starting a new game"""
         try:
             ai_type = data.get('ai_type', 'bladework_v2')
+            print(f"Starting game with AI type: {ai_type}")  # Debug log
+            
             game_id, response = game_service.create_new_game(ai_type)
+            print(f"Game created with ID: {game_id}")  # Debug log
+            print(f"Response data structure: {type(response)}")  # Debug log
+            
+            # Validate response data before sending
+            if not response or not isinstance(response, dict):
+                print(f"Invalid response data: {response}")
+                emit('error', {'message': 'Invalid game data generated'})
+                return
             
             # Join the player to the game room
             websocket_service.handle_join_game(request.sid, {'game_id': game_id})
@@ -60,6 +70,7 @@ def register_websocket_handlers(socketio: SocketIO):
             websocket_service.broadcast_game_start(game_id, response)
             
         except Exception as e:
+            print(f"Error in handle_start_game: {str(e)}")  # Debug log
             emit('error', {'message': f'Failed to start game: {str(e)}'})
     
     @socketio.on('player_action')
@@ -70,14 +81,18 @@ def register_websocket_handlers(socketio: SocketIO):
             action = data.get('action')
             amount = data.get('amount', 0)
             
+            print(f"Player action: {action}, amount: {amount}, game_id: {game_id}")  # Debug log
+            
             # Validate input
             is_valid, error_msg = validation_service.validate_game_id(game_id)
             if not is_valid:
+                print(f"Invalid game ID: {error_msg}")  # Debug log
                 emit('error', {'message': error_msg})
                 return
             
             is_valid, error_msg = validation_service.validate_player_action(action, amount)
             if not is_valid:
+                print(f"Invalid player action: {error_msg}")  # Debug log
                 emit('error', {'message': error_msg})
                 return
             
@@ -87,6 +102,13 @@ def register_websocket_handlers(socketio: SocketIO):
             
             # Execute the action
             result = game_service.execute_player_action(game_id, action, amount)
+            print(f"Player action result type: {type(result)}")  # Debug log
+            
+            # Validate result before broadcasting
+            if not result or not isinstance(result, dict):
+                print(f"Invalid result from player action: {result}")
+                emit('error', {'message': 'Invalid game state after action'})
+                return
             
             # Broadcast the result to all players in the game
             websocket_service.broadcast_action_result(game_id, result)
@@ -98,8 +120,10 @@ def register_websocket_handlers(socketio: SocketIO):
                 socketio.start_background_task(_process_ai_action, game_id)
                 
         except ValueError as e:
+            print(f"ValueError in player action: {str(e)}")  # Debug log
             emit('error', {'message': str(e)})
         except Exception as e:
+            print(f"Unexpected error in player action: {str(e)}")  # Debug log
             emit('error', {'message': 'Internal server error'})
     
     @socketio.on('new_hand')
