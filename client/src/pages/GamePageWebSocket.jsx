@@ -45,7 +45,6 @@ const GamePage = () => {
   const [previousCommunityLength, setPreviousCommunityLength] = useState(0);
   const [newCardIndices, setNewCardIndices] = useState([]);
   const [selectedCardback, setSelectedCardback] = useState('Cardback17');
-  const [aiThinking, setAiThinking] = useState(false);
 
   // WebSocket connection
   const socket = useSocket(import.meta.env.VITE_API_URL || 'https://poker-program-1-production.up.railway.app');
@@ -63,6 +62,18 @@ const GamePage = () => {
     const nextIndex = (currentIndex + 1) % cardbacks.length;
     setSelectedCardback(cardbacks[nextIndex]);
   }, [selectedCardback, cardbacks]);
+
+  const handleSliderRaise = useCallback(() => {
+    if (betSliderValue < minBet) {
+      setMessage(`Minimum bet is $${minBet}`);
+      return;
+    }
+    if (betSliderValue > maxBet) {
+      setMessage(`Maximum bet is $${maxBet}`);
+      return;
+    }
+    makeAction('raise', betSliderValue);
+  }, [betSliderValue, minBet, maxBet, makeAction]);
 
   // Memoize function wrappers to prevent recreation on every render
   const gameUtils = useMemo(() => ({
@@ -145,7 +156,6 @@ const GamePage = () => {
       if (data.winners) {
         setWinners(data.winners);
         setHandOver(true);
-        setAiThinking(false); // Clear AI thinking when hand ends
         if (data.showdown) {
           setShowdown(true);
         }
@@ -181,9 +191,8 @@ const GamePage = () => {
         }
       }
       
-      // Clear loading and AI thinking states when AI action completes
+      // Clear loading state when AI action completes
       setLoading(false);
-      setAiThinking(false);
     });
 
     // Handle hand over
@@ -269,17 +278,60 @@ const GamePage = () => {
       for (let i = previousCommunityLength; i < currentLength; i++) {
         newIndices.push(i);
       }
-      setNewCardIndices(newIndices);
+      
+      // Special case for flop: if we're going from 0 to 3 cards, animate all 3
+      if (previousCommunityLength === 0 && currentLength === 3) {
+        setNewCardIndices([0, 1, 2]);
+      } else {
+        setNewCardIndices(newIndices);
+      }
+      
+      // Check if it's an all-in showdown with multiple cards dealt at once
+      const cardsDifference = currentLength - previousCommunityLength;
+      const animationDuration = cardsDifference > 1 ? 1500 : 1000; // Longer for multiple cards
       
       // Remove dealing animation after animation completes
       setTimeout(() => {
         setDealingCards(false);
         setNewCardIndices([]);
-      }, 1000);
+      }, animationDuration);
     }
     
     setPreviousCommunityLength(currentLength);
-  }, [gameState?.community?.length]);
+  }, [gameState?.community?.length, previousCommunityLength]);
+
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handleKeyPress = (event) => {
+      if (!gameState || handOver || gameState.current_player !== 0 || loading) return;
+
+      switch (event.key.toLowerCase()) {
+        case 'f':
+          if (event.ctrlKey || event.metaKey) return; // Don't interfere with browser shortcuts
+          makeAction('fold');
+          break;
+        case 'c':
+          if (event.ctrlKey || event.metaKey) return;
+          if (canCheckWrapper()) {
+            makeAction('check');
+          } else if (canCallWrapper()) {
+            makeAction('call');
+          }
+          break;
+        case 'r':
+          if (event.ctrlKey || event.metaKey) return;
+          if (canRaiseWrapper()) {
+            handleSliderRaise();
+          }
+          break;
+        default:
+          break;
+      }
+    };
+
+    document.addEventListener('keypress', handleKeyPress);
+    return () => document.removeEventListener('keypress', handleKeyPress);
+  }, [gameState, handOver, loading, makeAction, canCheckWrapper, canCallWrapper, canRaiseWrapper, handleSliderRaise]);
 
   // Game action functions using WebSocket - memoized for performance
   const startGame = useCallback((selectedAI = 'bladework_v2') => {
@@ -299,24 +351,12 @@ const GamePage = () => {
   const makeAction = useCallback((action, amount = 0) => {
     if (!gameId || handOver || loading || !socket.isConnected) return;
     
-    // Instant UI feedback - show action immediately
     setLoading(true);
-    setAiThinking(true);
-    
-    // Optimistic UI update - immediately reflect player action
-    if (gameState && gameState.players && gameState.players[0]) {
-      const optimisticMessage = action === 'fold' ? 'You folded - AI thinking...' :
-                               action === 'check' ? 'You checked - AI thinking...' :
-                               action === 'call' ? 'You called - AI thinking...' :
-                               action === 'raise' ? `You raised to ${amount} - AI thinking...` :
-                               `${action.charAt(0).toUpperCase() + action.slice(1)} confirmed - AI thinking...`;
-      
-      setMessage(optimisticMessage);
-    }
+    setMessage(`Making ${action}...`);
     
     console.log(`Making action: ${action}`, { gameId, action, amount });
     socket.makeAction(gameId, action, amount);
-  }, [gameId, handOver, loading, socket.isConnected, socket.makeAction, gameState]);
+  }, [gameId, handOver, loading, socket.isConnected, socket.makeAction]);
 
   const newHand = useCallback(() => {
     if (!gameId || loading || !socket.isConnected) return;
@@ -364,7 +404,6 @@ const GamePage = () => {
     setDealingCards(false);
     setPreviousCommunityLength(0);
     setNewCardIndices([]);
-    setAiThinking(false);
   }, []);
 
   // Bet slider functions - memoized for performance
@@ -442,9 +481,8 @@ const GamePage = () => {
     translateCard,
     getPlayerPosition: getPlayerPositionWrapper,
     hasPlayerChecked: hasPlayerCheckedWrapper,
-    isBackground: !gameState, // New prop to indicate background mode
-    aiThinking
-  }), [gameState, showdown, selectedCardback, dealingCards, newCardIndices, handOver, getPlayerPositionWrapper, hasPlayerCheckedWrapper, aiThinking]);
+    isBackground: !gameState // New prop to indicate background mode
+  }), [gameState, showdown, selectedCardback, dealingCards, newCardIndices, handOver, getPlayerPositionWrapper, hasPlayerCheckedWrapper]);
 
   const actionPanelProps = useMemo(() => ({
     gameState,

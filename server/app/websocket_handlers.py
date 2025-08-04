@@ -69,6 +69,11 @@ def register_websocket_handlers(socketio: SocketIO):
             # Broadcast game start
             websocket_service.broadcast_game_start(game_id, response)
             
+            # Check if AI needs to act first in the initial game
+            if response.get('current_player') == 1:
+                print(f"AI goes first in game {game_id}, triggering AI action")  # Debug log
+                socketio.start_background_task(_process_ai_action, game_id)
+            
         except Exception as e:
             print(f"Error in handle_start_game: {str(e)}")  # Debug log
             emit('error', {'message': f'Failed to start game: {str(e)}'})
@@ -166,6 +171,10 @@ def register_websocket_handlers(socketio: SocketIO):
             
             # Broadcast new round to all players
             websocket_service.broadcast_game_update(game_id, 'new_round', game_state)
+            
+            # Check if AI needs to act first in the new round
+            if game_state.get('current_player') == 1:
+                socketio.start_background_task(_process_ai_action, game_id)
             
         except ValueError as e:
             emit('error', {'message': str(e)})
