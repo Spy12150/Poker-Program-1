@@ -63,6 +63,26 @@ try:
     # Test importing just the module (not the function)
     print("🔍 DEBUG: Testing ai_bladework_v2 module import...")
     try:
+        # Check if the file exists in the deployment
+        import os
+        ai_dir = '/app/app/game/hardcode_ai'
+        print(f"🔍 DEBUG: Checking directory: {ai_dir}")
+        if os.path.exists(ai_dir):
+            files = os.listdir(ai_dir)
+            print(f"🔍 DEBUG: Files in hardcode_ai directory: {files}")
+            
+            # Look for the specific file
+            target_file = 'ai_bladework_v2.py'
+            if target_file in files:
+                print(f"✅ DEBUG: {target_file} exists in directory")
+                file_path = os.path.join(ai_dir, target_file)
+                file_size = os.path.getsize(file_path)
+                print(f"🔍 DEBUG: File size: {file_size} bytes")
+            else:
+                print(f"❌ DEBUG: {target_file} NOT found in directory")
+        else:
+            print(f"❌ DEBUG: Directory {ai_dir} does not exist")
+        
         import app.game.hardcode_ai.ai_bladework_v2 as bladework_module
         print("✅ DEBUG: ai_bladework_v2 module imported successfully")
         print(f"🔍 DEBUG: Module attributes: {dir(bladework_module)}")
