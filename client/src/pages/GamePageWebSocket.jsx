@@ -502,8 +502,8 @@ const GamePage = () => {
               handOver={handOver}
               showdown={showdown}
               winners={winners}
-              onNewHand={newHand}
-              onNewRound={newRound}
+              newHand={newHand}
+              newRound={newRound}
               loading={loading}
               gameState={gameState}
             />
