@@ -12,7 +12,8 @@ const PokerTable = ({
   evaluateHand, 
   translateCard,
   selectedCardback,
-  isBackground = false
+  isBackground = false,
+  aiThinking = false
 }) => {
   // Card image component with WebP support and error handling
   const CardImage = ({ card, isCardback = false, className = "card", alt = "card" }) => {
@@ -157,7 +158,7 @@ const PokerTable = ({
               </div>
               
               {/* AI Thinking Indicator */}
-              {!handOver && gameState.current_player === 1 && (
+              {!handOver && (aiThinking || gameState.current_player === 1) && (
                 <div className="turn-indicator ai-thinking">
                   AI is thinking...
                 </div>

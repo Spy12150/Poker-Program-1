@@ -45,6 +45,7 @@ const GamePage = () => {
   const [previousCommunityLength, setPreviousCommunityLength] = useState(0);
   const [newCardIndices, setNewCardIndices] = useState([]);
   const [selectedCardback, setSelectedCardback] = useState('Cardback17');
+  const [aiThinking, setAiThinking] = useState(false);
 
   // WebSocket connection
   const socket = useSocket(import.meta.env.VITE_API_URL || 'https://poker-program-1-production.up.railway.app');
@@ -144,6 +145,7 @@ const GamePage = () => {
       if (data.winners) {
         setWinners(data.winners);
         setHandOver(true);
+        setAiThinking(false); // Clear AI thinking when hand ends
         if (data.showdown) {
           setShowdown(true);
         }
@@ -166,6 +168,9 @@ const GamePage = () => {
 
       if (data.message) {
         setMessage(data.message);
+      } else {
+        // If no specific message, show AI action feedback
+        setMessage('AI made their move');
       }
 
       if (data.winners) {
@@ -175,6 +180,10 @@ const GamePage = () => {
           setShowdown(true);
         }
       }
+      
+      // Clear loading and AI thinking states when AI action completes
+      setLoading(false);
+      setAiThinking(false);
     });
 
     // Handle hand over
@@ -290,12 +299,24 @@ const GamePage = () => {
   const makeAction = useCallback((action, amount = 0) => {
     if (!gameId || handOver || loading || !socket.isConnected) return;
     
+    // Instant UI feedback - show action immediately
     setLoading(true);
-    setMessage(`Making ${action}...`);
+    setAiThinking(true);
+    
+    // Optimistic UI update - immediately reflect player action
+    if (gameState && gameState.players && gameState.players[0]) {
+      const optimisticMessage = action === 'fold' ? 'You folded - AI thinking...' :
+                               action === 'check' ? 'You checked - AI thinking...' :
+                               action === 'call' ? 'You called - AI thinking...' :
+                               action === 'raise' ? `You raised to ${amount} - AI thinking...` :
+                               `${action.charAt(0).toUpperCase() + action.slice(1)} confirmed - AI thinking...`;
+      
+      setMessage(optimisticMessage);
+    }
     
     console.log(`Making action: ${action}`, { gameId, action, amount });
     socket.makeAction(gameId, action, amount);
-  }, [gameId, handOver, loading, socket.isConnected, socket.makeAction]);
+  }, [gameId, handOver, loading, socket.isConnected, socket.makeAction, gameState]);
 
   const newHand = useCallback(() => {
     if (!gameId || loading || !socket.isConnected) return;
@@ -343,6 +364,7 @@ const GamePage = () => {
     setDealingCards(false);
     setPreviousCommunityLength(0);
     setNewCardIndices([]);
+    setAiThinking(false);
   }, []);
 
   // Bet slider functions - memoized for performance
@@ -420,8 +442,9 @@ const GamePage = () => {
     translateCard,
     getPlayerPosition: getPlayerPositionWrapper,
     hasPlayerChecked: hasPlayerCheckedWrapper,
-    isBackground: !gameState // New prop to indicate background mode
-  }), [gameState, showdown, selectedCardback, dealingCards, newCardIndices, handOver, getPlayerPositionWrapper, hasPlayerCheckedWrapper]);
+    isBackground: !gameState, // New prop to indicate background mode
+    aiThinking
+  }), [gameState, showdown, selectedCardback, dealingCards, newCardIndices, handOver, getPlayerPositionWrapper, hasPlayerCheckedWrapper, aiThinking]);
 
   const actionPanelProps = useMemo(() => ({
     gameState,
