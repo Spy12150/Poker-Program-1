@@ -13,11 +13,19 @@ export const useSocket = (serverUrl) => {
   const eventListenersRef = useRef({});
 
   useEffect(() => {
-    // Initialize socket connection
+    // Initialize socket connection with optimized settings
     socketRef.current = io(serverUrl, {
       transports: ['websocket', 'polling'],
       upgrade: true,
-      forceNew: true
+      // Remove forceNew for better connection reuse
+      timeout: 5000,
+      reconnection: true,
+      reconnectionDelay: 1000,
+      reconnectionAttempts: 3,
+      // Optimize for low latency
+      forceJSONP: false,
+      jsonp: false,
+      forceBase64: false
     });
 
     const socket = socketRef.current;
@@ -57,25 +65,33 @@ export const useSocket = (serverUrl) => {
     };
   }, [serverUrl]);
 
-  // Function to emit events to server
+  // Function to emit events to server (optimized)
   const emit = (eventName, data) => {
     if (socketRef.current && isConnected) {
-      console.log(`📤 Emitting ${eventName}:`, data);
+      // Only log in development
+      if (process.env.NODE_ENV === 'development') {
+        console.log(`📤 Emitting ${eventName}:`, data);
+      }
       socketRef.current.emit(eventName, data);
     } else {
       console.warn('⚠️ Socket not connected. Cannot emit:', eventName);
     }
   };
 
-  // Function to listen for events from server
+  // Function to listen for events from server (optimized)
   const on = (eventName, callback) => {
     if (socketRef.current) {
       // Store the callback for cleanup
       eventListenersRef.current[eventName] = callback;
       
-      console.log(`👂 Listening for ${eventName}`);
+      if (process.env.NODE_ENV === 'development') {
+        console.log(`👂 Listening for ${eventName}`);
+      }
+      
       socketRef.current.on(eventName, (data) => {
-        console.log(`📥 Received ${eventName}:`, data);
+        if (process.env.NODE_ENV === 'development') {
+          console.log(`📥 Received ${eventName}:`, data);
+        }
         callback(data);
       });
     }

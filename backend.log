@@ -1,0 +1,10 @@
+Werkzeug appears to be used in a production deployment. Consider switching to a production web server instead.
+ * Tip: There are .env or .flaskenv files present. Do "pip install python-dotenv" to use them.
+🚀 Starting SocketIO server on http://localhost:5001
+ * Serving Flask app 'app'
+ * Debug mode: off
+[31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5001
+ * Running on http://26.26.26.1:5001
+[33mPress CTRL+C to quit[0m

@@ -14,6 +14,7 @@ try:
 except ImportError as e:
     print(f"Warning: Could not import ai_bladework_v2: {e}")
     def decide_action_bladeworkv2(*args, **kwargs):
+        print("⚠️ USING FALLBACK BLADEWORK AI (always folds)")
         return "fold", 0  # Fallback action
 
 try:
@@ -21,7 +22,8 @@ try:
 except ImportError as e:
     print(f"Warning: Could not import ai_froggie: {e}")
     def decide_action_froggie(*args, **kwargs):
-        return "fold", 0  # Fallback action
+        print("⚠️ USING FALLBACK FROGGIE AI (always checks/calls)")
+        return "check", 0  # Different fallback action
 
 
 class GameService:
@@ -70,7 +72,7 @@ class GameService:
                 'logic': 'Random'
             },
             'bladework_v2': {
-                'name': 'Bladework v2',
+                'name': 'Bladework',
                 'logic': 'Hard Coded'
             }
         }
@@ -240,7 +242,9 @@ class GameService:
         
         # AI makes decision using the selected AI type
         ai_type = game_state.get('ai_type', 'bladework_v2')
+        console_logs.append(f"AI TYPE: {ai_type}")
         ai_decision_func = self._get_ai_function(ai_type)
+        console_logs.append(f"AI FUNCTION: {ai_decision_func.__name__}")
         ai_action, ai_amount = ai_decision_func(game_state)
         
         console_logs.append(f"AI Action: {ai_action}")
@@ -460,7 +464,7 @@ class GameService:
             'action_history': game_state.get('action_history', []),
             'dealer_pos': game_state['dealer_pos'],
             'big_blind': game_state.get('big_blind', 10),  # Include big blind for frontend calculations
-            'ai_info': game_state.get('ai_info', {'name': 'Bladework v2', 'logic': 'Hard Coded', 'type': 'bladework_v2'})
+            'ai_info': game_state.get('ai_info', {'name': 'Bladework', 'logic': 'Hard Coded', 'type': 'bladework_v2'})
         }
         
         return serialized

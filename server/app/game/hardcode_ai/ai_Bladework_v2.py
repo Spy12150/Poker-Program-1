@@ -541,6 +541,7 @@ class GTOEnhancedAI:
 gto_ai = None
 
 def decide_action_bladeworkv2(game_state):
+    print("⚔️ BLADEWORK V2 AI IS MAKING A DECISION! ⚔️")
     global gto_ai
     if gto_ai is None:
         gto_ai = GTOEnhancedAI()

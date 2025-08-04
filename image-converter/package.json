@@ -1,0 +1,12 @@
+{
+  "name": "image-converter",
+  "version": "1.0.0",
+  "description": "Convert PNG images to WebP",
+  "main": "convert.js",
+  "scripts": {
+    "convert": "node convert.js"
+  },
+  "dependencies": {
+    "sharp": "^0.33.0"
+  }
+}

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import './GamePage.css';
 
 // Components
@@ -49,30 +49,41 @@ const GamePage = () => {
   // WebSocket connection
   const socket = useSocket(import.meta.env.VITE_API_URL || 'http://localhost:5001');
 
-  // Array of all available cardbacks from IvoryCards folder
-  const cardbacks = [
+  // Memoize cardbacks array to prevent recreation on every render
+  const cardbacks = useMemo(() => [
     'Cardback17', 'Cardback18', 'Cardback3', 'Cardback4', 'Cardback5',
     'Cardback6', 'Cardback7', 'Cardback8', 'Cardback9', 'Cardback10',
     'Cardback11', 'Cardback12', 'Cardback13', 'Cardback14', 
     'Cardback16', 'Cardback2', 'Cardback1', 'Cardback19'
-  ];
+  ], []);
 
-  const cycleCardback = () => {
+  const cycleCardback = useCallback(() => {
     const currentIndex = cardbacks.indexOf(selectedCardback);
     const nextIndex = (currentIndex + 1) % cardbacks.length;
     setSelectedCardback(cardbacks[nextIndex]);
-  };
+  }, [selectedCardback, cardbacks]);
 
-  // Function definitions (moved above useEffect to avoid reference errors)
-  const getCallAmountWrapper = () => getCallAmount(gameState);
-  const getActualCallAmountWrapper = () => getActualCallAmount(gameState);
-  const canCheckWrapper = () => canCheck(gameState);
-  const canCallWrapper = () => canCall(gameState);
-  const canRaiseWrapper = () => canRaise(gameState);
-  const getPlayerPositionWrapper = (playerIndex) => getPlayerPosition(gameState, playerIndex);
-  const hasPlayerCheckedWrapper = (playerIndex) => hasPlayerChecked(gameState, playerIndex);
+  // Memoize function wrappers to prevent recreation on every render
+  const gameUtils = useMemo(() => ({
+    getCallAmount: () => getCallAmount(gameState),
+    getActualCallAmount: () => getActualCallAmount(gameState),
+    canCheck: () => canCheck(gameState),
+    canCall: () => canCall(gameState),
+    canRaise: () => canRaise(gameState),
+    getPlayerPosition: (playerIndex) => getPlayerPosition(gameState, playerIndex),
+    hasPlayerChecked: (playerIndex) => hasPlayerChecked(gameState, playerIndex)
+  }), [gameState]);
 
-  const updateBetLimits = (state) => {
+  // Create memoized wrapper functions using gameUtils
+  const getCallAmountWrapper = useCallback(() => gameUtils.getCallAmount(), [gameUtils]);
+  const getActualCallAmountWrapper = useCallback(() => gameUtils.getActualCallAmount(), [gameUtils]);
+  const canCheckWrapper = useCallback(() => gameUtils.canCheck(), [gameUtils]);
+  const canCallWrapper = useCallback(() => gameUtils.canCall(), [gameUtils]);
+  const canRaiseWrapper = useCallback(() => gameUtils.canRaise(), [gameUtils]);
+  const getPlayerPositionWrapper = useCallback((playerIndex) => gameUtils.getPlayerPosition(playerIndex), [gameUtils]);
+  const hasPlayerCheckedWrapper = useCallback((playerIndex) => gameUtils.hasPlayerChecked(playerIndex), [gameUtils]);
+
+  const updateBetLimits = useCallback((state) => {
     if (!state || !state.players || state.current_player !== 0) return;
     
     const player = state.players[0];
@@ -103,7 +114,7 @@ const GamePage = () => {
     // Always default to minimum bet for new actions
     setBetSliderValue(finalMinBet);
     setRaiseAmount(finalMinBet.toString());
-  };
+  }, []);
 
   // WebSocket event handlers
   useEffect(() => {
@@ -261,8 +272,8 @@ const GamePage = () => {
     setPreviousCommunityLength(currentLength);
   }, [gameState?.community?.length]);
 
-  // Game action functions using WebSocket
-  const startGame = (selectedAI = 'bladework_v2') => {
+  // Game action functions using WebSocket - memoized for performance
+  const startGame = useCallback((selectedAI = 'bladework_v2') => {
     if (!socket.isConnected) {
       setMessage('Not connected to server. Please refresh the page.');
       return;
@@ -274,9 +285,9 @@ const GamePage = () => {
     
     console.log('Starting game with AI:', selectedAI);
     socket.startGame(selectedAI);
-  };
+  }, [socket.isConnected, socket.startGame]);
 
-  const makeAction = (action, amount = 0) => {
+  const makeAction = useCallback((action, amount = 0) => {
     if (!gameId || handOver || loading || !socket.isConnected) return;
     
     setLoading(true);
@@ -284,9 +295,9 @@ const GamePage = () => {
     
     console.log(`Making action: ${action}`, { gameId, action, amount });
     socket.makeAction(gameId, action, amount);
-  };
+  }, [gameId, handOver, loading, socket.isConnected, socket.makeAction]);
 
-  const newHand = () => {
+  const newHand = useCallback(() => {
     if (!gameId || loading || !socket.isConnected) return;
     
     setLoading(true);
@@ -294,9 +305,9 @@ const GamePage = () => {
     
     console.log('Starting new hand for game:', gameId);
     socket.startNewHand(gameId);
-  };
+  }, [gameId, loading, socket.isConnected, socket.startNewHand]);
 
-  const newRound = () => {
+  const newRound = useCallback(() => {
     if (!gameId || loading || !socket.isConnected) return;
     
     setLoading(true);
@@ -304,34 +315,34 @@ const GamePage = () => {
     
     console.log('Starting new round for game:', gameId);
     socket.startNewRound(gameId);
-  };
+  }, [gameId, loading, socket.isConnected, socket.startNewRound]);
 
-  // Action helper functions
-  const handleFold = () => makeAction('fold');
-  const handleCheck = () => makeAction('check');
-  const handleCall = () => makeAction('call');
-  const handleRaise = () => {
+  // Action helper functions - memoized to prevent unnecessary re-renders
+  const handleFold = useCallback(() => makeAction('fold'), []);
+  const handleCheck = useCallback(() => makeAction('check'), []);
+  const handleCall = useCallback(() => makeAction('call'), []);
+  const handleRaise = useCallback(() => {
     const amount = parseInt(raiseAmount) || minBet;
     makeAction('raise', amount);
-  };
+  }, [raiseAmount, minBet]);
 
-  // Bet slider functions
-  const handleSliderChange = (e) => {
+  // Bet slider functions - memoized for performance
+  const handleSliderChange = useCallback((e) => {
     const position = parseInt(e.target.value);
     setBetSliderValue(position);
     const betValue = sliderPositionToBet(position, minBet, maxBet);
     setRaiseAmount(betValue.toString());
-  };
+  }, [minBet, maxBet]);
 
-  const updateSliderFromAmount = (amount) => {
+  const updateSliderFromAmount = useCallback((amount) => {
     const numAmount = parseInt(amount) || minBet;
     const clampedAmount = Math.max(minBet, Math.min(maxBet, numAmount));
     const position = betToSliderPosition(clampedAmount, minBet, maxBet);
     setBetSliderValue(position);
     setRaiseAmount(clampedAmount.toString());
-  };
+  }, [minBet, maxBet]);
 
-  const handleBetPreset = (preset) => {
+  const handleBetPreset = useCallback((preset) => {
     let amount;
     const pot = gameState?.pot || 0;
     const playerStack = gameState?.players[0]?.stack || 0;
@@ -365,10 +376,10 @@ const GamePage = () => {
 
     amount = Math.max(minBet, Math.min(maxAllIn, amount));
     updateSliderFromAmount(amount);
-  };
+  }, [gameState, minBet, updateSliderFromAmount]);
 
-  // Connection status display - only show when there's an issue or connecting
-  const connectionStatus = () => {
+  // Connection status display - only show when there's an issue or connecting - memoized
+  const connectionStatus = useCallback(() => {
     if (socket.connectionError) {
       return <div className="connection-status error">Connection Error</div>;
     } else if (!socket.isConnected) {
@@ -376,7 +387,45 @@ const GamePage = () => {
     }
     // Return null when connected successfully - no status indicator needed
     return null;
-  };
+  }, [socket.connectionError, socket.isConnected]);
+
+  // Memoize complex prop objects to prevent unnecessary re-renders
+  const pokerTableProps = useMemo(() => ({
+    gameState,
+    selectedCardback,
+    dealingCards,
+    newCardIndices,
+    evaluateHand,
+    translateCard,
+    getPlayerPosition: getPlayerPositionWrapper,
+    hasPlayerChecked: hasPlayerCheckedWrapper
+  }), [gameState, selectedCardback, dealingCards, newCardIndices, getPlayerPositionWrapper, hasPlayerCheckedWrapper]);
+
+  const actionPanelProps = useMemo(() => ({
+    gameState,
+    handOver,
+    loading,
+    canCheck: canCheckWrapper,
+    canCall: canCallWrapper,
+    canRaise: canRaiseWrapper,
+    getCallAmount: getCallAmountWrapper,
+    getActualCallAmount: getActualCallAmountWrapper,
+    onFold: handleFold,
+    onCheck: handleCheck,
+    onCall: handleCall,
+    onRaise: handleRaise,
+    raiseAmount,
+    setRaiseAmount,
+    betSliderValue,
+    onSliderChange: handleSliderChange,
+    onBetPreset: handleBetPreset,
+    minBet,
+    maxBet,
+    updateSliderFromAmount
+  }), [gameState, handOver, loading, canCheckWrapper, canCallWrapper, canRaiseWrapper, 
+       getCallAmountWrapper, getActualCallAmountWrapper, handleFold, handleCheck, 
+       handleCall, handleRaise, raiseAmount, betSliderValue, handleSliderChange, 
+       handleBetPreset, minBet, maxBet, updateSliderFromAmount]);
 
   if (!gameState) {
     return (
@@ -399,39 +448,9 @@ const GamePage = () => {
       <GameHeader gameState={gameState} />
       {connectionStatus()}
       
-      <PokerTable 
-        gameState={gameState}
-        selectedCardback={selectedCardback}
-        dealingCards={dealingCards}
-        newCardIndices={newCardIndices}
-        evaluateHand={evaluateHand}
-        translateCard={translateCard}
-        getPlayerPosition={getPlayerPositionWrapper}
-        hasPlayerChecked={hasPlayerCheckedWrapper}
-      />
+      <PokerTable {...pokerTableProps} />
       
-      <ActionPanel
-        gameState={gameState}
-        handOver={handOver}
-        loading={loading}
-        canCheck={canCheckWrapper}
-        canCall={canCallWrapper}
-        canRaise={canRaiseWrapper}
-        getCallAmount={getCallAmountWrapper}
-        getActualCallAmount={getActualCallAmountWrapper}
-        onFold={handleFold}
-        onCheck={handleCheck}
-        onCall={handleCall}
-        onRaise={handleRaise}
-        raiseAmount={raiseAmount}
-        setRaiseAmount={setRaiseAmount}
-        betSliderValue={betSliderValue}
-        onSliderChange={handleSliderChange}
-        onBetPreset={handleBetPreset}
-        minBet={minBet}
-        maxBet={maxBet}
-        updateSliderFromAmount={updateSliderFromAmount}
-      />
+      <ActionPanel {...actionPanelProps} />
       
       {message && <GameMessage message={message} />}
       
@@ -461,4 +480,4 @@ const GamePage = () => {
   );
 };
 
-export default GamePage;
+export default React.memo(GamePage);

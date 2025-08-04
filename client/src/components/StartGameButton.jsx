@@ -14,7 +14,7 @@ const StartGameButton = ({ gameState, startGame, loading }) => {
     },
     {
       id: 'bladework_v2',
-      name: 'Bladework v2',
+      name: 'Bladework',
       description: 'A hard-coded bot with defined ranges that can beat intermediate heads up players'
     }
   ];

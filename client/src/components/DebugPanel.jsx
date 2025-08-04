@@ -6,7 +6,7 @@ const DebugPanel = ({ gameState, handOver, canCheck, canCall, canRaise, processA
   // Define AI info based on selectedAIType
   const aiInfoMap = {
     'bladework_v2': {
-      name: 'Bladework v2',
+      name: 'Bladework',
       logic: 'Hard Coded'
     },
     'froggie': {

@@ -1,7 +1,7 @@
 {
-  "total_hands": 693,
-  "player_wins": 439,
-  "ai_wins": 254,
+  "total_hands": 699,
+  "player_wins": 442,
+  "ai_wins": 257,
   "showdowns": 109,
   "player_stats": {
     "vpip": 0.0,
@@ -28704,6 +28704,256 @@
       "actions": [
         {
           "player": "Bladework v2",
+          "action": "fold",
+          "round": "preflop",
+          "pot_after": 15
+        }
+      ]
+    },
+    {
+      "timestamp": "2025-08-03T22:14:34.879038",
+      "winner": "Player 1",
+      "pot_size": 0,
+      "showdown": false,
+      "player_hand": [
+        "5d",
+        "Kd"
+      ],
+      "ai_hand": [
+        "Qc",
+        "7h"
+      ],
+      "community": [
+        "9s",
+        "4s",
+        "Th"
+      ],
+      "actions": [
+        {
+          "player": "Froggie",
+          "action": "raise",
+          "round": "preflop",
+          "pot_after": 65,
+          "amount": 55
+        },
+        {
+          "player": "Player 1",
+          "action": "call",
+          "round": "preflop",
+          "pot_after": 110,
+          "amount": 0
+        },
+        {
+          "player": "Player 1",
+          "action": "raise",
+          "round": "flop",
+          "pot_after": 120,
+          "amount": 10
+        },
+        {
+          "player": "Froggie",
+          "action": "fold",
+          "round": "flop",
+          "pot_after": 120
+        }
+      ]
+    },
+    {
+      "timestamp": "2025-08-03T22:15:45.600020",
+      "winner": "Player 1",
+      "pot_size": 0,
+      "showdown": false,
+      "player_hand": [
+        "Ah",
+        "2d"
+      ],
+      "ai_hand": [
+        "6h",
+        "8d"
+      ],
+      "community": [
+        "7d",
+        "8s",
+        "9d",
+        "4h",
+        "5h"
+      ],
+      "actions": [
+        {
+          "player": "Player 1",
+          "action": "call",
+          "round": "preflop",
+          "pot_after": 20,
+          "amount": 0
+        },
+        {
+          "player": "Froggie",
+          "action": "raise",
+          "round": "preflop",
+          "pot_after": 77,
+          "amount": 67
+        },
+        {
+          "player": "Player 1",
+          "action": "call",
+          "round": "preflop",
+          "pot_after": 134,
+          "amount": 0
+        },
+        {
+          "player": "Froggie",
+          "action": "check",
+          "round": "flop",
+          "pot_after": 134
+        },
+        {
+          "player": "Player 1",
+          "action": "check",
+          "round": "flop",
+          "pot_after": 134
+        },
+        {
+          "player": "Froggie",
+          "action": "check",
+          "round": "turn",
+          "pot_after": 134
+        },
+        {
+          "player": "Player 1",
+          "action": "raise",
+          "round": "turn",
+          "pot_after": 144,
+          "amount": 10
+        },
+        {
+          "player": "Froggie",
+          "action": "raise",
+          "round": "turn",
+          "pot_after": 222,
+          "amount": 78
+        },
+        {
+          "player": "Player 1",
+          "action": "raise",
+          "round": "turn",
+          "pot_after": 358,
+          "amount": 146
+        },
+        {
+          "player": "Froggie",
+          "action": "call",
+          "round": "turn",
+          "pot_after": 426,
+          "amount": 0
+        },
+        {
+          "player": "Froggie",
+          "action": "raise",
+          "round": "river",
+          "pot_after": 509,
+          "amount": 83
+        },
+        {
+          "player": "Player 1",
+          "action": "raise",
+          "round": "river",
+          "pot_after": 675,
+          "amount": 166
+        },
+        {
+          "player": "Froggie",
+          "action": "fold",
+          "round": "river",
+          "pot_after": 675
+        }
+      ]
+    },
+    {
+      "timestamp": "2025-08-03T22:18:45.717685",
+      "winner": "Player 1",
+      "pot_size": 0,
+      "showdown": false,
+      "player_hand": [
+        "Qc",
+        "7h"
+      ],
+      "ai_hand": [
+        "3s",
+        "Qh"
+      ],
+      "community": [],
+      "actions": [
+        {
+          "player": "Froggie",
+          "action": "fold",
+          "round": "preflop",
+          "pot_after": 15
+        }
+      ]
+    },
+    {
+      "timestamp": "2025-08-03T22:22:20.036938",
+      "winner": "Bladework v2",
+      "pot_size": 0,
+      "showdown": false,
+      "player_hand": [
+        "Ks",
+        "5d"
+      ],
+      "ai_hand": [
+        "Kd",
+        "3s"
+      ],
+      "community": [],
+      "actions": [
+        {
+          "player": "Player 1",
+          "action": "fold",
+          "round": "preflop",
+          "pot_after": 15
+        }
+      ]
+    },
+    {
+      "timestamp": "2025-08-03T22:26:06.132983",
+      "winner": "Bladework v2",
+      "pot_size": 0,
+      "showdown": false,
+      "player_hand": [
+        "Qd",
+        "3d"
+      ],
+      "ai_hand": [
+        "Td",
+        "8d"
+      ],
+      "community": [],
+      "actions": [
+        {
+          "player": "Player 1",
+          "action": "fold",
+          "round": "preflop",
+          "pot_after": 15
+        }
+      ]
+    },
+    {
+      "timestamp": "2025-08-03T22:26:33.299886",
+      "winner": "Bladework",
+      "pot_size": 0,
+      "showdown": false,
+      "player_hand": [
+        "4d",
+        "Td"
+      ],
+      "ai_hand": [
+        "2c",
+        "8d"
+      ],
+      "community": [],
+      "actions": [
+        {
+          "player": "Player 1",
           "action": "fold",
           "round": "preflop",
           "pot_after": 15

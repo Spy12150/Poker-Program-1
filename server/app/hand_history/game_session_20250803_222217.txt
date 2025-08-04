@@ -1,0 +1,34 @@
+Riposte Hand #00001:  Hold'em No Limit ($5/$10) - 2025/08/03 22:22:17 ET
+Table 'Heads-Up' 2-max Seat #1 is the button
+Seat 1: Player 1 (button) ($1000 in chips)
+Seat 2: Player 2 ($1000 in chips)
+Player 1: posts small blind $5
+Player 2: posts big blind $10
+
+*** PREFLOP ***
+*** HOLE CARDS ***
+Dealt to Player 1 [Ks 5d]
+Dealt to Player 2 [Kd 3s]
+Player 1: folds
+Uncalled bet ($10) returned to Bladework v2
+Bladework v2 collected $5 from pot
+Bladework v2: doesn't show hand
+
+*** SUMMARY ***
+Total pot $15 | Rake $0.00
+Seat 1: Player 1 (button) folded on the Preflop
+Seat 2: Bladework v2 collected ($15) with Wins by Fold
+
+
+Riposte Hand #00002:  Hold'em No Limit ($5/$10) - 2025/08/03 22:22:23 ET
+Table 'Heads-Up' 2-max Seat #2 is the button
+Seat 1: Player 1 ($995 in chips)
+Seat 2: Bladework v2 (button) ($1005 in chips)
+Bladework v2: posts small blind $5
+Player 1: posts big blind $10
+
+*** PREFLOP ***
+*** HOLE CARDS ***
+Dealt to Player 1 [6c Th]
+Dealt to Bladework v2 [Ts As]
+Bladework v2: raises $15 to $25

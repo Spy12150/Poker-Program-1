@@ -5,6 +5,7 @@ def decide_action(game_state):
     Simple random AI for debugging purposes.
     Returns: (action, amount) tuple
     """
+    print("🐸 FROGGIE AI IS MAKING A DECISION! 🐸")
     ai_player = game_state['players'][1]  # AI is player 1
     to_call = game_state.get('current_bet', 0) - ai_player['current_bet']
     
@@ -24,7 +25,7 @@ def decide_action(game_state):
             return debug_action('check', 0)
         else:
             # Calculate raise amount properly
-            big_blind = 20  # From config
+            big_blind = 10  # From config
             min_raise = big_blind  # Minimum first bet
             max_raise = ai_player['current_bet'] + ai_player['stack']  # All-in
             

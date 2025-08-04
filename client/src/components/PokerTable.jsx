@@ -1,4 +1,5 @@
 import React from 'react';
+import { useCardImage } from '../hooks/useImagePreloader';
 
 const PokerTable = ({ 
   gameState, 
@@ -13,6 +14,11 @@ const PokerTable = ({
   selectedCardback,
   isBackground = false
 }) => {
+  // Card image component with WebP support
+  const CardImage = ({ card, isCardback = false, className = "card", alt = "card" }) => {
+    const cardSrc = useCardImage(isCardback ? selectedCardback : translateCard(card));
+    return <img src={cardSrc} alt={alt} className={className} />;
+  };
   // Show empty table in background mode
   if (isBackground) {
     return (
@@ -42,11 +48,12 @@ const PokerTable = ({
               </div>
               <div className="hand-container">
                 {(showdown ? gameState.players[1]?.hand || [selectedCardback, selectedCardback] : [selectedCardback, selectedCardback]).map((card, idx) => (
-                  <img 
-                    key={idx} 
-                    src={`/IvoryCards/${showdown ? translateCard(card) : selectedCardback}.png`} 
-                    alt="card"
+                  <CardImage
+                    key={idx}
+                    card={card}
+                    isCardback={!showdown}
                     className="card"
+                    alt="card"
                   />
                 ))}
               </div>
@@ -97,11 +104,11 @@ const PokerTable = ({
             </div>
             <div className={`community-cards ${dealingCards ? 'dealing-animation' : ''}`}>
               {gameState.community.map((card, idx) => (
-                <img 
-                  key={idx} 
-                  src={`/IvoryCards/${translateCard(card)}.png`} 
-                  alt="community card"
+                <CardImage
+                  key={idx}
+                  card={card}
                   className={`community-card ${dealingCards && newCardIndices.includes(idx) ? 'new-card' : ''}`}
+                  alt="community card"
                 />
               ))}
               {/* Show placeholders for undealt cards */}
@@ -130,11 +137,11 @@ const PokerTable = ({
               </div>
               <div className="hand-container">
                 {gameState.player_hand?.map((card, idx) => (
-                  <img 
-                    key={idx} 
-                    src={`/IvoryCards/${translateCard(card)}.png`} 
-                    alt="your card"
+                  <CardImage
+                    key={idx}
+                    card={card}
                     className="card"
+                    alt="your card"
                   />
                 ))}
               </div>
