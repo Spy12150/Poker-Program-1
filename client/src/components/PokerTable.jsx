@@ -26,14 +26,24 @@ const PokerTable = ({
       card = selectedCardback;
     }
     
+    // Special check for corrupt cardback strings
+    if (!isCardback && card.startsWith('Cardback')) {
+      console.warn('CardImage: Received cardback string when expecting regular card:', card);
+      isCardback = true;
+      card = selectedCardback;
+    }
+    
     let cardSrc;
     try {
       if (isCardback) {
+        console.log('CardImage: Using cardback:', selectedCardback);
         cardSrc = useCardImage(selectedCardback);
       } else {
+        console.log('CardImage: Processing regular card:', card);
         const translatedCard = translateCard(card);
         if (translatedCard === 'Cardback1') {
           // translateCard returned fallback, use cardback instead
+          console.warn('CardImage: translateCard returned fallback, using cardback');
           cardSrc = useCardImage(selectedCardback);
         } else {
           cardSrc = useCardImage(translatedCard);
@@ -45,14 +55,17 @@ const PokerTable = ({
     }
     
     const handleImageError = (e) => {
+      console.error('Image failed to load:', e.target.src);
       // If WebP fails, try PNG fallback
       const currentSrc = e.target.src;
       if (currentSrc.includes('.webp')) {
-        e.target.src = currentSrc.replace('.webp', '.png');
+        const pngSrc = currentSrc.replace('.webp', '.png');
+        console.log('Trying PNG fallback:', pngSrc);
+        e.target.src = pngSrc;
       } else {
-        // If both fail, show a placeholder
-        e.target.style.display = 'none';
-        console.warn('Failed to load card image:', currentSrc);
+        // If both fail, use a different cardback as last resort
+        console.warn('Both WebP and PNG failed, using Cardback1 as last resort');
+        e.target.src = '/IvoryCards/Cardback1.webp';
       }
     };
     
@@ -94,7 +107,23 @@ const PokerTable = ({
               </div>
               <div className="hand-container">
                 {(() => {
-                  const playerHand = showdown ? gameState.players[1]?.hand || [selectedCardback, selectedCardback] : [selectedCardback, selectedCardback];
+                  let playerHand;
+                  if (showdown && gameState.players[1]?.hand && Array.isArray(gameState.players[1].hand)) {
+                    // Validate each card in the hand
+                    playerHand = gameState.players[1].hand.map(cardData => {
+                      if (!cardData || typeof cardData !== 'string' || cardData.length < 2) {
+                        console.warn('Invalid card in opponent hand during showdown:', cardData);
+                        return selectedCardback;
+                      }
+                      return cardData;
+                    });
+                  } else {
+                    // Not showdown or invalid hand data - use cardbacks
+                    playerHand = [selectedCardback, selectedCardback];
+                  }
+                  
+                  console.log('Opponent hand being rendered:', playerHand, 'showdown:', showdown);
+                  
                   return playerHand.map((cardData, idx) => (
                     <CardImage
                       key={idx}
@@ -185,14 +214,37 @@ const PokerTable = ({
                 <span>Stack: ${gameState.players[0]?.stack}</span>
               </div>
               <div className="hand-container">
-                {gameState.player_hand?.map((playerCard, idx) => (
-                  <CardImage
-                    key={idx}
-                    card={playerCard}
-                    className="card"
-                    alt="your card"
-                  />
-                ))}
+                {(() => {
+                  const playerHand = gameState.player_hand;
+                  if (!playerHand || !Array.isArray(playerHand)) {
+                    console.warn('Invalid or missing player_hand in gameState:', playerHand);
+                    return null;
+                  }
+                  
+                  return playerHand.map((playerCard, idx) => {
+                    if (!playerCard || typeof playerCard !== 'string' || playerCard.length < 2) {
+                      console.warn('Invalid card in player hand:', playerCard);
+                      return (
+                        <CardImage
+                          key={idx}
+                          card={selectedCardback}
+                          isCardback={true}
+                          className="card"
+                          alt="invalid card"
+                        />
+                      );
+                    }
+                    
+                    return (
+                      <CardImage
+                        key={idx}
+                        card={playerCard}
+                        className="card"
+                        alt="your card"
+                      />
+                    );
+                  });
+                })()}
               </div>
               
               {/* Position Indicators */}

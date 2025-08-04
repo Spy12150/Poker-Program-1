@@ -428,9 +428,8 @@ const GamePage = () => {
         <GameHeader />
         {connectionStatus()}
         <StartGameButton 
+          gameState={gameState}
           startGame={startGame}
-          selectedAIType={selectedAIType}
-          setSelectedAIType={setSelectedAIType}
           loading={loading}
         />
         {message && <GameMessage message={message} />}

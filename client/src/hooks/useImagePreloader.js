@@ -75,16 +75,40 @@ export const useImagePreloader = () => {
  */
 export const useCardImage = (card) => {
   const getCardImageSrc = (cardCode) => {
-    if (!cardCode || cardCode.length < 2) {
-      // Try WebP first, fallback to PNG
+    console.log('useCardImage called with:', cardCode);
+    
+    if (!cardCode || typeof cardCode !== 'string') {
+      console.warn('useCardImage: Invalid card code, using fallback:', cardCode);
+      return '/IvoryCards/Cardback1.webp';
+    }
+    
+    // Handle cardbacks (they start with "Cardback")
+    if (cardCode.startsWith('Cardback')) {
+      console.log('useCardImage: Detected cardback:', cardCode);
+      return `/IvoryCards/${cardCode}.webp`;
+    }
+    
+    // Handle regular cards (should be 2 characters: rank + suit)
+    if (cardCode.length !== 2) {
+      console.warn('useCardImage: Invalid card format, expected 2 chars, got:', cardCode.length, 'for card:', cardCode);
       return '/IvoryCards/Cardback1.webp';
     }
     
     const rank = cardCode[0];
     const suit = cardCode[1];
     
-    // Try WebP first since we converted all files
-    return `/IvoryCards/${rank}${suit}.webp`;
+    // Validate rank and suit
+    const validRanks = ['2', '3', '4', '5', '6', '7', '8', '9', 'T', 'J', 'Q', 'K', 'A'];
+    const validSuits = ['c', 'd', 'h', 's'];
+    
+    if (!validRanks.includes(rank) || !validSuits.includes(suit)) {
+      console.warn('useCardImage: Invalid rank/suit combination:', rank, suit, 'for card:', cardCode);
+      return '/IvoryCards/Cardback1.webp';
+    }
+    
+    const result = `/IvoryCards/${rank}${suit}.webp`;
+    console.log('useCardImage: Generated path:', result);
+    return result;
   };
   
   return getCardImageSrc(card);
