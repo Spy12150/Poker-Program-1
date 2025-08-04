@@ -516,9 +516,9 @@ const GamePage = () => {
             handOver={handOver}
             loading={loading}
             makeAction={makeAction}
-            canCheck={canCheckWrapper}
-            canCall={canCallWrapper}
-            canRaise={canRaiseWrapper}
+            isCheckAllowed={canCheckWrapper}
+            isCallAllowed={canCallWrapper}
+            isRaiseAllowed={canRaiseWrapper}
             getActualCallAmount={getActualCallAmountWrapper}
             betSliderValue={betSliderValue}
             setBetSliderValue={setBetSliderValue}
@@ -533,9 +533,9 @@ const GamePage = () => {
           <DebugPanel 
             gameState={gameState}
             handOver={handOver}
-            canCheck={canCheckWrapper}
-            canCall={canCallWrapper}
-            canRaise={canRaiseWrapper}
+            isCheckAllowed={canCheckWrapper}
+            isCallAllowed={canCallWrapper}
+            isRaiseAllowed={canRaiseWrapper}
             processAITurn={processAITurn}
             selectedAIType={selectedAIType}
           />
