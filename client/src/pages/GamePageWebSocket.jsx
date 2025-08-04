@@ -122,7 +122,14 @@ const GamePage = () => {
 
     // Handle game start
     socket.on('game_start', (data) => {
-      console.log('Game started via WebSocket');
+      console.log('🎮 Game started via WebSocket', data);
+      
+      // Clear any pending start game timeout
+      if (window.startGameTimeoutId) {
+        clearTimeout(window.startGameTimeoutId);
+        window.startGameTimeoutId = null;
+      }
+      
       setGameId(data.game_id);
       setGameState(data);
       setHandOver(false);
@@ -266,7 +273,7 @@ const GamePage = () => {
       socket.off('error');
       socket.off('message');
     };
-  }, [socket.connectionError]);
+  }, [socket.isConnected, socket.connectionError, updateBetLimits]);
 
   // Card dealing animation effect
   useEffect(() => {
@@ -306,9 +313,14 @@ const GamePage = () => {
 
   // Game action functions using WebSocket - memoized for performance
   const startGame = useCallback((selectedAI = 'bladework_v2') => {
-    // Only check for persistent connection errors, not brief disconnections
+    // Check for connection errors or if socket is not connected
     if (socket.connectionError) {
       setMessage('Connection error. Please refresh the page.');
+      return;
+    }
+
+    if (!socket.isConnected) {
+      setMessage('Not connected to server. Please wait and try again.');
       return;
     }
 
@@ -317,8 +329,19 @@ const GamePage = () => {
     setMessage('Starting game...');
     
     console.log('Starting game with AI:', selectedAI);
+    
+    // Set a timeout to reset loading state if no response received
+    const timeoutId = setTimeout(() => {
+      console.warn('Start game timeout - resetting loading state');
+      setLoading(false);
+      setMessage('Game start timed out. Please try again.');
+    }, 10000); // 10 second timeout
+    
+    // Store timeout ID for cleanup
+    window.startGameTimeoutId = timeoutId;
+    
     socket.startGame(selectedAI);
-  }, [socket.connectionError, socket.startGame]);
+  }, [socket.connectionError, socket.isConnected, socket.startGame]);
 
   const makeAction = useCallback((action, amount = 0) => {
     if (!gameId || handOver || loading) return;

@@ -1,1 +1,21 @@
 .vercel
+
+# Game analytics data - exclude from version control
+server/game_stats.json
+server/app/hand_history/*.txt
+
+# Python cache files
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Node.js dependencies and cache
+node_modules/
+.npm/
+.node_repl_history
+
+# Build outputs
+dist/
+build/
+.vite/
