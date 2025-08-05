@@ -10,8 +10,9 @@ app = create_app()
 application = socketio
 
 if __name__ == "__main__":
-    # For Railway deployment - use SocketIO's built-in server
+    # For LOCAL development only - use SocketIO's built-in server
     import os
     port = int(os.environ.get('PORT', 5001))
-    print(f"🚀 Starting WebSocket server on port {port}")
-    socketio.run(app, host='0.0.0.0', port=port, debug=False, log_output=True)
+    print(f"🚀 Starting LOCAL WebSocket server on port {port}")
+    print("⚠️  This is for development only - production uses Gunicorn via Procfile")
+    socketio.run(app, host='0.0.0.0', port=port, debug=True, log_output=True)
