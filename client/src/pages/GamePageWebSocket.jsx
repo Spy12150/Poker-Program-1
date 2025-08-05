@@ -50,7 +50,7 @@ const GamePage = () => {
   const isAnimatingRef = useRef(false);
 
   // WebSocket connection - connect to local server for development
-  const socket = useSocket('http://localhost:5001');
+  const socket = useSocket(import.meta.env.VITE_API_URL || 'http://localhost:5001');
 
   // Memoize cardbacks array to prevent recreation on every render
   const cardbacks = useMemo(() => [
