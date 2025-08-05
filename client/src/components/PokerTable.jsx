@@ -291,27 +291,29 @@ const PokerTable = memo(({
   );
 });
 
-// Ultra-aggressive animation protection - maximum strictness for slow WiFi
+// Network-resilient animation - block ALL re-renders during animation
 const arePropsEqual = (prevProps, nextProps) => {
-  // PHASE 1: Allow animation start (false -> true)
-  if (!prevProps.dealingCards && nextProps.dealingCards) {
-    return false; // Starting animation - must allow for setup
+  // CRITICAL: Block ALL re-renders when either prev OR next is animating
+  // This handles slow WiFi where delayed messages arrive during animation
+  if (prevProps.dealingCards || nextProps.dealingCards) {
+    // If we're entering animation (start) or have essential changes, allow re-render
+    if (prevProps.dealingCards !== nextProps.dealingCards) {
+      return false; // Animation state changed - allow re-render for setup
+    }
+    
+    // During animation: only allow re-renders for new cards (length increase)
+    const prevCommunity = prevProps.gameState?.community || [];
+    const nextCommunity = nextProps.gameState?.community || [];
+    if (nextCommunity.length > prevCommunity.length) {
+      return false; // New cards dealt - allow re-render for DOM update
+    }
+    
+    // Block everything else during animation (delayed network updates, etc.)
+    return true; // "Equal" props - prevent re-render during animation
   }
   
-  // PHASE 2: During animation - BLOCK EVERYTHING except animation end
-  if (prevProps.dealingCards && nextProps.dealingCards) {
-    // Animation in progress - block ALL re-renders to prevent CSS restart
-    // This includes: gameState changes, community updates, player actions, etc.
-    return true; // "Equal" props - prevent ANY re-render during animation
-  }
-  
-  // PHASE 3: Allow animation end (true -> false)
-  if (prevProps.dealingCards && !nextProps.dealingCards) {
-    return false; // Ending animation - must allow for cleanup
-  }
-  
-  // PHASE 4: Outside animation - normal React behavior
-  return false; // Allow all re-renders when not animating
+  // Outside animation: normal React behavior (allow all re-renders)
+  return false;
 };
 
 export default memo(PokerTable, arePropsEqual);
