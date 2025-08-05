@@ -24,8 +24,8 @@ export const useImagePreloader = () => {
         cardImages.push(`/IvoryCards/Cardback${i}.webp`);
       }
 
-      // Preload images in batches to avoid overwhelming the browser
-      const batchSize = 10;
+      // Preload images in larger batches for faster loading
+      const batchSize = 20;
       const startTime = performance.now();
       
       console.log('Starting image preload');

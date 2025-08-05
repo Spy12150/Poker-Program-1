@@ -10,21 +10,13 @@ from typing import Dict, List, Any
 class GameAnalytics:
     def __init__(self, data_file="game_stats.json"):
         self.data_file = data_file
-        self.session_stats = self.load_stats()
+        # Session-only stats (in memory, no persistence)
+        self.session_stats = self._get_default_stats()
         self.read_only_mode = False
+        self.persist_data = False  # Disable file persistence
     
-    def load_stats(self) -> Dict:
-        """Load existing statistics from file"""
-        if os.path.exists(self.data_file):
-            try:
-                with open(self.data_file, 'r') as f:
-                    return json.load(f)
-            except (IOError, PermissionError, json.JSONDecodeError):
-                # Handle file system issues gracefully
-                print(f"Warning: Could not read {self.data_file}, using default stats")
-                pass
-        
-        # Default stats structure
+    def _get_default_stats(self) -> Dict:
+        """Get default stats structure (session-only, no file loading)"""
         return {
             'total_hands': 0,
             'player_wins': 0,
@@ -32,23 +24,22 @@ class GameAnalytics:
             'showdowns': 0,
             'player_stats': {
                 'vpip': 0.0,  # Voluntarily put in pot %
-                'pfr': 0.0,   # Pre-flop raise %
-                'fold_to_bet': 0.0,
-                'avg_bet_size': 0.0,
-                'total_winnings': 0
+                'hands_played': 0,
+                'vpip_hands': 0
             },
             'ai_stats': {
                 'vpip': 0.0,
-                'pfr': 0.0,
-                'fold_to_bet': 0.0,
-                'avg_bet_size': 0.0,
-                'total_winnings': 0
-            },
-            'hand_history': []
+                'hands_played': 0,  
+                'vpip_hands': 0
+            }
+            # Removed hand_history - no persistence needed
         }
     
     def save_stats(self):
-        """Save statistics to file"""
+        """Save statistics to file - DISABLED for session-only mode"""
+        if not self.persist_data:
+            return  # Skip file operations for session-only analytics
+        
         try:
             with open(self.data_file, 'w') as f:
                 json.dump(self.session_stats, f, indent=2)
@@ -57,19 +48,7 @@ class GameAnalytics:
     
     def record_hand(self, game_state: Dict, winner_info: List[Dict], 
                    action_history: List[Dict]):
-        """Record a completed hand for analysis"""
-        hand_data = {
-            'timestamp': datetime.now().isoformat(),
-            'winner': winner_info[0]['name'] if winner_info else 'Unknown',
-            'pot_size': game_state.get('pot', 0),
-            'showdown': len([p for p in game_state['players'] if p['status'] == 'active']) > 1,
-            'player_hand': game_state['players'][0]['hand'],
-            'ai_hand': game_state['players'][1]['hand'],
-            'community': game_state['community'],
-            'actions': action_history
-        }
-        
-        self.session_stats['hand_history'].append(hand_data)
+        """Record a completed hand for session analytics (no persistence)"""
         self.session_stats['total_hands'] += 1
         
         # Update win counts
@@ -79,37 +58,49 @@ class GameAnalytics:
             else:
                 self.session_stats['ai_wins'] += 1
         
-        # Update showdown count
-        if hand_data['showdown']:
+        # Update showdown count (simplified check)
+        active_players = len([p for p in game_state['players'] if p['status'] == 'active'])
+        if active_players > 1:
             self.session_stats['showdowns'] += 1
         
-        # Calculate player statistics
-        self._update_player_stats(game_state, action_history)
+        # Calculate VPIP only (lightweight)
+        self._update_player_vpip(action_history)
         
-        # Save after each hand
-        self.save_stats()
+        # No file saving - session only!
     
-    def _update_player_stats(self, game_state: Dict, action_history: List[Dict]):
-        """Update detailed player statistics"""
-        player_actions = [a for a in action_history if 'Player 1' in a['player']]
-        ai_actions = [a for a in action_history if 'Player 2' in a['player']]
+    def _update_player_vpip(self, action_history: List[Dict]):
+        """Update VPIP statistics only (session-only, lightweight)"""
+        # Get preflop actions only
+        preflop_actions = [a for a in action_history if a.get('round') == 'preflop']
         
-        # Calculate VPIP (voluntarily put money in pot)
-        preflop_actions = [a for a in action_history if a['round'] == 'preflop']
-        player_preflop = [a for a in preflop_actions if 'Player 1' in a['player']]
-        ai_preflop = [a for a in preflop_actions if 'Player 2' in a['player']]
+        # Check if players voluntarily put money in pot preflop
+        player_preflop = [a for a in preflop_actions if 'Player 1' in a.get('player', '')]
+        ai_preflop = [a for a in preflop_actions if 'Player 2' in a.get('player', '')]
         
-        # Update running averages (simplified)
-        total_hands = self.session_stats['total_hands']
+        # Update hands played counter
+        self.session_stats['player_stats']['hands_played'] += 1
+        self.session_stats['ai_stats']['hands_played'] += 1
         
-        if total_hands > 1:
-            # Player VPIP
-            player_vpip_hands = len([a for a in player_preflop if a['action'] in ['call', 'raise']])
-            self.session_stats['player_stats']['vpip'] = player_vpip_hands / total_hands
+        # Check for VPIP actions (call/raise, not fold)
+        if any(a.get('action') in ['call', 'raise'] for a in player_preflop):
+            self.session_stats['player_stats']['vpip_hands'] += 1
             
-            # AI VPIP  
-            ai_vpip_hands = len([a for a in ai_preflop if a['action'] in ['call', 'raise']])
-            self.session_stats['ai_stats']['vpip'] = ai_vpip_hands / total_hands
+        if any(a.get('action') in ['call', 'raise'] for a in ai_preflop):
+            self.session_stats['ai_stats']['vpip_hands'] += 1
+        
+        # Calculate VPIP percentage
+        player_hands = self.session_stats['player_stats']['hands_played']
+        ai_hands = self.session_stats['ai_stats']['hands_played']
+        
+        if player_hands > 0:
+            self.session_stats['player_stats']['vpip'] = (
+                self.session_stats['player_stats']['vpip_hands'] / player_hands
+            )
+        
+        if ai_hands > 0:
+            self.session_stats['ai_stats']['vpip'] = (
+                self.session_stats['ai_stats']['vpip_hands'] / ai_hands
+            )
     
     def get_session_summary(self) -> Dict:
         """Get summary of current session"""
@@ -133,8 +124,8 @@ class GameAnalytics:
         }
     
     def get_recent_hands(self, count: int = 10) -> List[Dict]:
-        """Get recent hand history"""
-        return self.session_stats['hand_history'][-count:]
+        """Get recent hand history - DISABLED (no hand history stored)"""
+        return []
 
 # Global analytics instance
 analytics = GameAnalytics()
