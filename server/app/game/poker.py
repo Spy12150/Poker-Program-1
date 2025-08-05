@@ -541,26 +541,33 @@ def distribute_side_pots(players_in_hand, winner_data, game_state):
         return winnings
     
     # Complex case: different investment amounts - create side pots
+    # Sort by investment amount (lowest to highest)
     sorted_investments = sorted(investments.items(), key=lambda x: x[1])
     
     # Create side pots based on investment levels
     side_pots = []
     prev_level = 0
     
-    for i, (player_name, investment) in enumerate(sorted_investments):
+    for i, (current_player, investment) in enumerate(sorted_investments):
         if investment > prev_level:
-            # Players eligible for this side pot (those who invested at least this much)
-            eligible_players = [p[0] for p in sorted_investments[i:]]
-            num_eligible = len(eligible_players)
+            # Calculate how many players contributed to this level
+            # Everyone who invested at least this much
+            contributors = [name for name, amt in investments.items() if amt >= investment]
+            num_contributors = len(contributors)
             
-            # Size of this side pot
-            pot_size = (investment - prev_level) * num_eligible
+            # Size of this side pot: (level_difference) * (number_of_contributors)
+            level_diff = investment - prev_level
+            pot_size = level_diff * num_contributors
+            
+            # Players eligible for this side pot are those who invested at least this much
+            eligible_players = contributors.copy()
             
             side_pots.append({
                 'size': pot_size,
                 'eligible_players': eligible_players,
                 'level': investment,
-                'prev_level': prev_level
+                'prev_level': prev_level,
+                'contributors': contributors
             })
             
             prev_level = investment
@@ -569,14 +576,22 @@ def distribute_side_pots(players_in_hand, winner_data, game_state):
     
     # Distribute each side pot to the best eligible hand(s)
     for pot in side_pots:
-        # Find winners who are eligible for this side pot
+        print(f"DEBUG: Processing side pot of ${pot['size']:.0f} for players: {pot['eligible_players']}")
+        
+        # Find the best hand among eligible players
         eligible_winners = []
+        best_score = float('inf')
+        
         for score, hand_class, player in winner_data:
             if player['name'] in pot['eligible_players']:
-                eligible_winners.append((score, hand_class, player))
+                if score < best_score:
+                    best_score = score
+                    eligible_winners = [(score, hand_class, player)]
+                elif score == best_score:
+                    eligible_winners.append((score, hand_class, player))
         
         if eligible_winners:
-            # Split this side pot among eligible winners
+            # Split this side pot among eligible winners with the best hand
             pot_share = pot['size'] / len(eligible_winners)
             for _, _, winner_player in eligible_winners:
                 winnings[winner_player['name']] += pot_share

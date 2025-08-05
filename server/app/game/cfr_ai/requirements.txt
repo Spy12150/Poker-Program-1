@@ -1,0 +1,29 @@
+# Neural CFR Implementation Requirements
+
+# Core dependencies
+numpy>=1.19.0
+torch>=1.9.0                 # PyTorch for neural networks (optional - falls back to tabular CFR)
+
+# Optional dependencies for enhanced functionality
+# tensorboard>=2.7.0         # For training visualization
+# wandb>=0.12.0              # For experiment tracking
+# scikit-learn>=0.24.0       # For clustering in card abstraction
+# matplotlib>=3.3.0          # For plotting training curves
+# seaborn>=0.11.0            # For enhanced visualizations
+
+# Development dependencies (optional)
+# pytest>=6.0.0              # For testing
+# black>=21.0.0              # For code formatting
+# flake8>=3.8.0              # For linting
+
+# Installation instructions:
+# 
+# Minimal installation (CPU only):
+# pip install numpy torch
+#
+# Full installation with GPU support:  
+# pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
+# pip install numpy tensorboard matplotlib seaborn
+#
+# The implementation will work with just numpy if PyTorch is not available,
+# falling back to pure tabular CFR (which is still functional).
