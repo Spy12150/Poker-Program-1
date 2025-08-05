@@ -13,20 +13,27 @@ export const useSocket = (serverUrl) => {
   const eventListenersRef = useRef({});
 
   useEffect(() => {
-    // Initialize socket connection with optimized settings for stability
+    // Initialize socket connection optimized for Railway deployment
     socketRef.current = io(serverUrl, {
-      transports: ['websocket', 'polling'],
+      // Start with polling for Railway compatibility, then upgrade to WebSocket
+      transports: ['polling', 'websocket'],
       upgrade: true,
-      timeout: 10000, // Increase timeout for better stability
+      timeout: 60000, // Longer timeout for Railway
       reconnection: true,
-      reconnectionDelay: 500, // Faster initial reconnection
-      reconnectionDelayMax: 5000,
-      maxReconnectionAttempts: 10, // More attempts
-      randomizationFactor: 0.2,
-      // Optimize for low latency
+      reconnectionDelay: 2000, // Start with 2 second delay
+      reconnectionDelayMax: 20000, // Max 20 seconds between attempts
+      maxReconnectionAttempts: 5, // Limit attempts to avoid infinite loops
+      randomizationFactor: 0.3,
+      // Railway-specific optimizations
       forceJSONP: false,
       jsonp: false,
-      forceBase64: false
+      forceBase64: false,
+      // Connection keep-alive
+      pingTimeout: 120000, // 2 minutes
+      pingInterval: 30000, // Send ping every 30 seconds
+      // Additional Railway compatibility
+      rememberUpgrade: false, // Don't remember upgrade failures
+      autoConnect: true
     });
 
     const socket = socketRef.current;
@@ -41,12 +48,41 @@ export const useSocket = (serverUrl) => {
     socket.on('disconnect', (reason) => {
       console.log('❌ Disconnected from poker server:', reason);
       setIsConnected(false);
+      
+      // Clear connection error on normal disconnect
+      if (reason === 'io client disconnect' || reason === 'io server disconnect') {
+        setConnectionError(null);
+      }
+    });
+    
+    // Handle reconnection events
+    socket.on('reconnect', (attemptNumber) => {
+      console.log('🔄 Reconnected to poker server after', attemptNumber, 'attempts');
+      setIsConnected(true);
+      setConnectionError(null);
+    });
+    
+    socket.on('reconnecting', (attemptNumber) => {
+      console.log('🔄 Attempting to reconnect...', attemptNumber);
+      setConnectionError('Reconnecting...');
+    });
+    
+    socket.on('reconnect_error', (error) => {
+      console.log('❌ Reconnection failed:', error);
+      setConnectionError('Reconnection failed - retrying...');
     });
 
     socket.on('connect_error', (error) => {
       console.error('❌ Connection error:', error);
       setConnectionError(error.message);
       setIsConnected(false);
+      window.hadConnectionIssues = true;
+    });
+    
+    socket.on('reconnect_failed', () => {
+      console.error('❌ All reconnection attempts failed');
+      setConnectionError('Unable to reconnect - please refresh the page');
+      window.hadConnectionIssues = true;
     });
 
     // Generic error handler

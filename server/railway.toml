@@ -3,5 +3,7 @@ builder = "nixpacks"
 
 [deploy]
 healthcheckPath = "/"
-healthcheckTimeout = 100
+healthcheckTimeout = 300
 restartPolicyType = "always"
+# WebSocket-optimized startup - use SocketIO's built-in server
+startCommand = "python wsgi.py"

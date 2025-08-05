@@ -46,8 +46,8 @@ const GamePage = () => {
   const [newCardIndices, setNewCardIndices] = useState([]);
   const [selectedCardback, setSelectedCardback] = useState('Cardback17');
 
-  // WebSocket connection
-  const socket = useSocket(import.meta.env.VITE_API_URL || 'https://poker-program-1-production.up.railway.app');
+  // WebSocket connection - Railway production URL (for now)
+  const socket = useSocket('https://poker-program-1-production.up.railway.app');
 
   // Memoize cardbacks array to prevent recreation on every render
   const cardbacks = useMemo(() => [
@@ -524,16 +524,29 @@ const GamePage = () => {
     updateSliderFromAmount(amount);
   }, [gameState, minBet, updateSliderFromAmount]);
 
-  // Connection status display - only show when there's a persistent issue
+  // Connection status display - improved for Railway deployment
   const connectionStatus = useCallback(() => {
-    // Only show connection error for actual errors, not brief disconnections
     if (socket.connectionError) {
-      return <div className="connection-status error">Connection Error - Please refresh</div>;
+      // Show different messages based on connection state
+      if (socket.connectionError.includes('Reconnecting')) {
+        return <div className="connection-status reconnecting">🔄 Reconnecting to server...</div>;
+      } else if (socket.connectionError.includes('Reconnection failed')) {
+        return <div className="connection-status error">⚠️ Connection issues - Retrying...</div>;
+      } else {
+        return <div className="connection-status error">❌ Connection Error - Please refresh if issues persist</div>;
+      }
     }
-    // Don't show "Connecting..." during brief network hiccups - it's confusing and causes UI issues
-    // The socket will automatically reconnect, and actions will queue/retry
+    
+    // Show a subtle indicator if we're connected after having connection issues
+    if (socket.isConnected && window.hadConnectionIssues) {
+      setTimeout(() => {
+        window.hadConnectionIssues = false;
+      }, 3000);
+      return <div className="connection-status success">✅ Connected</div>;
+    }
+    
     return null;
-  }, [socket.connectionError]);
+  }, [socket.connectionError, socket.isConnected]);
 
   // Memoize complex prop objects to prevent unnecessary re-renders
   const pokerTableProps = useMemo(() => ({

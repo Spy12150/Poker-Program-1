@@ -5,3 +5,4 @@ treys==0.1.8
 pytest==7.4.3
 gunicorn==21.2.0
 eventlet==0.33.3
+setuptools>=65.0.0
