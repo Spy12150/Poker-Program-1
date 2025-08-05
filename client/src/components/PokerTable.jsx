@@ -291,28 +291,27 @@ const PokerTable = memo(({
   );
 });
 
-// Ultra-strict animation protection - zero tolerance for interruptions
+// Ultra-aggressive animation protection - maximum strictness for slow WiFi
 const arePropsEqual = (prevProps, nextProps) => {
-  // CRITICAL: Once animation starts, block EVERYTHING except animation end
-  if (prevProps.dealingCards || nextProps.dealingCards) {
-    // ONLY allow re-render when animation is starting (false -> true)
-    if (!prevProps.dealingCards && nextProps.dealingCards) {
-      return false; // Starting animation - allow setup
-    }
-    
-    // ONLY allow re-render when animation is ending (true -> false)  
-    if (prevProps.dealingCards && !nextProps.dealingCards) {
-      return false; // Ending animation - allow cleanup
-    }
-    
-    // BLOCK EVERYTHING ELSE during animation period
-    // This includes: delayed network messages, community card updates, 
-    // game state changes, player actions, etc.
-    return true; // "Equal" props - prevent ALL re-renders during animation
+  // PHASE 1: Allow animation start (false -> true)
+  if (!prevProps.dealingCards && nextProps.dealingCards) {
+    return false; // Starting animation - must allow for setup
   }
   
-  // Outside animation: normal React behavior (allow all re-renders)
-  return false;
+  // PHASE 2: During animation - BLOCK EVERYTHING except animation end
+  if (prevProps.dealingCards && nextProps.dealingCards) {
+    // Animation in progress - block ALL re-renders to prevent CSS restart
+    // This includes: gameState changes, community updates, player actions, etc.
+    return true; // "Equal" props - prevent ANY re-render during animation
+  }
+  
+  // PHASE 3: Allow animation end (true -> false)
+  if (prevProps.dealingCards && !nextProps.dealingCards) {
+    return false; // Ending animation - must allow for cleanup
+  }
+  
+  // PHASE 4: Outside animation - normal React behavior
+  return false; // Allow all re-renders when not animating
 };
 
 export default memo(PokerTable, arePropsEqual);
