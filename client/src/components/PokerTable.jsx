@@ -1,4 +1,4 @@
-import React, { memo } from 'react';
+import React, { memo, useMemo } from 'react';
 import { useCardImage } from '../hooks/useImagePreloader';
 
 const PokerTable = memo(({ 
@@ -15,68 +15,63 @@ const PokerTable = memo(({
   isBackground = false
 }) => {
   // Card image component with WebP support and error handling
-  const CardImage = ({ card, isCardback = false, className = "card", alt = "card" }) => {
-
-    
+  const CardImage = React.memo(({ card, isCardback = false, className = "card", alt = "card" }) => {
     // Additional validation to prevent invalid cards
     if (!isCardback && (!card || typeof card !== 'string' || card.length < 2)) {
-
       isCardback = true;
       card = selectedCardback;
     }
     
     // Special check for corrupt cardback strings
     if (!isCardback && card.startsWith('Cardback')) {
-
       isCardback = true;
       card = selectedCardback;
     }
     
-    let cardSrc;
-    try {
-      if (isCardback) {
-
-        cardSrc = useCardImage(selectedCardback);
-      } else {
-
-        const translatedCard = translateCard(card);
-        if (translatedCard === 'Cardback1') {
-          // translateCard returned fallback, use cardback instead
-
-          cardSrc = useCardImage(selectedCardback);
+    // Get stable image src using useMemo to prevent re-calculation on renders
+    const cardSrc = React.useMemo(() => {
+      try {
+        if (isCardback) {
+          return useCardImage(selectedCardback);
         } else {
-          cardSrc = useCardImage(translatedCard);
+          const translatedCard = translateCard(card);
+          if (translatedCard === 'Cardback1') {
+            // translateCard returned fallback, use cardback instead
+            return useCardImage(selectedCardback);
+          } else {
+            return useCardImage(translatedCard);
+          }
         }
+      } catch (error) {
+        return useCardImage(selectedCardback); // Use selected cardback as fallback
       }
-    } catch (error) {
-
-      cardSrc = useCardImage(selectedCardback); // Use selected cardback as fallback
-    }
+    }, [card, isCardback, selectedCardback]);
     
     const handleImageError = (e) => {
-      
       // If WebP fails, try PNG fallback
       const currentSrc = e.target.src;
       if (currentSrc.includes('.webp')) {
         const pngSrc = currentSrc.replace('.webp', '.png');
-
         e.target.src = pngSrc;
       } else {
         // If both fail, use a different cardback as last resort
-
         e.target.src = '/IvoryCards/Cardback1.webp';
       }
     };
     
     return (
       <img 
+        key={`${card}-${isCardback}`} // Stable key for React reconciliation
         src={cardSrc} 
         alt={alt} 
         className={className} 
+        loading="eager" // Eager loading for instant display
+        draggable={false}
         onError={handleImageError}
+
       />
     );
-  };
+  });
   // Show empty table in background mode
   if (isBackground) {
     return (
