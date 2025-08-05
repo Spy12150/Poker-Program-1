@@ -291,25 +291,24 @@ const PokerTable = memo(({
   );
 });
 
-// Network-resilient animation - block ALL re-renders during animation
+// Ultra-strict animation protection - zero tolerance for interruptions
 const arePropsEqual = (prevProps, nextProps) => {
-  // CRITICAL: Block ALL re-renders when either prev OR next is animating
-  // This handles slow WiFi where delayed messages arrive during animation
+  // CRITICAL: Once animation starts, block EVERYTHING except animation end
   if (prevProps.dealingCards || nextProps.dealingCards) {
-    // If we're entering animation (start) or have essential changes, allow re-render
-    if (prevProps.dealingCards !== nextProps.dealingCards) {
-      return false; // Animation state changed - allow re-render for setup
+    // ONLY allow re-render when animation is starting (false -> true)
+    if (!prevProps.dealingCards && nextProps.dealingCards) {
+      return false; // Starting animation - allow setup
     }
     
-    // During animation: only allow re-renders for new cards (length increase)
-    const prevCommunity = prevProps.gameState?.community || [];
-    const nextCommunity = nextProps.gameState?.community || [];
-    if (nextCommunity.length > prevCommunity.length) {
-      return false; // New cards dealt - allow re-render for DOM update
+    // ONLY allow re-render when animation is ending (true -> false)  
+    if (prevProps.dealingCards && !nextProps.dealingCards) {
+      return false; // Ending animation - allow cleanup
     }
     
-    // Block everything else during animation (delayed network updates, etc.)
-    return true; // "Equal" props - prevent re-render during animation
+    // BLOCK EVERYTHING ELSE during animation period
+    // This includes: delayed network messages, community card updates, 
+    // game state changes, player actions, etc.
+    return true; // "Equal" props - prevent ALL re-renders during animation
   }
   
   // Outside animation: normal React behavior (allow all re-renders)
