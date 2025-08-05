@@ -503,6 +503,94 @@ def prepare_next_hand(game_state):
 
 
 
+def distribute_side_pots(players_in_hand, winner_data, game_state):
+    """
+    Properly distribute side pots when players have different investment amounts.
+    
+    Args:
+        players_in_hand: List of players still in the hand
+        winner_data: List of (score, hand_class, player) tuples for winners
+        game_state: Current game state
+    
+    Returns:
+        Dictionary of {player_name: amount_won}
+    """
+    winnings = {p['name']: 0 for p in game_state['players']}
+    
+    # Get investment amounts (current_bet) for each player in hand
+    investments = {}
+    for player in players_in_hand:
+        investments[player['name']] = player['current_bet']
+    
+    print(f"DEBUG: Player investments: {investments}")
+    print(f"DEBUG: Total pot: {game_state['pot']}")
+    
+    # Simple case: if all players invested the same amount, distribute normally
+    investment_amounts = list(investments.values())
+    if len(set(investment_amounts)) == 1:
+        # All players invested the same - simple distribution
+        total_pot = game_state['pot']
+        winners = [w[2] for w in winner_data]  # Extract player objects
+        pot_share = total_pot / len(winners)
+        
+        for winner_player in winners:
+            winnings[winner_player['name']] = pot_share
+            winner_player['stack'] += pot_share
+        
+        print(f"DEBUG: Equal investments - simple distribution: {winnings}")
+        return winnings
+    
+    # Complex case: different investment amounts - create side pots
+    sorted_investments = sorted(investments.items(), key=lambda x: x[1])
+    
+    # Create side pots based on investment levels
+    side_pots = []
+    prev_level = 0
+    
+    for i, (player_name, investment) in enumerate(sorted_investments):
+        if investment > prev_level:
+            # Players eligible for this side pot (those who invested at least this much)
+            eligible_players = [p[0] for p in sorted_investments[i:]]
+            num_eligible = len(eligible_players)
+            
+            # Size of this side pot
+            pot_size = (investment - prev_level) * num_eligible
+            
+            side_pots.append({
+                'size': pot_size,
+                'eligible_players': eligible_players,
+                'level': investment,
+                'prev_level': prev_level
+            })
+            
+            prev_level = investment
+    
+    print(f"DEBUG: Side pots created: {side_pots}")
+    
+    # Distribute each side pot to the best eligible hand(s)
+    for pot in side_pots:
+        # Find winners who are eligible for this side pot
+        eligible_winners = []
+        for score, hand_class, player in winner_data:
+            if player['name'] in pot['eligible_players']:
+                eligible_winners.append((score, hand_class, player))
+        
+        if eligible_winners:
+            # Split this side pot among eligible winners
+            pot_share = pot['size'] / len(eligible_winners)
+            for _, _, winner_player in eligible_winners:
+                winnings[winner_player['name']] += pot_share
+                winner_player['stack'] += pot_share
+                print(f"DEBUG: Awarded ${pot_share:.0f} from side pot to {winner_player['name']}")
+    
+    print(f"DEBUG: Final winnings distribution: {winnings}")
+    
+    # Verify total distributed equals total pot
+    total_distributed = sum(winnings.values())
+    print(f"DEBUG: Total distributed: ${total_distributed:.0f}, Total pot: ${game_state['pot']:.0f}")
+    
+    return winnings
+
 def showdown(game_state):
     community = game_state['community']
     players_in_hand = [p for p in game_state['players'] if p['status'] in ['active', 'all-in']]
@@ -512,6 +600,11 @@ def showdown(game_state):
     
     # Store initial state for summary
     initial_stacks = {p['name']: p['stack'] + p['current_bet'] for p in all_players}
+    
+    print(f"DEBUG SHOWDOWN: Initial state:")
+    for p in all_players:
+        print(f"  {p['name']}: stack={p['stack']}, current_bet={p['current_bet']}, total={p['stack'] + p['current_bet']}")
+    print(f"DEBUG SHOWDOWN: Total pot = {game_state['pot']}")
     
     # --- Single Winner by Folds ---
     if len(players_in_hand) == 1:
@@ -542,14 +635,17 @@ def showdown(game_state):
         winner_data = [info for info in sorted_hands if info[0] == best_score]
         winners = [{'name': w[2]['name'], 'hand': w[2]['hand'], 'hand_class': w[1]} for w in winner_data]
 
-        total_pot = game_state['pot']
+        # Proper side pot calculation
+        winnings_distributed = distribute_side_pots(players_in_hand, winner_data, game_state)
         
-        # Simplified pot distribution for now
-        pot_share = total_pot / len(winner_data)
-        for score_info in winner_data:
-            winner_player = score_info[2]
-            winner_player['stack'] += pot_share
-            log_to_hand_history(game_state, f"{winner_player['name']} collected ${pot_share:.0f} from pot")
+        print(f"DEBUG SHOWDOWN: After side pot distribution:")
+        for p in all_players:
+            print(f"  {p['name']}: stack={p['stack']}, current_bet={p['current_bet']}, total={p['stack'] + p['current_bet']}")
+        
+        # Log the winnings
+        for player_name, amount_won in winnings_distributed.items():
+            if amount_won > 0:
+                log_to_hand_history(game_state, f"{player_name} collected ${amount_won:.0f} from pot")
 
     # --- Summary Section ---
     log_to_hand_history(game_state, "\n*** SUMMARY ***")
@@ -591,6 +687,10 @@ def showdown(game_state):
     for player in all_players:
         player['current_bet'] = 0
     game_state['current_bet'] = 0
+    
+    print(f"DEBUG SHOWDOWN: Final state after reset:")
+    for p in all_players:
+        print(f"  {p['name']}: stack={p['stack']}, current_bet={p['current_bet']}")
     
     return winners
 

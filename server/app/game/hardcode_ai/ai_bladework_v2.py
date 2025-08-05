@@ -311,95 +311,336 @@ class GTOEnhancedAI:
         equity = self.postflop_strategy.calculate_hand_equity(hand, community, villain_range=villain_range, num_simulations=300)
         pot_odds = self.calculate_pot_odds(to_call, pot)
         
+        # Advanced board analysis
+        board_analysis = self.analyze_board_comprehensive(community, street)
+        
+        # Create/update multi-street plan
+        betting_plan = self.create_multi_street_plan(hand, community, street, position, stack_bb, hand_strength)
+        
+        # River gets specialized treatment
+        if street == 'river':
+            return self.river_decision_logic(hand, community, to_call, pot, ai_player, position, game_state, board_analysis)
+        
         if to_call == 0:
-            return self.decide_check_or_bet(hand_strength, equity, pot, ai_player, position, street, game_state)
+            return self.decide_check_or_bet_advanced(hand_strength, equity, pot, ai_player, position, street, game_state, board_analysis, betting_plan)
         else:
-            return self.decide_call_raise_fold(hand_strength, equity, pot_odds, to_call, pot, ai_player, position, street, game_state)
+            return self.decide_call_raise_fold_advanced(hand_strength, equity, pot_odds, to_call, pot, ai_player, position, street, game_state, board_analysis)
 
-    def decide_check_or_bet(self, hand_strength, equity, pot, ai_player, position, street, game_state):
-        board_texture = self.analyze_board_texture_advanced(game_state.get('community', []))
-
-        # Value betting
+    def decide_check_or_bet_advanced(self, hand_strength, equity, pot, ai_player, position, street, game_state, board_analysis, betting_plan):
+        """Advanced betting decision with dynamic sizing and sophisticated logic."""
+        stack = ai_player['stack']
+        
+        # Protection betting logic
+        if self.needs_protection(hand_strength, board_analysis, street):
+            protection_size = self.calculate_protection_bet_size(hand_strength, pot, stack, board_analysis)
+            print(f"DEBUG: Protection bet - hand_strength: {hand_strength:.3f}, size: {protection_size}")
+            return ('raise', ai_player['current_bet'] + protection_size)
+        
+        # Strong value betting
         if hand_strength >= 0.75:
-            if board_texture.get('dry'):
-                bet_size = min(ai_player['stack'], round(pot * 0.33))
+            bet_size = self.calculate_optimal_bet_size(hand_strength, board_analysis, position, street, pot, stack, 'value')
+            print(f"DEBUG: Strong value bet - hand_strength: {hand_strength:.3f}, size: {bet_size}")
+            return ('raise', ai_player['current_bet'] + bet_size)
+
+        # Medium strength - mixed strategy
+        elif hand_strength >= 0.55:
+            # Bet more often in position and on favorable boards
+            bet_frequency = 0.75 if position == 'ip' else 0.60
+            
+            # Adjust for board texture
+            if board_analysis.get('static', False):
+                bet_frequency += 0.10
+            elif board_analysis.get('draw_heavy', False):
+                bet_frequency += 0.15  # Bet more on draw-heavy boards
+                
+            if random.random() < bet_frequency:
+                bet_size = self.calculate_optimal_bet_size(hand_strength, board_analysis, position, street, pot, stack, 'thin_value')
+                print(f"DEBUG: Thin value bet - hand_strength: {hand_strength:.3f}, size: {bet_size}")
+                return ('raise', ai_player['current_bet'] + bet_size)
             else:
-                bet_size = self.calculate_value_bet_size(hand_strength, pot, ai_player['stack'], street)
-            return ('bet', bet_size)
+                print(f"DEBUG: Check behind - hand_strength: {hand_strength:.3f} (pot control)")
+                return ('check', 0)
 
-        # Semi-bluffing with strong equity hands/draws
-        if equity > 0.6 and street != 'river':
-            sizing = 0.5 if board_texture.get('dry') else 0.7
-            bet_size = round(pot * sizing)
-            return ('bet', min(bet_size, ai_player['stack']))
+        # Semi-bluffing with draws
+        elif equity >= 0.30 and street != 'river':
+            if self.should_semi_bluff(hand_strength, equity, board_analysis, position, street):
+                bet_size = self.calculate_optimal_bet_size(hand_strength, board_analysis, position, street, pot, stack, 'semi_bluff')
+                print(f"DEBUG: Semi-bluff - equity: {equity:.3f}, size: {bet_size}")
+                return ('raise', ai_player['current_bet'] + bet_size)
+            else:
+                return ('check', 0)
 
+        # Pure bluffs
+        elif hand_strength <= 0.25 and self.should_bluff_advanced(hand_strength, board_analysis, position, street, pot, stack):
+            bet_size = self.calculate_optimal_bet_size(hand_strength, board_analysis, position, street, pot, stack, 'bluff')
+            print(f"DEBUG: Pure bluff - hand_strength: {hand_strength:.3f}, size: {bet_size}")
+            return ('raise', ai_player['current_bet'] + bet_size)
+
+        # Default to check
+        print(f"DEBUG: Check - hand_strength: {hand_strength:.3f}, equity: {equity:.3f}")
         return ('check', 0)
 
-    def decide_call_raise_fold(self, hand_strength, equity, pot_odds, to_call, pot, ai_player, position, street, game_state):
-        required_equity = to_call / (pot + to_call)
+    def decide_call_raise_fold_advanced(self, hand_strength, equity, pot_odds, to_call, pot, ai_player, position, street, game_state, board_analysis):
+        """Advanced call/raise/fold decision with sophisticated logic."""
+        required_equity = to_call / (pot + to_call) if (pot + to_call) > 0 else 0
         bet_size_ratio = to_call / pot if pot > 0 else 0
+        stack = ai_player['stack']
         
-        # Identify strong draws early (used throughout function)
-        is_strong_draw = equity >= 0.32 and street != 'river'  # Strong draws get special treatment
+        # Enhanced hand classification
+        is_strong_draw = equity >= 0.32 and street != 'river'
+        is_made_hand = hand_strength >= 0.35
+        is_premium = hand_strength >= 0.85
         
-        # CRITICAL FIX: Add hand strength filters for big bets
-        min_hand_strength_thresholds = {
-            # Bet size ratio -> minimum hand strength to call
-            0.0:  0.10,   # Small bets: can call with weak hands
-            0.33: 0.15,   # 1/3 pot: need some strength  
-            0.5:  0.20,   # 1/2 pot: need decent strength (pairs OK)
-            0.67: 0.30,   # 2/3 pot: need good strength
-            1.0:  0.45,   # Pot bet: need strong hand
-            1.5:  0.65,   # 1.5x pot: need very strong hand
-            2.0:  0.80,   # 2x pot: need nuts/near-nuts
+        # Dynamic minimum strength thresholds based on board texture
+        base_thresholds = {
+            0.0:  0.10,   0.33: 0.15,   0.5:  0.20,   0.67: 0.30,
+            1.0:  0.45,   1.5:  0.65,   2.0:  0.80,
         }
         
-        # Find the appropriate threshold based on bet size
+        # Adjust thresholds for board texture
         min_strength = 0.10
-        for threshold_ratio in sorted(min_hand_strength_thresholds.keys()):
+        for threshold_ratio in sorted(base_thresholds.keys()):
             if bet_size_ratio >= threshold_ratio:
-                min_strength = min_hand_strength_thresholds[threshold_ratio]
+                min_strength = base_thresholds[threshold_ratio]
         
-        # CRITICAL CHECK: Don't call big bets with weak hands (BUT allow strong draws)
-        if hand_strength < min_strength and not is_strong_draw:
-            print(f"DEBUG: Folding weak hand (strength {hand_strength:.3f} < required {min_strength:.3f}) vs {bet_size_ratio:.1f}x pot bet")
-            return ('fold', 0)
-        elif is_strong_draw and hand_strength < min_strength:
-            print(f"DEBUG: Allowing draw (strength {hand_strength:.3f}, equity {equity:.3f}) vs {bet_size_ratio:.1f}x pot bet")
+        # Board texture adjustments
+        if board_analysis.get('draw_heavy', False):
+            min_strength -= 0.05  # Can call lighter on draw-heavy boards
+        if board_analysis.get('action_cards'):
+            min_strength += 0.05  # Need stronger hands on action cards
+            
+        # Premium hands - always consider raising
+        if is_premium:
+            raise_size = self.calculate_optimal_raise_size(hand_strength, to_call, pot, stack, street, board_analysis, 'value')
+            print(f"DEBUG: Premium value raise - hand_strength: {hand_strength:.3f}, raise_size: {raise_size}")
+            return ('raise', ai_player['current_bet'] + to_call + raise_size)
 
-        # Adjust required equity based on bet size (bigger bets need higher equity)
-        bet_size_adjustment = min(0.15, bet_size_ratio * 0.05)  # Up to 15% increase
-        
-        # Be more lenient with equity requirements for strong draws (implied odds)
-        if is_strong_draw:
-            bet_size_adjustment *= 0.5  # Reduce adjustment for draws
+        # Strong hands - mixed strategy
+        elif hand_strength >= 0.65:
+            # Sometimes raise, sometimes call based on position and board
+            raise_frequency = 0.50 if position == 'ip' else 0.35
             
-        adjusted_required_equity = required_equity + bet_size_adjustment
-
-        if hand_strength >= 0.85: # Raise for value with the nuts
-             raise_size = self.calculate_value_raise_size(hand_strength, to_call, pot, ai_player['stack'], street)
-             return ('raise', ai_player['current_bet'] + to_call + raise_size)
-
-        if equity > adjusted_required_equity:
-            # Consider raising with strong hands/draws, especially in position
-            should_raise = False
-            
-            # Raise with very strong made hands
-            if equity > 0.7 and position == 'ip' and hand_strength > 0.6:
-                should_raise = random.random() < 0.4
-            
-            # Also raise with monster draws (combo draws, strong flush draws)
-            elif equity >= 0.42 and is_strong_draw and position == 'ip' and street != 'river':
-                should_raise = random.random() < 0.3  # Semi-bluff raise with strong draws
-                print(f"DEBUG: Considering semi-bluff raise with draw (equity {equity:.3f})")
-            
-            if should_raise:
-                raise_size = self.calculate_value_raise_size(hand_strength, to_call, pot, ai_player['stack'], street)
+            # Adjust for board texture
+            if board_analysis.get('static', False):
+                raise_frequency -= 0.15  # Raise less on static boards
+            elif board_analysis.get('draw_heavy', False):
+                raise_frequency += 0.15  # Raise more for protection
+                
+            if random.random() < raise_frequency:
+                raise_size = self.calculate_optimal_raise_size(hand_strength, to_call, pot, stack, street, board_analysis, 'value')
+                print(f"DEBUG: Strong value raise - hand_strength: {hand_strength:.3f}, raise_size: {raise_size}")
                 return ('raise', ai_player['current_bet'] + to_call + raise_size)
-            
-            return ('call', 0)
+
+        # Check minimum strength requirements
+        if hand_strength < min_strength and not is_strong_draw:
+            print(f"DEBUG: Folding weak hand - strength: {hand_strength:.3f} < required: {min_strength:.3f}")
+            return ('fold', 0)
+
+        # Equity-based decisions
+        adjusted_required_equity = required_equity
         
-        return ('fold', 0)
+        # Adjust for implied odds with draws
+        if is_strong_draw:
+            adjusted_required_equity *= 0.85  # Account for implied odds
+            
+        # Adjust for position
+        if position == 'ip':
+            adjusted_required_equity *= 0.95  # Slight discount in position
+            
+        # Semi-bluff raising with strong draws
+        if is_strong_draw and position == 'ip' and street != 'river':
+            semi_bluff_frequency = 0.25 if equity >= 0.40 else 0.15
+            
+            if random.random() < semi_bluff_frequency:
+                raise_size = self.calculate_optimal_raise_size(hand_strength, to_call, pot, stack, street, board_analysis, 'semi_bluff')
+                print(f"DEBUG: Semi-bluff raise - equity: {equity:.3f}, raise_size: {raise_size}")
+                return ('raise', ai_player['current_bet'] + to_call + raise_size)
+
+        # Final equity check
+        if equity >= adjusted_required_equity:
+            print(f"DEBUG: Calling - equity: {equity:.3f} >= required: {adjusted_required_equity:.3f}")
+            return ('call', 0)
+        else:
+            print(f"DEBUG: Folding - equity: {equity:.3f} < required: {adjusted_required_equity:.3f}")
+            return ('fold', 0)
+
+    # ----- Advanced bet sizing and strategy methods -----
+    def calculate_optimal_bet_size(self, hand_strength, board_analysis, position, street, pot, stack, bet_type):
+        """Calculate optimal bet size based on multiple factors."""
+        base_size = pot * 0.67  # Starting point
+        
+        # Adjust based on bet type
+        if bet_type == 'value':
+            if hand_strength >= 0.90:  # Nuts
+                if board_analysis.get('static', False):
+                    multiplier = 0.85  # Can bet large on safe boards
+                else:
+                    multiplier = 0.75  # Standard large bet on coordinated boards
+            elif hand_strength >= 0.80:
+                multiplier = 0.70
+            else:  # 0.75-0.79
+                multiplier = 0.60
+                
+        elif bet_type == 'thin_value':
+            multiplier = 0.50  # Smaller for thin value
+            
+        elif bet_type == 'semi_bluff':
+            if board_analysis.get('draw_heavy', False):
+                multiplier = 0.65  # Medium size on draw-heavy boards
+            else:
+                multiplier = 0.55  # Smaller on static boards
+                
+        elif bet_type == 'bluff':
+            if board_analysis.get('texture_type') in ['coordinated_wet', 'double_draw']:
+                multiplier = 0.80  # Large bluffs on scary boards
+            elif board_analysis.get('static', False):
+                multiplier = 0.45  # Small bluffs on dry boards
+            else:
+                multiplier = 0.65  # Standard bluff size
+        else:
+            multiplier = 0.67  # Default
+            
+        # Position adjustments
+        if position == 'oop':
+            multiplier += 0.05  # Bet slightly larger out of position
+            
+        # Street adjustments
+        if street == 'flop':
+            multiplier *= 0.95  # Slightly smaller on flop
+        elif street == 'turn':
+            multiplier *= 1.05  # Slightly larger on turn
+            
+        # Board texture fine-tuning
+        if board_analysis.get('paired', False):
+            multiplier *= 0.90  # Smaller on paired boards
+        if board_analysis.get('connectivity_score', 0) >= 7:
+            multiplier *= 1.10  # Larger on highly connected boards
+            
+        final_size = min(stack, max(round(pot * 0.25), round(pot * multiplier)))
+        return final_size
+
+    def calculate_optimal_raise_size(self, hand_strength, bet_to_call, pot, stack, street, board_analysis, raise_type):
+        """Calculate optimal raise size for different situations."""
+        if raise_type == 'value':
+            if hand_strength >= 0.90:  # Nuts
+                raise_amount = min(stack - bet_to_call, round((pot + bet_to_call) * 1.0))
+            elif hand_strength >= 0.80:  # Very strong
+                raise_amount = min(stack - bet_to_call, round((pot + bet_to_call) * 0.8))
+            else:  # Strong
+                raise_amount = min(stack - bet_to_call, round((pot + bet_to_call) * 0.6))
+                
+        elif raise_type == 'semi_bluff':
+            # Semi-bluff raises should be substantial but not huge
+            raise_amount = min(stack - bet_to_call, round((pot + bet_to_call) * 0.7))
+            
+        else:  # Default
+            raise_amount = min(stack - bet_to_call, round((pot + bet_to_call) * 0.8))
+            
+        return max(bet_to_call, raise_amount)  # Ensure minimum raise
+
+    def needs_protection(self, hand_strength, board_analysis, street):
+        """Determine if hand needs protection betting."""
+        if hand_strength < 0.55 or street == 'river':  # Not strong enough or no more cards
+            return False
+            
+        # Calculate opponent's potential equity
+        draw_equity = 0
+        if board_analysis.get('flush_draws', 0) >= 1:
+            draw_equity += 0.20  # Approximate flush draw equity
+        if board_analysis.get('straight_draws', 0) >= 1:
+            draw_equity += 0.17  # Approximate straight draw equity
+        if board_analysis.get('backdoor_draws', 0) >= 1:
+            draw_equity += 0.05  # Backdoor equity
+            
+        # Protect if opponent likely has significant equity
+        return draw_equity >= 0.25
+
+    def calculate_protection_bet_size(self, hand_strength, pot, stack, board_analysis):
+        """Calculate bet size for protection."""
+        # Protection bets should be substantial to charge draws properly
+        if board_analysis.get('draw_heavy', False):
+            multiplier = 0.80  # Large bet on very draw-heavy boards
+        elif board_analysis.get('total_draws', 0) >= 1:
+            multiplier = 0.70  # Good-sized bet with some draws
+        else:
+            multiplier = 0.60  # Medium bet
+            
+        return min(stack, round(pot * multiplier))
+
+    def should_semi_bluff(self, hand_strength, equity, board_analysis, position, street):
+        """Determine if this is a good semi-bluff spot."""
+        if street == 'river' or equity < 0.25:  # No draws on river or too weak
+            return False
+            
+        semi_bluff_score = 0
+        
+        # Equity considerations
+        if equity >= 0.40:  # Strong draws
+            semi_bluff_score += 30
+        elif equity >= 0.30:  # Decent draws
+            semi_bluff_score += 20
+            
+        # Position advantage
+        if position == 'ip':
+            semi_bluff_score += 15
+            
+        # Board texture
+        if board_analysis.get('draw_heavy', False):
+            semi_bluff_score += 10  # Good to semi-bluff on draw-heavy boards
+        if board_analysis.get('connectivity_score', 0) >= 6:
+            semi_bluff_score += 10
+            
+        # Convert to probability
+        probability = min(0.70, semi_bluff_score / 100)
+        
+        return random.random() < probability
+
+    def should_bluff_advanced(self, hand_strength, board_analysis, position, street, pot, stack):
+        """Advanced bluff selection with multiple factors."""
+        if street == 'river':
+            return False  # River bluffs handled separately
+            
+        bluff_score = 0
+        
+        # Base bluff frequencies by street
+        base_frequencies = {'flop': 0.25, 'turn': 0.20}
+        base_score = base_frequencies.get(street, 0.15) * 100
+        
+        # Position advantage
+        if position == 'ip':
+            bluff_score += 20
+        else:
+            bluff_score += 5  # Some bluffs out of position
+            
+        # Board texture considerations
+        texture_type = board_analysis.get('texture_type', 'rainbow_dry')
+        if texture_type in ['coordinated_wet', 'double_draw']:
+            bluff_score += 25  # More bluffs on scary boards
+        elif texture_type == 'rainbow_dry':
+            bluff_score += 10  # Some bluffs on dry boards
+        elif texture_type == 'paired_dry':
+            bluff_score += 15  # Medium bluffs on paired boards
+            
+        # Connectivity and action considerations
+        if board_analysis.get('connectivity_score', 0) >= 7:
+            bluff_score += 15
+        if board_analysis.get('action_cards'):
+            bluff_score += 20
+            
+        # Stack depth considerations
+        stack_pot_ratio = stack / pot if pot > 0 else 10
+        if stack_pot_ratio >= 3:  # Deep stacks
+            bluff_score += 10
+        elif stack_pot_ratio <= 1.5:  # Short stacks
+            bluff_score -= 15
+            
+        # Hand-specific factors (simplified blocker analysis)
+        if hand_strength <= 0.15:  # Very weak hands are better bluffs
+            bluff_score += 10
+            
+        final_probability = min(0.50, (base_score + bluff_score) / 100)
+        
+        return random.random() < final_probability
 
     def calculate_value_bet_size(self, hand_strength, pot, stack, street):
         if street == 'river':
@@ -407,7 +648,8 @@ class GTOEnhancedAI:
         return min(stack, round(pot * 0.67))
 
     def calculate_value_raise_size(self, hand_strength, bet_to_call, pot, stack, street):
-        return min(stack - bet_to_call, round((pot + bet_to_call) * 0.8))
+        """Legacy method - redirects to calculate_optimal_raise_size"""
+        return self.calculate_optimal_raise_size(hand_strength, bet_to_call, pot, stack, street, {}, 'value')
 
     def calculate_hand_strength_normalized(self, hand, community):
         if not community: return self.get_simple_hand_strength(hand)
@@ -431,40 +673,494 @@ class GTOEnhancedAI:
         if bet_to_call <= 0: return float('inf')
         return pot_size / bet_to_call
 
-    # ----- Advanced board texture analysis (imported from GTO Enhanced AI) -----
-    def analyze_board_texture_advanced(self, community):
-        """Return simple texture flags for sizing decisions."""
+    # ----- Advanced board texture analysis system -----
+    def analyze_board_comprehensive(self, community, street):
+        """Advanced comprehensive board analysis for strategic decisions."""
         if len(community) < 3:
-            return {'type': 'preflop'}
+            return {'type': 'preflop', 'texture_type': 'preflop', 'static': True, 'draw_heavy': False}
 
         ranks = [card[0] for card in community]
         suits = [card[1] for card in community]
-
-        suit_counts = {}
-        for s in suits:
-            suit_counts[s] = suit_counts.get(s, 0) + 1
-        max_suit = max(suit_counts.values())
-
         rank_values = {'2': 2, '3': 3, '4': 4, '5': 5, '6': 6, '7': 7, '8': 8, '9': 9,
                        'T': 10, 'J': 11, 'Q': 12, 'K': 13, 'A': 14}
         values = sorted([rank_values[r] for r in ranks])
 
-        straight_draw = False
-        if len(set(values)) >= 3:
-            for i in range(len(values) - 2):
-                if values[i+2] - values[i] <= 4:
-                    straight_draw = True
-                    break
+        # Draw analysis
+        flush_draws = self.count_flush_draws(community)
+        straight_draws = self.count_straight_draws(community)
+        backdoor_draws = self.count_backdoor_draws(community, street)
 
+        # Board coordination
+        connectivity_score = self.calculate_connectivity(community)
+        rank_spread = max(values) - min(values)
+        gap_count = self.count_gaps_in_sequence(community)
+
+        # Pairing analysis
         paired = len(set(ranks)) < len(ranks)
+        trips_plus = any(ranks.count(rank) >= 3 for rank in ranks)
+
+        # Texture categorization
+        texture_type = self.categorize_texture_type(community, flush_draws, straight_draws, paired)
+        draw_heavy = flush_draws + straight_draws >= 2 or (flush_draws >= 1 and straight_draws >= 1)
+        static = not draw_heavy and not paired and rank_spread <= 6
+
+        # Street-specific analysis
+        action_cards = self.identify_action_cards(community, street) if street in ['turn', 'river'] else []
+        brick_cards = self.identify_brick_cards(community, street) if street in ['turn', 'river'] else []
 
         return {
-            'dry': max_suit <= 2 and not straight_draw and not paired,
-            'wet': max_suit >= 3 or straight_draw,
+            'type': 'postflop',
+            'street': street,
+            
+            # Draw information
+            'flush_draws': flush_draws,
+            'straight_draws': straight_draws,
+            'backdoor_draws': backdoor_draws,
+            'total_draws': flush_draws + straight_draws,
+            
+            # Board coordination
+            'connectivity_score': connectivity_score,  # 0-10 scale
+            'rank_spread': rank_spread,
+            'gap_count': gap_count,
+            
+            # Texture categories
+            'texture_type': texture_type,
+            'draw_heavy': draw_heavy,
+            'static': static,
             'paired': paired,
-            'flush_draw': max_suit >= 3,
-            'straight_draw': straight_draw
+            'trips_plus': trips_plus,
+            
+            # Legacy compatibility
+            'wet': draw_heavy or paired,
+            'dry': static and not paired,
+            
+            # Street-specific
+            'action_cards': action_cards,
+            'brick_cards': brick_cards,
         }
+
+    def count_flush_draws(self, community):
+        """Count flush draws on board."""
+        suits = [card[1] for card in community]
+        suit_counts = {}
+        for suit in suits:
+            suit_counts[suit] = suit_counts.get(suit, 0) + 1
+        
+        flush_draws = 0
+        for count in suit_counts.values():
+            if count == 3:  # 3 of same suit = flush draw
+                flush_draws += 1
+            elif count >= 4:  # 4+ of same suit = made flush
+                flush_draws += 2  # Strong draw potential
+        return flush_draws
+
+    def count_straight_draws(self, community):
+        """Count straight draws on board."""
+        rank_values = {'2': 2, '3': 3, '4': 4, '5': 5, '6': 6, '7': 7, '8': 8, '9': 9,
+                       'T': 10, 'J': 11, 'Q': 12, 'K': 13, 'A': 14}
+        values = sorted(list(set([rank_values[card[0]] for card in community])))
+        
+        straight_draws = 0
+        
+        # Check for open-ended straight draws
+        for i in range(len(values) - 2):
+            if i + 3 < len(values) and values[i+3] - values[i] == 3:  # 4 in a row
+                straight_draws += 2  # Open-ended = 2 points
+            elif i + 2 < len(values) and values[i+2] - values[i] <= 4:  # Potential straight
+                straight_draws += 1  # Gutshot/weak draw = 1 point
+        
+        # Special case for wheel draws (A-2-3-4-5)
+        if 14 in values and 2 in values and 3 in values:
+            straight_draws += 1
+            
+        return min(straight_draws, 3)  # Cap at 3 for very coordinated boards
+
+    def count_backdoor_draws(self, community, street):
+        """Count backdoor draw potential."""
+        if street != 'flop' or len(community) != 3:
+            return 0
+            
+        backdoor_count = 0
+        
+        # Backdoor flush draws (2 of same suit)
+        suits = [card[1] for card in community]
+        suit_counts = {}
+        for suit in suits:
+            suit_counts[suit] = suit_counts.get(suit, 0) + 1
+        
+        for count in suit_counts.values():
+            if count == 2:
+                backdoor_count += 1
+        
+        # Backdoor straight draws (simplified)
+        rank_values = {'2': 2, '3': 3, '4': 4, '5': 5, '6': 6, '7': 7, '8': 8, '9': 9,
+                       'T': 10, 'J': 11, 'Q': 12, 'K': 13, 'A': 14}
+        values = sorted([rank_values[card[0]] for card in community])
+        
+        # Check if there's potential for backdoor straights
+        if len(set(values)) >= 2 and max(values) - min(values) <= 8:
+            backdoor_count += 1
+            
+        return min(backdoor_count, 2)
+
+    def calculate_connectivity(self, community):
+        """Calculate board connectivity score (0-10)."""
+        rank_values = {'2': 2, '3': 3, '4': 4, '5': 5, '6': 6, '7': 7, '8': 8, '9': 9,
+                       'T': 10, 'J': 11, 'Q': 12, 'K': 13, 'A': 14}
+        values = sorted([rank_values[card[0]] for card in community])
+        
+        connectivity = 0
+        
+        # Points for consecutive ranks
+        for i in range(len(values) - 1):
+            if values[i+1] - values[i] == 1:
+                connectivity += 3
+            elif values[i+1] - values[i] == 2:
+                connectivity += 2
+            elif values[i+1] - values[i] == 3:
+                connectivity += 1
+                
+        # Points for suit coordination
+        suits = [card[1] for card in community]
+        suit_counts = list(suit_counts.values()) if (suit_counts := {suit: suits.count(suit) for suit in set(suits)}) else []
+        
+        for count in suit_counts:
+            if count >= 3:
+                connectivity += 3
+            elif count == 2:
+                connectivity += 1
+                
+        return min(connectivity, 10)
+
+    def count_gaps_in_sequence(self, community):
+        """Count gaps in rank sequence."""
+        rank_values = {'2': 2, '3': 3, '4': 4, '5': 5, '6': 6, '7': 7, '8': 8, '9': 9,
+                       'T': 10, 'J': 11, 'Q': 12, 'K': 13, 'A': 14}
+        values = sorted(list(set([rank_values[card[0]] for card in community])))
+        
+        if len(values) < 2:
+            return 0
+            
+        gaps = 0
+        for i in range(len(values) - 1):
+            gap_size = values[i+1] - values[i] - 1
+            gaps += max(0, gap_size)
+            
+        return gaps
+
+    def categorize_texture_type(self, community, flush_draws, straight_draws, paired):
+        """Categorize the overall board texture."""
+        if paired:
+            if flush_draws >= 1 or straight_draws >= 1:
+                return 'paired_coordinated'
+            else:
+                return 'paired_dry'
+        elif flush_draws >= 1 and straight_draws >= 1:
+            return 'double_draw'
+        elif flush_draws >= 2 or straight_draws >= 2:
+            return 'coordinated_wet'
+        elif flush_draws >= 1 or straight_draws >= 1:
+            return 'single_draw'
+        else:
+            return 'rainbow_dry'
+
+    def identify_action_cards(self, community, street):
+        """Identify cards that create action (complete draws, etc.)."""
+        if street == 'flop' or len(community) < 4:
+            return []
+            
+        action_cards = []
+        prev_community = community[:-1]  # Board before this card
+        new_card = community[-1]
+        
+        # Check if new card completed a flush
+        suits = [card[1] for card in community]
+        prev_suits = [card[1] for card in prev_community]
+        
+        suit_counts = {suit: suits.count(suit) for suit in set(suits)}
+        prev_suit_counts = {suit: prev_suits.count(suit) for suit in set(prev_suits)}
+        
+        for suit in suit_counts:
+            if suit_counts[suit] >= 4 and prev_suit_counts.get(suit, 0) == 3:
+                action_cards.append('flush_complete')
+                break
+                
+        # Check if new card completed a straight (simplified)
+        rank_values = {'2': 2, '3': 3, '4': 4, '5': 5, '6': 6, '7': 7, '8': 8, '9': 9,
+                       'T': 10, 'J': 11, 'Q': 12, 'K': 13, 'A': 14}
+        values = sorted([rank_values[card[0]] for card in community])
+        
+        # Simple straight detection
+        consecutive_count = 1
+        max_consecutive = 1
+        for i in range(len(values) - 1):
+            if values[i+1] - values[i] == 1:
+                consecutive_count += 1
+                max_consecutive = max(max_consecutive, consecutive_count)
+            else:
+                consecutive_count = 1
+                
+        if max_consecutive >= 4:
+            action_cards.append('straight_possible')
+            
+        return action_cards
+
+    def identify_brick_cards(self, community, street):
+        """Identify cards that don't change much (bricks)."""
+        if street == 'flop' or len(community) < 4:
+            return []
+            
+        new_card = community[-1]
+        rank_values = {'2': 2, '3': 3, '4': 4, '5': 5, '6': 6, '7': 7, '8': 8, '9': 9,
+                       'T': 10, 'J': 11, 'Q': 12, 'K': 13, 'A': 14}
+        
+        brick_cards = []
+        
+        # Low cards that don't connect
+        new_rank = rank_values[new_card[0]]
+        board_ranks = [rank_values[card[0]] for card in community[:-1]]
+        
+        # If new card is low and doesn't connect to existing ranks
+        if new_rank <= 6:
+            min_existing = min(board_ranks)
+            if new_rank < min_existing - 2:  # Doesn't connect
+                brick_cards.append('low_brick')
+                
+        # If new card doesn't create flush draws or straight draws
+        prev_analysis = self.analyze_board_comprehensive(community[:-1], 'turn' if street == 'river' else 'flop')
+        current_draws = self.count_flush_draws(community) + self.count_straight_draws(community)
+        prev_draws = prev_analysis['total_draws']
+        
+        if current_draws <= prev_draws:  # Didn't increase draw potential
+            brick_cards.append('non_action')
+            
+        return brick_cards
+
+    def analyze_board_texture_advanced(self, community):
+        """Legacy method - redirect to comprehensive analysis."""
+        analysis = self.analyze_board_comprehensive(community, 'flop')
+        return {
+            'dry': analysis['dry'],
+            'wet': analysis['wet'], 
+            'paired': analysis['paired'],
+            'flush_draw': analysis['flush_draws'] >= 1,
+            'straight_draw': analysis['straight_draws'] >= 1
+        }
+
+    # ----- Multi-street planning system -----
+    def create_multi_street_plan(self, hand, community, street, position, stack_bb, hand_strength):
+        """Create a multi-street betting plan for consistency."""
+        hand_category = self.categorize_hand(hand, community, hand_strength)
+        
+        plan = {
+            'current_street': street,
+            'hand_category': hand_category,
+            'position': position,
+            'stack_depth': 'short' if stack_bb <= 25 else 'medium' if stack_bb <= 60 else 'deep',
+            'planned_actions': {},
+            'reasoning': ''
+        }
+        
+        if hand_category == 'premium_value':  # 0.85+ hand strength
+            plan['planned_actions'] = {
+                'flop': 'bet_large',
+                'turn': 'bet_large', 
+                'river': 'bet_large'
+            }
+            plan['reasoning'] = 'Extract maximum value across all streets'
+            
+        elif hand_category == 'strong_value':  # 0.65-0.84 hand strength
+            plan['planned_actions'] = {
+                'flop': 'bet_medium',
+                'turn': 'bet_medium_or_check',
+                'river': 'thin_value_or_check'
+            }
+            plan['reasoning'] = 'Value bet but be cautious on dangerous runouts'
+            
+        elif hand_category == 'medium_made':  # 0.40-0.64 hand strength
+            plan['planned_actions'] = {
+                'flop': 'check_or_small_bet',
+                'turn': 'check_call',
+                'river': 'check_call_thin'
+            }
+            plan['reasoning'] = 'Pot control, call reasonable bets'
+            
+        elif hand_category == 'strong_draw':  # <0.40 strength but high equity
+            plan['planned_actions'] = {
+                'flop': 'semi_bluff',
+                'turn': 'evaluate_improvement',
+                'river': 'give_up_or_bluff'
+            }
+            plan['reasoning'] = 'Semi-bluff early, evaluate improvement'
+            
+        elif hand_category == 'weak_draw':  # Some equity but weak
+            plan['planned_actions'] = {
+                'flop': 'check_call_or_fold',
+                'turn': 'check_fold',
+                'river': 'check_fold'
+            }
+            plan['reasoning'] = 'Draw cheaply, fold to pressure'
+            
+        else:  # 'air' - very weak hands
+            plan['planned_actions'] = {
+                'flop': 'check_fold_or_bluff',
+                'turn': 'check_fold',
+                'river': 'bluff_or_give_up'
+            }
+            plan['reasoning'] = 'Occasional bluffs, mostly give up'
+            
+        return plan
+
+    def categorize_hand(self, hand, community, hand_strength):
+        """Categorize hand for multi-street planning."""
+        equity = self.postflop_strategy.calculate_hand_equity(hand, community, num_simulations=200)
+        
+        if hand_strength >= 0.85:
+            return 'premium_value'
+        elif hand_strength >= 0.65:
+            return 'strong_value'
+        elif hand_strength >= 0.40:
+            return 'medium_made'
+        elif equity >= 0.35:  # Strong draws
+            return 'strong_draw'
+        elif equity >= 0.20:  # Weak draws
+            return 'weak_draw'
+        else:
+            return 'air'
+
+    # ----- River specialization system -----
+    def river_decision_logic(self, hand, community, to_call, pot, ai_player, position, game_state, board_analysis):
+        """Specialized river decision logic."""
+        hand_strength = self.calculate_hand_strength_normalized(hand, community)
+        
+        if to_call == 0:  # We can bet or check
+            return self.river_betting_decision(hand_strength, community, pot, ai_player, position, board_analysis)
+        else:  # Facing a bet
+            return self.river_calling_decision(hand_strength, to_call, pot, community, position, board_analysis)
+
+    def river_betting_decision(self, hand_strength, community, pot, ai_player, position, board_analysis):
+        """River betting decision with polarized strategy."""
+        stack = ai_player['stack']
+        
+        # River betting is more polarized - strong hands and bluffs, fewer medium bets
+        if hand_strength >= 0.70:  # Strong value betting range
+            bet_size = self.calculate_river_value_size(hand_strength, pot, stack, board_analysis)
+            print(f"DEBUG: River value bet - hand_strength: {hand_strength:.3f}, bet_size: {bet_size}")
+            return ('raise', ai_player['current_bet'] + bet_size)
+            
+        elif hand_strength <= 0.25 and self.should_river_bluff(hand_strength, community, position, pot, board_analysis):
+            bluff_size = self.calculate_river_bluff_size(pot, stack, board_analysis)
+            print(f"DEBUG: River bluff - hand_strength: {hand_strength:.3f}, bluff_size: {bluff_size}")
+            return ('raise', ai_player['current_bet'] + bluff_size)
+            
+        else:  # Medium hands - mostly check for pot control
+            print(f"DEBUG: River check - hand_strength: {hand_strength:.3f} (medium range)")
+            return ('check', 0)
+
+    def river_calling_decision(self, hand_strength, to_call, pot, community, position, board_analysis):
+        """River calling decision with precise ranges."""
+        pot_odds = pot / (pot + to_call) if (pot + to_call) > 0 else 0
+        bet_size_ratio = to_call / pot if pot > 0 else 0
+        
+        # River calling thresholds based on bet size
+        calling_thresholds = {
+            0.25: 0.35,   # Small bet (1/4 pot) - call with decent hands
+            0.50: 0.45,   # Medium bet (1/2 pot) - need good hands
+            0.75: 0.55,   # Large bet (3/4 pot) - need strong hands
+            1.00: 0.65,   # Pot bet - need very strong hands
+            1.50: 0.75,   # Large overbet - need near nuts
+            2.00: 0.85,   # Huge overbet - need nuts
+        }
+        
+        # Find appropriate threshold
+        required_strength = 0.35
+        for size_threshold in sorted(calling_thresholds.keys()):
+            if bet_size_ratio >= size_threshold:
+                required_strength = calling_thresholds[size_threshold]
+        
+        # Adjust for board texture and blockers
+        if board_analysis.get('action_cards'):
+            required_strength += 0.05  # Be more cautious on action boards
+        if board_analysis.get('brick_cards'):
+            required_strength -= 0.05  # More liberal on brick cards
+            
+        if self.has_strong_blockers(community, position):
+            required_strength -= 0.05  # Can call lighter with blockers
+            
+        print(f"DEBUG: River call decision - hand_strength: {hand_strength:.3f}, required: {required_strength:.3f}, bet_ratio: {bet_size_ratio:.2f}")
+        
+        if hand_strength >= required_strength:
+            return ('call', 0)
+        else:
+            return ('fold', 0)
+
+    def calculate_river_value_size(self, hand_strength, pot, stack, board_analysis):
+        """Calculate optimal river value bet size."""
+        # River value betting - size based on hand strength and board
+        if hand_strength >= 0.90:  # Near nuts
+            if board_analysis.get('static', False):
+                return min(stack, round(pot * 1.2))  # Can overbet on safe boards
+            else:
+                return min(stack, round(pot * 0.85))  # Standard large bet
+                
+        elif hand_strength >= 0.80:  # Very strong
+            return min(stack, round(pot * 0.75))
+            
+        elif hand_strength >= 0.70:  # Strong but not nuts
+            return min(stack, round(pot * 0.60))
+            
+        else:  # Shouldn't be value betting this weak on river
+            return min(stack, round(pot * 0.45))
+
+    def calculate_river_bluff_size(self, pot, stack, board_analysis):
+        """Calculate optimal river bluff size."""
+        # River bluffs should be polarized - either small or large
+        if board_analysis.get('texture_type') in ['coordinated_wet', 'double_draw']:
+            # Large bluffs on scary boards
+            return min(stack, round(pot * 0.90))
+        elif board_analysis.get('static', False):
+            # Medium bluffs on static boards  
+            return min(stack, round(pot * 0.65))
+        else:
+            # Standard bluff size
+            return min(stack, round(pot * 0.75))
+
+    def should_river_bluff(self, hand_strength, community, position, pot, board_analysis):
+        """Determine if this is a good river bluff spot."""
+        # River bluffing factors
+        bluff_score = 0
+        
+        # Position advantage
+        if position == 'ip':
+            bluff_score += 15
+            
+        # Board texture considerations
+        if board_analysis.get('action_cards'):
+            bluff_score += 20  # Bluff more on action cards
+        if board_analysis.get('brick_cards'):
+            bluff_score -= 10  # Bluff less on brick cards
+            
+        # Hand-specific factors (blockers)
+        if self.has_strong_blockers(community, position):
+            bluff_score += 25
+            
+        # Stack considerations (simplified)
+        # Deep stacks favor more bluffing
+        bluff_score += 5
+        
+        # Frequency balance - don't bluff too often
+        base_bluff_frequency = 0.25  # 25% base frequency
+        
+        # Convert score to probability
+        bluff_probability = min(0.45, base_bluff_frequency + (bluff_score / 100))
+        
+        return random.random() < bluff_probability
+
+    def has_strong_blockers(self, community, position):
+        """Check if we have strong blockers (simplified analysis)."""
+        # This is a simplified blocker check
+        # In practice, you'd analyze specific card combinations
+        return random.random() < 0.3  # Placeholder
 
     def update_opponent_model(self, game_state):
         """
