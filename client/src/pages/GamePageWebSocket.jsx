@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import './GamePage.css';
 
 // Components
@@ -45,9 +45,12 @@ const GamePage = () => {
   const [previousCommunityLength, setPreviousCommunityLength] = useState(0);
   const [newCardIndices, setNewCardIndices] = useState([]);
   const [selectedCardback, setSelectedCardback] = useState('Cardback17');
+  
+  // Use ref to track animation state synchronously (prevents React batching issues)
+  const isAnimatingRef = useRef(false);
 
-  // WebSocket connection - Railway production URL (for now)
-  const socket = useSocket('https://poker-program-1-production.up.railway.app');
+  // WebSocket connection - connect to local server for development
+  const socket = useSocket('http://localhost:5001');
 
   // Memoize cardbacks array to prevent recreation on every render
   const cardbacks = useMemo(() => [
@@ -116,13 +119,24 @@ const GamePage = () => {
     setRaiseAmount(finalMinBet.toString());
   }, []);
 
+  // Reset animation state when game starts/resets
+  useEffect(() => {
+    if (!gameState) {
+      setDealingCards(false);
+      setNewCardIndices([]);
+      setPreviousCommunityLength(0);
+      window.lastCommunityHash = '';
+      isAnimatingRef.current = false;
+    }
+  }, [gameState]);
+
   // WebSocket event handlers
   useEffect(() => {
     if (!socket.isConnected) return;
 
     // Handle game start
     socket.on('game_start', (data) => {
-      console.log('🎮 Game started via WebSocket', data);
+
       
       // Clear any pending start game timeout
       if (window.startGameTimeoutId) {
@@ -142,8 +156,6 @@ const GamePage = () => {
 
     // Handle player action results
     socket.on('action_result', (data) => {
-      console.log('Action result received');
-      
       // Clear any pending action timeout
       if (window.actionTimeoutId) {
         clearTimeout(window.actionTimeoutId);
@@ -172,7 +184,6 @@ const GamePage = () => {
 
     // Handle AI actions
     socket.on('ai_action', (data) => {
-      console.log('AI action received');
       if (data.game_state) {
         setGameState(data.game_state);
         updateBetLimits(data.game_state);
@@ -199,7 +210,7 @@ const GamePage = () => {
 
     // Handle hand over
     socket.on('hand_over', (data) => {
-      console.log('Hand over received');
+
       if (data.winners) {
         setWinners(data.winners);
         setHandOver(true);
@@ -214,7 +225,6 @@ const GamePage = () => {
 
     // Handle new hand
     socket.on('new_hand', (data) => {
-      console.log('New hand started via WebSocket');
       setGameState(data);
       setHandOver(false);
       setShowdown(false);
@@ -226,7 +236,6 @@ const GamePage = () => {
 
     // Handle new round
     socket.on('new_round', (data) => {
-      console.log('New round started via WebSocket');
       setGameState(data);
       setHandOver(false);
       setShowdown(false);
@@ -238,7 +247,7 @@ const GamePage = () => {
 
     // Handle errors
     socket.on('error', (data) => {
-      console.error('WebSocket error:', data.message);
+
       
       // Clear any pending action timeout
       if (window.actionTimeoutId) {
@@ -275,14 +284,35 @@ const GamePage = () => {
     };
   }, [socket.isConnected, socket.connectionError, updateBetLimits]);
 
-  // Card dealing animation effect
+  // Card dealing animation effect - improved to prevent double triggers
   useEffect(() => {
-    if (!gameState || !gameState.community) return;
+    if (!gameState || !gameState.community) {
+      return;
+    }
 
     const currentLength = gameState.community.length;
     
-    if (currentLength > previousCommunityLength) {
-      setDealingCards(true);
+    // CRITICAL: Exit immediately if already animating (using ref for synchronous check)
+    if (isAnimatingRef.current) {
+      return;
+    }
+    
+    // Create a unique identifier for this community state to prevent duplicates
+    const communityHash = gameState.community.join(',');
+    
+    // Only animate if:
+    // 1. Cards were actually added
+    // 2. Not currently dealing (checked above)
+    // 3. This is a new community state (prevent same cards from re-animating)
+    if (currentLength > previousCommunityLength && 
+        currentLength > 0 &&
+        window.lastCommunityHash !== communityHash) {
+      
+      // Store this community state to prevent re-animation
+      window.lastCommunityHash = communityHash;
+      
+      // Set animation flag immediately (synchronous)
+      isAnimatingRef.current = true;
       
       // Calculate which cards are new
       const newIndices = [];
@@ -297,19 +327,22 @@ const GamePage = () => {
         setNewCardIndices(newIndices);
       }
       
-      // Check if it's an all-in showdown with multiple cards dealt at once
-      const cardsDifference = currentLength - previousCommunityLength;
-      const animationDuration = cardsDifference > 1 ? 1500 : 1000; // Longer for multiple cards
+      setDealingCards(true);
+      
+      // Match CSS animation duration exactly (0.8s = 800ms)
+      const animationDuration = 800;
       
       // Remove dealing animation after animation completes
       setTimeout(() => {
         setDealingCards(false);
         setNewCardIndices([]);
+        isAnimatingRef.current = false; // Clear animation flag
       }, animationDuration);
     }
     
+    // Update previous length only after checking for animation
     setPreviousCommunityLength(currentLength);
-  }, [gameState?.community?.length, previousCommunityLength]);
+  }, [gameState?.community?.length]);
 
   // Game action functions using WebSocket - memoized for performance
   const startGame = useCallback((selectedAI = 'bladework_v2') => {
@@ -328,11 +361,11 @@ const GamePage = () => {
     setSelectedAIType(selectedAI);
     setMessage('Starting game...');
     
-    console.log('Starting game with AI:', selectedAI);
+
     
     // Set a timeout to reset loading state if no response received
     const timeoutId = setTimeout(() => {
-      console.warn('Start game timeout - resetting loading state');
+
       setLoading(false);
       setMessage('Game start timed out. Please try again.');
     }, 10000); // 10 second timeout
@@ -357,12 +390,12 @@ const GamePage = () => {
     
     // Safety timeout to prevent UI from getting stuck
     const timeoutId = setTimeout(() => {
-      console.warn('Action timeout - resetting loading state');
+
       setLoading(false);
       setMessage('Action timed out. Please try again.');
     }, 15000); // 15 second timeout
     
-    console.log(`Making action: ${action}`, { gameId, action, amount });
+
     socket.makeAction(gameId, action, amount);
     
     // Store timeout ID for potential cleanup (though it will be cleared by response handlers)
@@ -380,7 +413,7 @@ const GamePage = () => {
     setLoading(true);
     setMessage('Starting new hand...');
     
-    console.log('Starting new hand for game:', gameId);
+
     socket.startNewHand(gameId);
   }, [gameId, loading, socket.connectionError, socket.startNewHand]);
 
@@ -395,7 +428,7 @@ const GamePage = () => {
     setLoading(true);
     setMessage('Starting new round...');
     
-    console.log('Starting new round for game:', gameId);
+
     socket.startNewRound(gameId);
   }, [gameId, loading, socket.connectionError, socket.startNewRound]);
 
@@ -654,4 +687,4 @@ const GamePage = () => {
   );
 };
 
-export default React.memo(GamePage);
+export default GamePage;

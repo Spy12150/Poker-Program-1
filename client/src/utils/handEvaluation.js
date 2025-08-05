@@ -146,10 +146,10 @@ export const evaluatePartialHand = (cards) => {
 // Card translation utility
 export const translateCard = (shortCode) => {
   // Debug logging to catch invalid card formats
-  console.log('translateCard called with:', shortCode, 'type:', typeof shortCode);
+  
   
   if (!shortCode || typeof shortCode !== 'string' || shortCode.length < 2) {
-    console.error('translateCard received invalid card:', shortCode);
+    
     return 'Cardback1'; // Return safe fallback
   }
 
@@ -170,12 +170,11 @@ export const translateCard = (shortCode) => {
   
   // Additional validation
   if (!rank || !suit) {
-    console.error('translateCard: invalid rank or suit in card:', shortCode, 'rank:', rank, 'suit:', suit);
-    console.error('translateCard: shortCode[0]:', shortCode[0], 'shortCode[1]:', shortCode[1]);
+    
     return 'Cardback1'; // Return safe fallback
   }
   
   const result = `${rank}${suit}`;
-  console.log('translateCard result:', result);
+  
   return result;
 };

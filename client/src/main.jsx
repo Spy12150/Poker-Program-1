@@ -5,9 +5,10 @@ import App from './App.jsx'
 import ErrorBoundary from './components/ErrorBoundary.jsx'
 
 createRoot(document.getElementById('root')).render(
-  <StrictMode>
+  // Disabled StrictMode to prevent double animations in development
+  // <StrictMode>
     <ErrorBoundary>
       <App />
     </ErrorBoundary>
-  </StrictMode>,
+  // </StrictMode>
 )

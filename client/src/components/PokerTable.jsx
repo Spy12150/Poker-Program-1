@@ -1,7 +1,7 @@
-import React from 'react';
+import React, { memo } from 'react';
 import { useCardImage } from '../hooks/useImagePreloader';
 
-const PokerTable = ({ 
+const PokerTable = memo(({ 
   gameState, 
   showdown, 
   dealingCards, 
@@ -16,19 +16,18 @@ const PokerTable = ({
 }) => {
   // Card image component with WebP support and error handling
   const CardImage = ({ card, isCardback = false, className = "card", alt = "card" }) => {
-    // Debug logging
-    console.log('CardImage called with:', { card, isCardback, typeof_card: typeof card });
+
     
     // Additional validation to prevent invalid cards
     if (!isCardback && (!card || typeof card !== 'string' || card.length < 2)) {
-      console.error('CardImage received invalid card, using fallback:', card);
+
       isCardback = true;
       card = selectedCardback;
     }
     
     // Special check for corrupt cardback strings
     if (!isCardback && card.startsWith('Cardback')) {
-      console.warn('CardImage: Received cardback string when expecting regular card:', card);
+
       isCardback = true;
       card = selectedCardback;
     }
@@ -36,35 +35,35 @@ const PokerTable = ({
     let cardSrc;
     try {
       if (isCardback) {
-        console.log('CardImage: Using cardback:', selectedCardback);
+
         cardSrc = useCardImage(selectedCardback);
       } else {
-        console.log('CardImage: Processing regular card:', card);
+
         const translatedCard = translateCard(card);
         if (translatedCard === 'Cardback1') {
           // translateCard returned fallback, use cardback instead
-          console.warn('CardImage: translateCard returned fallback, using cardback');
+
           cardSrc = useCardImage(selectedCardback);
         } else {
           cardSrc = useCardImage(translatedCard);
         }
       }
     } catch (error) {
-      console.error('Error in CardImage with card:', card, 'error:', error);
+
       cardSrc = useCardImage(selectedCardback); // Use selected cardback as fallback
     }
     
     const handleImageError = (e) => {
-      console.error('Image failed to load:', e.target.src);
+      
       // If WebP fails, try PNG fallback
       const currentSrc = e.target.src;
       if (currentSrc.includes('.webp')) {
         const pngSrc = currentSrc.replace('.webp', '.png');
-        console.log('Trying PNG fallback:', pngSrc);
+
         e.target.src = pngSrc;
       } else {
         // If both fail, use a different cardback as last resort
-        console.warn('Both WebP and PNG failed, using Cardback1 as last resort');
+
         e.target.src = '/IvoryCards/Cardback1.webp';
       }
     };
@@ -112,7 +111,7 @@ const PokerTable = ({
                     // Validate each card in the hand
                     playerHand = gameState.players[1].hand.map(cardData => {
                       if (!cardData || typeof cardData !== 'string' || cardData.length < 2) {
-                        console.warn('Invalid card in opponent hand during showdown:', cardData);
+            
                         return selectedCardback;
                       }
                       return cardData;
@@ -122,7 +121,7 @@ const PokerTable = ({
                     playerHand = [selectedCardback, selectedCardback];
                   }
                   
-                  console.log('Opponent hand being rendered:', playerHand, 'showdown:', showdown);
+          
                   
                   return playerHand.map((cardData, idx) => (
                     <CardImage
@@ -183,7 +182,7 @@ const PokerTable = ({
             <div className={`community-cards ${dealingCards ? 'dealing-animation' : ''}`}>
               {gameState.community.map((communityCard, idx) => (
                 <CardImage
-                  key={idx}
+                  key={`${communityCard}-${idx}`}
                   card={communityCard}
                   className={`community-card ${dealingCards && newCardIndices.includes(idx) ? 'new-card' : ''}`}
                   alt="community card"
@@ -217,13 +216,13 @@ const PokerTable = ({
                 {(() => {
                   const playerHand = gameState.player_hand;
                   if (!playerHand || !Array.isArray(playerHand)) {
-                    console.warn('Invalid or missing player_hand in gameState:', playerHand);
+              
                     return null;
                   }
                   
                   return playerHand.map((playerCard, idx) => {
                     if (!playerCard || typeof playerCard !== 'string' || playerCard.length < 2) {
-                      console.warn('Invalid card in player hand:', playerCard);
+          
                       return (
                         <CardImage
                           key={idx}
@@ -287,6 +286,44 @@ const PokerTable = ({
       </div>
     </div>
   );
+});
+
+// Bulletproof animation - block ALL re-renders during animation
+const arePropsEqual = (prevProps, nextProps) => {
+  // CRITICAL: Completely block re-renders during animation to preserve CSS animations
+  if (prevProps.dealingCards && nextProps.dealingCards) {
+    // Animation is in progress - block ALL re-renders regardless of other changes
+    // This prevents CSS animation from restarting due to DOM updates
+    return true; // Props are "equal" - prevent re-render
+  }
+  
+  // ALWAYS allow re-render when dealingCards state changes (start/end animation)
+  if (prevProps.dealingCards !== nextProps.dealingCards) {
+    return false; // Props are different - allow re-render
+  }
+  
+  // ALWAYS allow re-render when community cards change (new cards dealt)
+  const prevCommunity = prevProps.gameState?.community || [];
+  const nextCommunity = nextProps.gameState?.community || [];
+  if (prevCommunity.length !== nextCommunity.length) {
+    return false; // Props are different - allow re-render
+  }
+  if (!prevCommunity.every((card, i) => card === nextCommunity[i])) {
+    return false; // Props are different - allow re-render
+  }
+  
+  // ALWAYS allow re-render when newCardIndices change (animation setup)
+  const prevIndices = prevProps.newCardIndices || [];
+  const nextIndices = nextProps.newCardIndices || [];
+  if (prevIndices.length !== nextIndices.length) {
+    return false; // Props are different - allow re-render
+  }
+  if (!prevIndices.every((idx, i) => idx === nextIndices[i])) {
+    return false; // Props are different - allow re-render
+  }
+  
+  // For all other cases, use React's default behavior (allow re-renders)
+  return false;
 };
 
-export default PokerTable;
+export default memo(PokerTable, arePropsEqual);

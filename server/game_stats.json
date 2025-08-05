@@ -1,10 +1,10 @@
 {
-  "total_hands": 2,
-  "player_wins": 2,
-  "ai_wins": 0,
-  "showdowns": 0,
+  "total_hands": 75,
+  "player_wins": 37,
+  "ai_wins": 38,
+  "showdowns": 43,
   "player_stats": {
-    "vpip": 0.5,
+    "vpip": 0.013333333333333334,
     "pfr": 0.0,
     "fold_to_bet": 0.0,
     "avg_bet_size": 0.0,
@@ -82,6 +82,4342 @@
           "action": "fold",
           "round": "preflop",
           "pot_after": 40
+        }
+      ]
+    },
+    {
+      "timestamp": "2025-08-05T09:16:07.092175",
+      "winner": "Player 1",
+      "pot_size": 0,
+      "showdown": false,
+      "player_hand": [
+        "2s",
+        "As"
+      ],
+      "ai_hand": [
+        "5h",
+        "3h"
+      ],
+      "community": [],
+      "actions": [
+        {
+          "player": "Bladework",
+          "action": "raise",
+          "round": "preflop",
+          "pot_after": 35,
+          "amount": 25
+        },
+        {
+          "player": "Player 1",
+          "action": "raise",
+          "round": "preflop",
+          "pot_after": 100,
+          "amount": 75
+        },
+        {
+          "player": "Bladework",
+          "action": "fold",
+          "round": "preflop",
+          "pot_after": 100
+        }
+      ]
+    },
+    {
+      "timestamp": "2025-08-05T09:16:09.972983",
+      "winner": "Player 1",
+      "pot_size": 0,
+      "showdown": false,
+      "player_hand": [
+        "Ts",
+        "2h"
+      ],
+      "ai_hand": [
+        "8d",
+        "7c"
+      ],
+      "community": [],
+      "actions": [
+        {
+          "player": "Player 1",
+          "action": "raise",
+          "round": "preflop",
+          "pot_after": 40,
+          "amount": 30
+        },
+        {
+          "player": "Bladework",
+          "action": "fold",
+          "round": "preflop",
+          "pot_after": 40
+        }
+      ]
+    },
+    {
+      "timestamp": "2025-08-05T09:16:11.597348",
+      "winner": "Player 1",
+      "pot_size": 0,
+      "showdown": false,
+      "player_hand": [
+        "Kh",
+        "6h"
+      ],
+      "ai_hand": [
+        "3h",
+        "6d"
+      ],
+      "community": [],
+      "actions": [
+        {
+          "player": "Bladework",
+          "action": "fold",
+          "round": "preflop",
+          "pot_after": 15
+        }
+      ]
+    },
+    {
+      "timestamp": "2025-08-05T09:16:20.480070",
+      "winner": "Player 1",
+      "pot_size": 0,
+      "showdown": true,
+      "player_hand": [
+        "3d",
+        "Js"
+      ],
+      "ai_hand": [
+        "Ah",
+        "7d"
+      ],
+      "community": [
+        "4s",
+        "3c",
+        "Qs",
+        "6d",
+        "9s"
+      ],
+      "actions": [
+        {
+          "player": "Player 1",
+          "action": "call",
+          "round": "preflop",
+          "pot_after": 20,
+          "amount": 0
+        },
+        {
+          "player": "Bladework",
+          "action": "raise",
+          "round": "preflop",
+          "pot_after": 35,
+          "amount": 25
+        },
+        {
+          "player": "Player 1",
+          "action": "call",
+          "round": "preflop",
+          "pot_after": 50,
+          "amount": 0
+        },
+        {
+          "player": "Bladework",
+          "action": "check",
+          "round": "flop",
+          "pot_after": 50
+        },
+        {
+          "player": "Player 1",
+          "action": "check",
+          "round": "flop",
+          "pot_after": 50
+        },
+        {
+          "player": "Bladework",
+          "action": "check",
+          "round": "turn",
+          "pot_after": 50
+        },
+        {
+          "player": "Player 1",
+          "action": "check",
+          "round": "turn",
+          "pot_after": 50
+        },
+        {
+          "player": "Bladework",
+          "action": "check",
+          "round": "river",
+          "pot_after": 50
+        },
+        {
+          "player": "Player 1",
+          "action": "check",
+          "round": "river",
+          "pot_after": 50
+        }
+      ]
+    },
+    {
+      "timestamp": "2025-08-05T09:16:30.696726",
+      "winner": "Player 1",
+      "pot_size": 0,
+      "showdown": true,
+      "player_hand": [
+        "2c",
+        "7d"
+      ],
+      "ai_hand": [
+        "6s",
+        "Kh"
+      ],
+      "community": [
+        "7h",
+        "4c",
+        "Jd",
+        "6d",
+        "Qd"
+      ],
+      "actions": [
+        {
+          "player": "Bladework",
+          "action": "raise",
+          "round": "preflop",
+          "pot_after": 35,
+          "amount": 25
+        },
+        {
+          "player": "Player 1",
+          "action": "call",
+          "round": "preflop",
+          "pot_after": 50,
+          "amount": 0
+        },
+        {
+          "player": "Player 1",
+          "action": "check",
+          "round": "flop",
+          "pot_after": 50
+        },
+        {
+          "player": "Bladework",
+          "action": "check",
+          "round": "flop",
+          "pot_after": 50
+        },
+        {
+          "player": "Player 1",
+          "action": "check",
+          "round": "turn",
+          "pot_after": 50
+        },
+        {
+          "player": "Bladework",
+          "action": "check",
+          "round": "turn",
+          "pot_after": 50
+        },
+        {
+          "player": "Player 1",
+          "action": "check",
+          "round": "river",
+          "pot_after": 50
+        },
+        {
+          "player": "Bladework",
+          "action": "check",
+          "round": "river",
+          "pot_after": 50
+        }
+      ]
+    },
+    {
+      "timestamp": "2025-08-05T09:18:10.283392",
+      "winner": "Player 1",
+      "pot_size": 0,
+      "showdown": false,
+      "player_hand": [
+        "3c",
+        "8c"
+      ],
+      "ai_hand": [
+        "5h",
+        "7c"
+      ],
+      "community": [],
+      "actions": [
+        {
+          "player": "Bladework",
+          "action": "fold",
+          "round": "preflop",
+          "pot_after": 15
+        }
+      ]
+    },
+    {
+      "timestamp": "2025-08-05T09:18:35.001134",
+      "winner": "Player 1",
+      "pot_size": 0,
+      "showdown": false,
+      "player_hand": [
+        "Qc",
+        "7h"
+      ],
+      "ai_hand": [
+        "3d",
+        "Tc"
+      ],
+      "community": [],
+      "actions": [
+        {
+          "player": "Player 1",
+          "action": "raise",
+          "round": "preflop",
+          "pot_after": 35,
+          "amount": 25
+        },
+        {
+          "player": "Bladework",
+          "action": "fold",
+          "round": "preflop",
+          "pot_after": 35
+        }
+      ]
+    },
+    {
+      "timestamp": "2025-08-05T09:20:41.245584",
+      "winner": "Player 1",
+      "pot_size": 0,
+      "showdown": false,
+      "player_hand": [
+        "8c",
+        "4c"
+      ],
+      "ai_hand": [
+        "9c",
+        "2s"
+      ],
+      "community": [],
+      "actions": [
+        {
+          "player": "Bladework",
+          "action": "fold",
+          "round": "preflop",
+          "pot_after": 15
+        }
+      ]
+    },
+    {
+      "timestamp": "2025-08-05T09:23:33.846113",
+      "winner": "Player 1",
+      "pot_size": 0,
+      "showdown": true,
+      "player_hand": [
+        "Td",
+        "Jc"
+      ],
+      "ai_hand": [
+        "5s",
+        "As"
+      ],
+      "community": [
+        "Tc",
+        "7d",
+        "6c",
+        "2c",
+        "6h"
+      ],
+      "actions": [
+        {
+          "player": "Player 1",
+          "action": "call",
+          "round": "preflop",
+          "pot_after": 20,
+          "amount": 0
+        },
+        {
+          "player": "Bladework",
+          "action": "raise",
+          "round": "preflop",
+          "pot_after": 35,
+          "amount": 25
+        },
+        {
+          "player": "Player 1",
+          "action": "call",
+          "round": "preflop",
+          "pot_after": 50,
+          "amount": 0
+        },
+        {
+          "player": "Bladework",
+          "action": "check",
+          "round": "flop",
+          "pot_after": 50
+        },
+        {
+          "player": "Player 1",
+          "action": "check",
+          "round": "flop",
+          "pot_after": 50
+        },
+        {
+          "player": "Bladework",
+          "action": "check",
+          "round": "turn",
+          "pot_after": 50
+        },
+        {
+          "player": "Player 1",
+          "action": "check",
+          "round": "turn",
+          "pot_after": 50
+        },
+        {
+          "player": "Bladework",
+          "action": "check",
+          "round": "river",
+          "pot_after": 50
+        },
+        {
+          "player": "Player 1",
+          "action": "check",
+          "round": "river",
+          "pot_after": 50
+        }
+      ]
+    },
+    {
+      "timestamp": "2025-08-05T09:26:38.988356",
+      "winner": "Player 1",
+      "pot_size": 0,
+      "showdown": true,
+      "player_hand": [
+        "2s",
+        "Jd"
+      ],
+      "ai_hand": [
+        "5d",
+        "7d"
+      ],
+      "community": [
+        "3c",
+        "6d",
+        "6h",
+        "9s",
+        "3h"
+      ],
+      "actions": [
+        {
+          "player": "Player 1",
+          "action": "call",
+          "round": "preflop",
+          "pot_after": 20,
+          "amount": 0
+        },
+        {
+          "player": "Bladework",
+          "action": "raise",
+          "round": "preflop",
+          "pot_after": 35,
+          "amount": 25
+        },
+        {
+          "player": "Player 1",
+          "action": "call",
+          "round": "preflop",
+          "pot_after": 50,
+          "amount": 0
+        },
+        {
+          "player": "Bladework",
+          "action": "check",
+          "round": "flop",
+          "pot_after": 50
+        },
+        {
+          "player": "Player 1",
+          "action": "check",
+          "round": "flop",
+          "pot_after": 50
+        },
+        {
+          "player": "Bladework",
+          "action": "check",
+          "round": "turn",
+          "pot_after": 50
+        },
+        {
+          "player": "Player 1",
+          "action": "check",
+          "round": "turn",
+          "pot_after": 50
+        },
+        {
+          "player": "Bladework",
+          "action": "check",
+          "round": "river",
+          "pot_after": 50
+        },
+        {
+          "player": "Player 1",
+          "action": "check",
+          "round": "river",
+          "pot_after": 50
+        }
+      ]
+    },
+    {
+      "timestamp": "2025-08-05T09:26:41.233311",
+      "winner": "Player 1",
+      "pot_size": 0,
+      "showdown": false,
+      "player_hand": [
+        "9d",
+        "Th"
+      ],
+      "ai_hand": [
+        "2c",
+        "6d"
+      ],
+      "community": [],
+      "actions": [
+        {
+          "player": "Bladework",
+          "action": "fold",
+          "round": "preflop",
+          "pot_after": 15
+        }
+      ]
+    },
+    {
+      "timestamp": "2025-08-05T09:26:48.738587",
+      "winner": "Player 1",
+      "pot_size": 0,
+      "showdown": true,
+      "player_hand": [
+        "Jd",
+        "6d"
+      ],
+      "ai_hand": [
+        "5d",
+        "Jh"
+      ],
+      "community": [
+        "4h",
+        "2c",
+        "9d",
+        "8s",
+        "Th"
+      ],
+      "actions": [
+        {
+          "player": "Player 1",
+          "action": "call",
+          "round": "preflop",
+          "pot_after": 20,
+          "amount": 0
+        },
+        {
+          "player": "Bladework",
+          "action": "check",
+          "round": "preflop",
+          "pot_after": 20
+        },
+        {
+          "player": "Bladework",
+          "action": "check",
+          "round": "flop",
+          "pot_after": 20
+        },
+        {
+          "player": "Player 1",
+          "action": "check",
+          "round": "flop",
+          "pot_after": 20
+        },
+        {
+          "player": "Bladework",
+          "action": "check",
+          "round": "turn",
+          "pot_after": 20
+        },
+        {
+          "player": "Player 1",
+          "action": "check",
+          "round": "turn",
+          "pot_after": 20
+        },
+        {
+          "player": "Bladework",
+          "action": "check",
+          "round": "river",
+          "pot_after": 20
+        },
+        {
+          "player": "Player 1",
+          "action": "check",
+          "round": "river",
+          "pot_after": 20
+        }
+      ]
+    },
+    {
+      "timestamp": "2025-08-05T09:27:05.302775",
+      "winner": "Bladework",
+      "pot_size": 0,
+      "showdown": true,
+      "player_hand": [
+        "Qd",
+        "Jd"
+      ],
+      "ai_hand": [
+        "As",
+        "6s"
+      ],
+      "community": [
+        "7h",
+        "2s",
+        "8h",
+        "9d",
+        "2h"
+      ],
+      "actions": [
+        {
+          "player": "Bladework",
+          "action": "raise",
+          "round": "preflop",
+          "pot_after": 35,
+          "amount": 25
+        },
+        {
+          "player": "Player 1",
+          "action": "call",
+          "round": "preflop",
+          "pot_after": 50,
+          "amount": 0
+        },
+        {
+          "player": "Player 1",
+          "action": "check",
+          "round": "flop",
+          "pot_after": 50
+        },
+        {
+          "player": "Bladework",
+          "action": "check",
+          "round": "flop",
+          "pot_after": 50
+        },
+        {
+          "player": "Player 1",
+          "action": "check",
+          "round": "turn",
+          "pot_after": 50
+        },
+        {
+          "player": "Bladework",
+          "action": "check",
+          "round": "turn",
+          "pot_after": 50
+        },
+        {
+          "player": "Player 1",
+          "action": "check",
+          "round": "river",
+          "pot_after": 50
+        },
+        {
+          "player": "Bladework",
+          "action": "check",
+          "round": "river",
+          "pot_after": 50
+        }
+      ]
+    },
+    {
+      "timestamp": "2025-08-05T09:29:40.441839",
+      "winner": "Player 1",
+      "pot_size": 0,
+      "showdown": false,
+      "player_hand": [
+        "4d",
+        "3d"
+      ],
+      "ai_hand": [
+        "2s",
+        "8c"
+      ],
+      "community": [],
+      "actions": [
+        {
+          "player": "Player 1",
+          "action": "raise",
+          "round": "preflop",
+          "pot_after": 35,
+          "amount": 25
+        },
+        {
+          "player": "Bladework",
+          "action": "fold",
+          "round": "preflop",
+          "pot_after": 35
+        }
+      ]
+    },
+    {
+      "timestamp": "2025-08-05T09:29:49.326331",
+      "winner": "Player 1",
+      "pot_size": 0,
+      "showdown": true,
+      "player_hand": [
+        "Ac",
+        "5s"
+      ],
+      "ai_hand": [
+        "3d",
+        "Tc"
+      ],
+      "community": [
+        "4c",
+        "9c",
+        "2h",
+        "7s",
+        "3h"
+      ],
+      "actions": [
+        {
+          "player": "Bladework",
+          "action": "raise",
+          "round": "preflop",
+          "pot_after": 35,
+          "amount": 25
+        },
+        {
+          "player": "Player 1",
+          "action": "call",
+          "round": "preflop",
+          "pot_after": 50,
+          "amount": 0
+        },
+        {
+          "player": "Player 1",
+          "action": "check",
+          "round": "flop",
+          "pot_after": 50
+        },
+        {
+          "player": "Bladework",
+          "action": "check",
+          "round": "flop",
+          "pot_after": 50
+        },
+        {
+          "player": "Player 1",
+          "action": "check",
+          "round": "turn",
+          "pot_after": 50
+        },
+        {
+          "player": "Bladework",
+          "action": "check",
+          "round": "turn",
+          "pot_after": 50
+        },
+        {
+          "player": "Player 1",
+          "action": "check",
+          "round": "river",
+          "pot_after": 50
+        },
+        {
+          "player": "Bladework",
+          "action": "check",
+          "round": "river",
+          "pot_after": 50
+        }
+      ]
+    },
+    {
+      "timestamp": "2025-08-05T09:32:28.740583",
+      "winner": "Bladework",
+      "pot_size": 0,
+      "showdown": true,
+      "player_hand": [
+        "2c",
+        "Qd"
+      ],
+      "ai_hand": [
+        "6c",
+        "6s"
+      ],
+      "community": [
+        "9c",
+        "6h",
+        "7d",
+        "5h",
+        "Jh"
+      ],
+      "actions": [
+        {
+          "player": "Player 1",
+          "action": "call",
+          "round": "preflop",
+          "pot_after": 20,
+          "amount": 0
+        },
+        {
+          "player": "Bladework",
+          "action": "raise",
+          "round": "preflop",
+          "pot_after": 35,
+          "amount": 25
+        },
+        {
+          "player": "Player 1",
+          "action": "call",
+          "round": "preflop",
+          "pot_after": 50,
+          "amount": 0
+        },
+        {
+          "player": "Bladework",
+          "action": "bet",
+          "round": "flop",
+          "pot_after": 85
+        },
+        {
+          "player": "Player 1",
+          "action": "call",
+          "round": "flop",
+          "pot_after": 120,
+          "amount": 0
+        },
+        {
+          "player": "Bladework",
+          "action": "bet",
+          "round": "turn",
+          "pot_after": 204
+        },
+        {
+          "player": "Player 1",
+          "action": "call",
+          "round": "turn",
+          "pot_after": 288,
+          "amount": 0
+        },
+        {
+          "player": "Bladework",
+          "action": "check",
+          "round": "river",
+          "pot_after": 288
+        },
+        {
+          "player": "Player 1",
+          "action": "check",
+          "round": "river",
+          "pot_after": 288
+        }
+      ]
+    },
+    {
+      "timestamp": "2025-08-05T09:32:38.856079",
+      "winner": "Bladework",
+      "pot_size": 0,
+      "showdown": true,
+      "player_hand": [
+        "7s",
+        "4c"
+      ],
+      "ai_hand": [
+        "Ks",
+        "As"
+      ],
+      "community": [
+        "2c",
+        "Tc",
+        "2h",
+        "Js",
+        "Td"
+      ],
+      "actions": [
+        {
+          "player": "Bladework",
+          "action": "raise",
+          "round": "preflop",
+          "pot_after": 35,
+          "amount": 25
+        },
+        {
+          "player": "Player 1",
+          "action": "call",
+          "round": "preflop",
+          "pot_after": 50,
+          "amount": 0
+        },
+        {
+          "player": "Player 1",
+          "action": "check",
+          "round": "flop",
+          "pot_after": 50
+        },
+        {
+          "player": "Bladework",
+          "action": "bet",
+          "round": "flop",
+          "pot_after": 85
+        },
+        {
+          "player": "Player 1",
+          "action": "call",
+          "round": "flop",
+          "pot_after": 120,
+          "amount": 0
+        },
+        {
+          "player": "Player 1",
+          "action": "check",
+          "round": "turn",
+          "pot_after": 120
+        },
+        {
+          "player": "Bladework",
+          "action": "check",
+          "round": "turn",
+          "pot_after": 120
+        },
+        {
+          "player": "Player 1",
+          "action": "check",
+          "round": "river",
+          "pot_after": 120
+        },
+        {
+          "player": "Bladework",
+          "action": "check",
+          "round": "river",
+          "pot_after": 120
+        }
+      ]
+    },
+    {
+      "timestamp": "2025-08-05T09:32:46.945020",
+      "winner": "Bladework",
+      "pot_size": 0,
+      "showdown": true,
+      "player_hand": [
+        "Qs",
+        "9d"
+      ],
+      "ai_hand": [
+        "6h",
+        "4s"
+      ],
+      "community": [
+        "8s",
+        "Th",
+        "Qh",
+        "6d",
+        "4d"
+      ],
+      "actions": [
+        {
+          "player": "Player 1",
+          "action": "call",
+          "round": "preflop",
+          "pot_after": 20,
+          "amount": 0
+        },
+        {
+          "player": "Bladework",
+          "action": "check",
+          "round": "preflop",
+          "pot_after": 20
+        },
+        {
+          "player": "Bladework",
+          "action": "check",
+          "round": "flop",
+          "pot_after": 20
+        },
+        {
+          "player": "Player 1",
+          "action": "check",
+          "round": "flop",
+          "pot_after": 20
+        },
+        {
+          "player": "Bladework",
+          "action": "check",
+          "round": "turn",
+          "pot_after": 20
+        },
+        {
+          "player": "Player 1",
+          "action": "check",
+          "round": "turn",
+          "pot_after": 20
+        },
+        {
+          "player": "Bladework",
+          "action": "check",
+          "round": "river",
+          "pot_after": 20
+        },
+        {
+          "player": "Player 1",
+          "action": "check",
+          "round": "river",
+          "pot_after": 20
+        }
+      ]
+    },
+    {
+      "timestamp": "2025-08-05T09:32:57.054005",
+      "winner": "Bladework",
+      "pot_size": 0,
+      "showdown": true,
+      "player_hand": [
+        "Ks",
+        "Jh"
+      ],
+      "ai_hand": [
+        "Qd",
+        "7s"
+      ],
+      "community": [
+        "7h",
+        "6d",
+        "8c",
+        "Td",
+        "6s"
+      ],
+      "actions": [
+        {
+          "player": "Bladework",
+          "action": "raise",
+          "round": "preflop",
+          "pot_after": 35,
+          "amount": 25
+        },
+        {
+          "player": "Player 1",
+          "action": "call",
+          "round": "preflop",
+          "pot_after": 50,
+          "amount": 0
+        },
+        {
+          "player": "Player 1",
+          "action": "check",
+          "round": "flop",
+          "pot_after": 50
+        },
+        {
+          "player": "Bladework",
+          "action": "bet",
+          "round": "flop",
+          "pot_after": 85
+        },
+        {
+          "player": "Player 1",
+          "action": "call",
+          "round": "flop",
+          "pot_after": 120,
+          "amount": 0
+        },
+        {
+          "player": "Player 1",
+          "action": "check",
+          "round": "turn",
+          "pot_after": 120
+        },
+        {
+          "player": "Bladework",
+          "action": "check",
+          "round": "turn",
+          "pot_after": 120
+        },
+        {
+          "player": "Player 1",
+          "action": "check",
+          "round": "river",
+          "pot_after": 120
+        },
+        {
+          "player": "Bladework",
+          "action": "check",
+          "round": "river",
+          "pot_after": 120
+        }
+      ]
+    },
+    {
+      "timestamp": "2025-08-05T09:33:09.391660",
+      "winner": "Player 1",
+      "pot_size": 0,
+      "showdown": true,
+      "player_hand": [
+        "Th",
+        "Tc"
+      ],
+      "ai_hand": [
+        "7d",
+        "5s"
+      ],
+      "community": [
+        "2h",
+        "6s",
+        "As",
+        "6d",
+        "9c"
+      ],
+      "actions": [
+        {
+          "player": "Player 1",
+          "action": "call",
+          "round": "preflop",
+          "pot_after": 20,
+          "amount": 0
+        },
+        {
+          "player": "Bladework",
+          "action": "check",
+          "round": "preflop",
+          "pot_after": 20
+        },
+        {
+          "player": "Bladework",
+          "action": "check",
+          "round": "flop",
+          "pot_after": 20
+        },
+        {
+          "player": "Player 1",
+          "action": "check",
+          "round": "flop",
+          "pot_after": 20
+        },
+        {
+          "player": "Bladework",
+          "action": "check",
+          "round": "turn",
+          "pot_after": 20
+        },
+        {
+          "player": "Player 1",
+          "action": "check",
+          "round": "turn",
+          "pot_after": 20
+        },
+        {
+          "player": "Bladework",
+          "action": "check",
+          "round": "river",
+          "pot_after": 20
+        },
+        {
+          "player": "Player 1",
+          "action": "check",
+          "round": "river",
+          "pot_after": 20
+        }
+      ]
+    },
+    {
+      "timestamp": "2025-08-05T09:33:17.128992",
+      "winner": "Bladework",
+      "pot_size": 0,
+      "showdown": true,
+      "player_hand": [
+        "8s",
+        "As"
+      ],
+      "ai_hand": [
+        "9s",
+        "Qs"
+      ],
+      "community": [
+        "7s",
+        "8h",
+        "9d",
+        "7c",
+        "Th"
+      ],
+      "actions": [
+        {
+          "player": "Bladework",
+          "action": "raise",
+          "round": "preflop",
+          "pot_after": 35,
+          "amount": 25
+        },
+        {
+          "player": "Player 1",
+          "action": "call",
+          "round": "preflop",
+          "pot_after": 50,
+          "amount": 0
+        },
+        {
+          "player": "Player 1",
+          "action": "check",
+          "round": "flop",
+          "pot_after": 50
+        },
+        {
+          "player": "Bladework",
+          "action": "bet",
+          "round": "flop",
+          "pot_after": 85
+        },
+        {
+          "player": "Player 1",
+          "action": "call",
+          "round": "flop",
+          "pot_after": 120,
+          "amount": 0
+        },
+        {
+          "player": "Player 1",
+          "action": "check",
+          "round": "turn",
+          "pot_after": 120
+        },
+        {
+          "player": "Bladework",
+          "action": "bet",
+          "round": "turn",
+          "pot_after": 204
+        },
+        {
+          "player": "Player 1",
+          "action": "call",
+          "round": "turn",
+          "pot_after": 288,
+          "amount": 0
+        },
+        {
+          "player": "Player 1",
+          "action": "check",
+          "round": "river",
+          "pot_after": 288
+        },
+        {
+          "player": "Bladework",
+          "action": "check",
+          "round": "river",
+          "pot_after": 288
+        }
+      ]
+    },
+    {
+      "timestamp": "2025-08-05T09:33:28.866311",
+      "winner": "Player 1",
+      "pot_size": 0,
+      "showdown": true,
+      "player_hand": [
+        "Th",
+        "6s"
+      ],
+      "ai_hand": [
+        "Jd",
+        "3h"
+      ],
+      "community": [
+        "Td",
+        "8c",
+        "9d",
+        "8d",
+        "8h"
+      ],
+      "actions": [
+        {
+          "player": "Player 1",
+          "action": "call",
+          "round": "preflop",
+          "pot_after": 20,
+          "amount": 0
+        },
+        {
+          "player": "Bladework",
+          "action": "check",
+          "round": "preflop",
+          "pot_after": 20
+        },
+        {
+          "player": "Bladework",
+          "action": "check",
+          "round": "flop",
+          "pot_after": 20
+        },
+        {
+          "player": "Player 1",
+          "action": "check",
+          "round": "flop",
+          "pot_after": 20
+        },
+        {
+          "player": "Bladework",
+          "action": "check",
+          "round": "turn",
+          "pot_after": 20
+        },
+        {
+          "player": "Player 1",
+          "action": "check",
+          "round": "turn",
+          "pot_after": 20
+        },
+        {
+          "player": "Bladework",
+          "action": "check",
+          "round": "river",
+          "pot_after": 20
+        },
+        {
+          "player": "Player 1",
+          "action": "check",
+          "round": "river",
+          "pot_after": 20
+        }
+      ]
+    },
+    {
+      "timestamp": "2025-08-05T09:33:38.088245",
+      "winner": "Bladework",
+      "pot_size": 0,
+      "showdown": true,
+      "player_hand": [
+        "Ah",
+        "3s"
+      ],
+      "ai_hand": [
+        "Qs",
+        "6c"
+      ],
+      "community": [
+        "4c",
+        "Kc",
+        "7d",
+        "5c",
+        "Jc"
+      ],
+      "actions": [
+        {
+          "player": "Bladework",
+          "action": "raise",
+          "round": "preflop",
+          "pot_after": 35,
+          "amount": 25
+        },
+        {
+          "player": "Player 1",
+          "action": "call",
+          "round": "preflop",
+          "pot_after": 50,
+          "amount": 0
+        },
+        {
+          "player": "Player 1",
+          "action": "check",
+          "round": "flop",
+          "pot_after": 50
+        },
+        {
+          "player": "Bladework",
+          "action": "check",
+          "round": "flop",
+          "pot_after": 50
+        },
+        {
+          "player": "Player 1",
+          "action": "check",
+          "round": "turn",
+          "pot_after": 50
+        },
+        {
+          "player": "Bladework",
+          "action": "check",
+          "round": "turn",
+          "pot_after": 50
+        },
+        {
+          "player": "Player 1",
+          "action": "check",
+          "round": "river",
+          "pot_after": 50
+        },
+        {
+          "player": "Bladework",
+          "action": "bet",
+          "round": "river",
+          "pot_after": 88
+        },
+        {
+          "player": "Player 1",
+          "action": "call",
+          "round": "river",
+          "pot_after": 126,
+          "amount": 0
+        }
+      ]
+    },
+    {
+      "timestamp": "2025-08-05T09:33:43.822877",
+      "winner": "Bladework",
+      "pot_size": 0,
+      "showdown": false,
+      "player_hand": [
+        "Qc",
+        "6c"
+      ],
+      "ai_hand": [
+        "8h",
+        "8c"
+      ],
+      "community": [],
+      "actions": [
+        {
+          "player": "Player 1",
+          "action": "call",
+          "round": "preflop",
+          "pot_after": 20,
+          "amount": 0
+        },
+        {
+          "player": "Bladework",
+          "action": "raise",
+          "round": "preflop",
+          "pot_after": 35,
+          "amount": 25
+        },
+        {
+          "player": "Player 1",
+          "action": "fold",
+          "round": "preflop",
+          "pot_after": 35
+        }
+      ]
+    },
+    {
+      "timestamp": "2025-08-05T09:33:49.534721",
+      "winner": "Bladework",
+      "pot_size": 0,
+      "showdown": true,
+      "player_hand": [
+        "Jc",
+        "Qd"
+      ],
+      "ai_hand": [
+        "7d",
+        "Ah"
+      ],
+      "community": [
+        "Td",
+        "7h",
+        "6s",
+        "Tc",
+        "3c"
+      ],
+      "actions": [
+        {
+          "player": "Bladework",
+          "action": "raise",
+          "round": "preflop",
+          "pot_after": 35,
+          "amount": 25
+        },
+        {
+          "player": "Player 1",
+          "action": "call",
+          "round": "preflop",
+          "pot_after": 50,
+          "amount": 0
+        },
+        {
+          "player": "Player 1",
+          "action": "check",
+          "round": "flop",
+          "pot_after": 50
+        },
+        {
+          "player": "Bladework",
+          "action": "bet",
+          "round": "flop",
+          "pot_after": 85
+        },
+        {
+          "player": "Player 1",
+          "action": "call",
+          "round": "flop",
+          "pot_after": 120,
+          "amount": 0
+        },
+        {
+          "player": "Player 1",
+          "action": "check",
+          "round": "turn",
+          "pot_after": 120
+        },
+        {
+          "player": "Bladework",
+          "action": "bet",
+          "round": "turn",
+          "pot_after": 204
+        },
+        {
+          "player": "Player 1",
+          "action": "call",
+          "round": "turn",
+          "pot_after": 288,
+          "amount": 0
+        },
+        {
+          "player": "Player 1",
+          "action": "check",
+          "round": "river",
+          "pot_after": 288
+        },
+        {
+          "player": "Bladework",
+          "action": "check",
+          "round": "river",
+          "pot_after": 288
+        }
+      ]
+    },
+    {
+      "timestamp": "2025-08-05T09:34:04.761865",
+      "winner": "Bladework",
+      "pot_size": 0,
+      "showdown": false,
+      "player_hand": [
+        "8s",
+        "8h"
+      ],
+      "ai_hand": [
+        "9s",
+        "4c"
+      ],
+      "community": [
+        "9c",
+        "Ad",
+        "5h"
+      ],
+      "actions": [
+        {
+          "player": "Player 1",
+          "action": "call",
+          "round": "preflop",
+          "pot_after": 20,
+          "amount": 0
+        },
+        {
+          "player": "Bladework",
+          "action": "check",
+          "round": "preflop",
+          "pot_after": 20
+        },
+        {
+          "player": "Bladework",
+          "action": "bet",
+          "round": "flop",
+          "pot_after": 30
+        },
+        {
+          "player": "Player 1",
+          "action": "fold",
+          "round": "flop",
+          "pot_after": 30
+        }
+      ]
+    },
+    {
+      "timestamp": "2025-08-05T09:34:17.740910",
+      "winner": "Player 1",
+      "pot_size": 0,
+      "showdown": false,
+      "player_hand": [
+        "7d",
+        "7c"
+      ],
+      "ai_hand": [
+        "6s",
+        "Ac"
+      ],
+      "community": [
+        "4s",
+        "5h",
+        "Kh",
+        "7h",
+        "7s"
+      ],
+      "actions": [
+        {
+          "player": "Bladework",
+          "action": "raise",
+          "round": "preflop",
+          "pot_after": 33,
+          "amount": 23
+        },
+        {
+          "player": "Player 1",
+          "action": "call",
+          "round": "preflop",
+          "pot_after": 46,
+          "amount": 0
+        },
+        {
+          "player": "Player 1",
+          "action": "check",
+          "round": "flop",
+          "pot_after": 46
+        },
+        {
+          "player": "Bladework",
+          "action": "check",
+          "round": "flop",
+          "pot_after": 46
+        },
+        {
+          "player": "Player 1",
+          "action": "check",
+          "round": "turn",
+          "pot_after": 46
+        },
+        {
+          "player": "Bladework",
+          "action": "check",
+          "round": "turn",
+          "pot_after": 46
+        },
+        {
+          "player": "Player 1",
+          "action": "raise",
+          "round": "river",
+          "pot_after": 398,
+          "amount": 352
+        },
+        {
+          "player": "Bladework",
+          "action": "fold",
+          "round": "river",
+          "pot_after": 398
+        }
+      ]
+    },
+    {
+      "timestamp": "2025-08-05T09:35:23.745081",
+      "winner": "Player 1",
+      "pot_size": 0,
+      "showdown": false,
+      "player_hand": [
+        "9s",
+        "5c"
+      ],
+      "ai_hand": [
+        "3d",
+        "6h"
+      ],
+      "community": [],
+      "actions": [
+        {
+          "player": "Bladework",
+          "action": "fold",
+          "round": "preflop",
+          "pot_after": 15
+        }
+      ]
+    },
+    {
+      "timestamp": "2025-08-05T09:37:01.397169",
+      "winner": "Bladework",
+      "pot_size": 0,
+      "showdown": true,
+      "player_hand": [
+        "7h",
+        "Ad"
+      ],
+      "ai_hand": [
+        "9h",
+        "Jc"
+      ],
+      "community": [
+        "9d",
+        "9s",
+        "Td",
+        "Qs",
+        "6h"
+      ],
+      "actions": [
+        {
+          "player": "Player 1",
+          "action": "raise",
+          "round": "preflop",
+          "pot_after": 35,
+          "amount": 25
+        },
+        {
+          "player": "Bladework",
+          "action": "call",
+          "round": "preflop",
+          "pot_after": 50,
+          "amount": 0
+        },
+        {
+          "player": "Bladework",
+          "action": "bet",
+          "round": "flop",
+          "pot_after": 85
+        },
+        {
+          "player": "Player 1",
+          "action": "call",
+          "round": "flop",
+          "pot_after": 120,
+          "amount": 0
+        },
+        {
+          "player": "Bladework",
+          "action": "bet",
+          "round": "turn",
+          "pot_after": 204
+        },
+        {
+          "player": "Player 1",
+          "action": "call",
+          "round": "turn",
+          "pot_after": 288,
+          "amount": 0
+        },
+        {
+          "player": "Bladework",
+          "action": "check",
+          "round": "river",
+          "pot_after": 288
+        },
+        {
+          "player": "Player 1",
+          "action": "check",
+          "round": "river",
+          "pot_after": 288
+        }
+      ]
+    },
+    {
+      "timestamp": "2025-08-05T09:37:07.606079",
+      "winner": "Player 1",
+      "pot_size": 0,
+      "showdown": true,
+      "player_hand": [
+        "As",
+        "9s"
+      ],
+      "ai_hand": [
+        "9d",
+        "8h"
+      ],
+      "community": [
+        "6d",
+        "6c",
+        "7s",
+        "Qs",
+        "Ad"
+      ],
+      "actions": [
+        {
+          "player": "Bladework",
+          "action": "raise",
+          "round": "preflop",
+          "pot_after": 35,
+          "amount": 25
+        },
+        {
+          "player": "Player 1",
+          "action": "call",
+          "round": "preflop",
+          "pot_after": 50,
+          "amount": 0
+        },
+        {
+          "player": "Player 1",
+          "action": "check",
+          "round": "flop",
+          "pot_after": 50
+        },
+        {
+          "player": "Bladework",
+          "action": "check",
+          "round": "flop",
+          "pot_after": 50
+        },
+        {
+          "player": "Player 1",
+          "action": "check",
+          "round": "turn",
+          "pot_after": 50
+        },
+        {
+          "player": "Bladework",
+          "action": "check",
+          "round": "turn",
+          "pot_after": 50
+        },
+        {
+          "player": "Player 1",
+          "action": "check",
+          "round": "river",
+          "pot_after": 50
+        },
+        {
+          "player": "Bladework",
+          "action": "check",
+          "round": "river",
+          "pot_after": 50
+        }
+      ]
+    },
+    {
+      "timestamp": "2025-08-05T09:37:16.923001",
+      "winner": "Player 1",
+      "pot_size": 0,
+      "showdown": true,
+      "player_hand": [
+        "Qc",
+        "9s"
+      ],
+      "ai_hand": [
+        "2c",
+        "Kc"
+      ],
+      "community": [
+        "Qh",
+        "7h",
+        "4c",
+        "9h",
+        "8s"
+      ],
+      "actions": [
+        {
+          "player": "Player 1",
+          "action": "call",
+          "round": "preflop",
+          "pot_after": 20,
+          "amount": 0
+        },
+        {
+          "player": "Bladework",
+          "action": "raise",
+          "round": "preflop",
+          "pot_after": 35,
+          "amount": 25
+        },
+        {
+          "player": "Player 1",
+          "action": "call",
+          "round": "preflop",
+          "pot_after": 50,
+          "amount": 0
+        },
+        {
+          "player": "Bladework",
+          "action": "check",
+          "round": "flop",
+          "pot_after": 50
+        },
+        {
+          "player": "Player 1",
+          "action": "check",
+          "round": "flop",
+          "pot_after": 50
+        },
+        {
+          "player": "Bladework",
+          "action": "check",
+          "round": "turn",
+          "pot_after": 50
+        },
+        {
+          "player": "Player 1",
+          "action": "check",
+          "round": "turn",
+          "pot_after": 50
+        },
+        {
+          "player": "Bladework",
+          "action": "check",
+          "round": "river",
+          "pot_after": 50
+        },
+        {
+          "player": "Player 1",
+          "action": "check",
+          "round": "river",
+          "pot_after": 50
+        }
+      ]
+    },
+    {
+      "timestamp": "2025-08-05T09:37:22.974666",
+      "winner": "Player 1",
+      "pot_size": 0,
+      "showdown": true,
+      "player_hand": [
+        "4c",
+        "Kd"
+      ],
+      "ai_hand": [
+        "2h",
+        "Ad"
+      ],
+      "community": [
+        "4d",
+        "Kh",
+        "5s",
+        "Qd",
+        "Kc"
+      ],
+      "actions": [
+        {
+          "player": "Bladework",
+          "action": "raise",
+          "round": "preflop",
+          "pot_after": 35,
+          "amount": 25
+        },
+        {
+          "player": "Player 1",
+          "action": "call",
+          "round": "preflop",
+          "pot_after": 50,
+          "amount": 0
+        },
+        {
+          "player": "Player 1",
+          "action": "check",
+          "round": "flop",
+          "pot_after": 50
+        },
+        {
+          "player": "Bladework",
+          "action": "check",
+          "round": "flop",
+          "pot_after": 50
+        },
+        {
+          "player": "Player 1",
+          "action": "check",
+          "round": "turn",
+          "pot_after": 50
+        },
+        {
+          "player": "Bladework",
+          "action": "check",
+          "round": "turn",
+          "pot_after": 50
+        },
+        {
+          "player": "Player 1",
+          "action": "check",
+          "round": "river",
+          "pot_after": 50
+        },
+        {
+          "player": "Bladework",
+          "action": "check",
+          "round": "river",
+          "pot_after": 50
+        }
+      ]
+    },
+    {
+      "timestamp": "2025-08-05T09:39:33.110437",
+      "winner": "Player 1",
+      "pot_size": 0,
+      "showdown": true,
+      "player_hand": [
+        "6c",
+        "9c"
+      ],
+      "ai_hand": [
+        "Qh",
+        "Ks"
+      ],
+      "community": [
+        "4h",
+        "6h",
+        "5d",
+        "9d",
+        "6s"
+      ],
+      "actions": [
+        {
+          "player": "Bladework",
+          "action": "raise",
+          "round": "preflop",
+          "pot_after": 35,
+          "amount": 25
+        },
+        {
+          "player": "Player 1",
+          "action": "call",
+          "round": "preflop",
+          "pot_after": 50,
+          "amount": 0
+        },
+        {
+          "player": "Player 1",
+          "action": "check",
+          "round": "flop",
+          "pot_after": 50
+        },
+        {
+          "player": "Bladework",
+          "action": "check",
+          "round": "flop",
+          "pot_after": 50
+        },
+        {
+          "player": "Player 1",
+          "action": "check",
+          "round": "turn",
+          "pot_after": 50
+        },
+        {
+          "player": "Bladework",
+          "action": "check",
+          "round": "turn",
+          "pot_after": 50
+        },
+        {
+          "player": "Player 1",
+          "action": "check",
+          "round": "river",
+          "pot_after": 50
+        },
+        {
+          "player": "Bladework",
+          "action": "check",
+          "round": "river",
+          "pot_after": 50
+        }
+      ]
+    },
+    {
+      "timestamp": "2025-08-05T09:39:41.260055",
+      "winner": "Player 1",
+      "pot_size": 0,
+      "showdown": true,
+      "player_hand": [
+        "2h",
+        "Kd"
+      ],
+      "ai_hand": [
+        "2d",
+        "8c"
+      ],
+      "community": [
+        "Qs",
+        "9h",
+        "Kh",
+        "Qd",
+        "2s"
+      ],
+      "actions": [
+        {
+          "player": "Player 1",
+          "action": "call",
+          "round": "preflop",
+          "pot_after": 20,
+          "amount": 0
+        },
+        {
+          "player": "Bladework",
+          "action": "check",
+          "round": "preflop",
+          "pot_after": 20
+        },
+        {
+          "player": "Bladework",
+          "action": "check",
+          "round": "flop",
+          "pot_after": 20
+        },
+        {
+          "player": "Player 1",
+          "action": "check",
+          "round": "flop",
+          "pot_after": 20
+        },
+        {
+          "player": "Bladework",
+          "action": "check",
+          "round": "turn",
+          "pot_after": 20
+        },
+        {
+          "player": "Player 1",
+          "action": "check",
+          "round": "turn",
+          "pot_after": 20
+        },
+        {
+          "player": "Bladework",
+          "action": "check",
+          "round": "river",
+          "pot_after": 20
+        },
+        {
+          "player": "Player 1",
+          "action": "check",
+          "round": "river",
+          "pot_after": 20
+        }
+      ]
+    },
+    {
+      "timestamp": "2025-08-05T09:39:51.955917",
+      "winner": "Player 1",
+      "pot_size": 0,
+      "showdown": true,
+      "player_hand": [
+        "Kh",
+        "Jc"
+      ],
+      "ai_hand": [
+        "Ac",
+        "Jd"
+      ],
+      "community": [
+        "Ts",
+        "Qc",
+        "Ah",
+        "Qh",
+        "7c"
+      ],
+      "actions": [
+        {
+          "player": "Bladework",
+          "action": "raise",
+          "round": "preflop",
+          "pot_after": 35,
+          "amount": 25
+        },
+        {
+          "player": "Player 1",
+          "action": "call",
+          "round": "preflop",
+          "pot_after": 50,
+          "amount": 0
+        },
+        {
+          "player": "Player 1",
+          "action": "check",
+          "round": "flop",
+          "pot_after": 50
+        },
+        {
+          "player": "Bladework",
+          "action": "bet",
+          "round": "flop",
+          "pot_after": 85
+        },
+        {
+          "player": "Player 1",
+          "action": "call",
+          "round": "flop",
+          "pot_after": 120,
+          "amount": 0
+        },
+        {
+          "player": "Player 1",
+          "action": "check",
+          "round": "turn",
+          "pot_after": 120
+        },
+        {
+          "player": "Bladework",
+          "action": "bet",
+          "round": "turn",
+          "pot_after": 204
+        },
+        {
+          "player": "Player 1",
+          "action": "call",
+          "round": "turn",
+          "pot_after": 288,
+          "amount": 0
+        },
+        {
+          "player": "Player 1",
+          "action": "check",
+          "round": "river",
+          "pot_after": 288
+        },
+        {
+          "player": "Bladework",
+          "action": "check",
+          "round": "river",
+          "pot_after": 288
+        }
+      ]
+    },
+    {
+      "timestamp": "2025-08-05T09:39:54.102407",
+      "winner": "Bladework",
+      "pot_size": 0,
+      "showdown": false,
+      "player_hand": [
+        "4s",
+        "5d"
+      ],
+      "ai_hand": [
+        "8h",
+        "Ac"
+      ],
+      "community": [],
+      "actions": [
+        {
+          "player": "Player 1",
+          "action": "fold",
+          "round": "preflop",
+          "pot_after": 15
+        }
+      ]
+    },
+    {
+      "timestamp": "2025-08-05T09:40:00.323917",
+      "winner": "Bladework",
+      "pot_size": 0,
+      "showdown": true,
+      "player_hand": [
+        "Qh",
+        "Th"
+      ],
+      "ai_hand": [
+        "Ks",
+        "7d"
+      ],
+      "community": [
+        "Kd",
+        "2d",
+        "Js",
+        "2h",
+        "7h"
+      ],
+      "actions": [
+        {
+          "player": "Bladework",
+          "action": "raise",
+          "round": "preflop",
+          "pot_after": 35,
+          "amount": 25
+        },
+        {
+          "player": "Player 1",
+          "action": "call",
+          "round": "preflop",
+          "pot_after": 50,
+          "amount": 0
+        },
+        {
+          "player": "Player 1",
+          "action": "check",
+          "round": "flop",
+          "pot_after": 50
+        },
+        {
+          "player": "Bladework",
+          "action": "bet",
+          "round": "flop",
+          "pot_after": 75
+        },
+        {
+          "player": "Player 1",
+          "action": "call",
+          "round": "flop",
+          "pot_after": 100,
+          "amount": 0
+        },
+        {
+          "player": "Player 1",
+          "action": "check",
+          "round": "turn",
+          "pot_after": 100
+        },
+        {
+          "player": "Bladework",
+          "action": "bet",
+          "round": "turn",
+          "pot_after": 170
+        },
+        {
+          "player": "Player 1",
+          "action": "call",
+          "round": "turn",
+          "pot_after": 240,
+          "amount": 0
+        },
+        {
+          "player": "Player 1",
+          "action": "check",
+          "round": "river",
+          "pot_after": 240
+        },
+        {
+          "player": "Bladework",
+          "action": "check",
+          "round": "river",
+          "pot_after": 240
+        }
+      ]
+    },
+    {
+      "timestamp": "2025-08-05T09:41:30.554084",
+      "winner": "Bladework",
+      "pot_size": 0,
+      "showdown": false,
+      "player_hand": [
+        "3h",
+        "4d"
+      ],
+      "ai_hand": [
+        "Ad",
+        "5c"
+      ],
+      "community": [
+        "9h",
+        "Th",
+        "Ah"
+      ],
+      "actions": [
+        {
+          "player": "Player 1",
+          "action": "call",
+          "round": "preflop",
+          "pot_after": 20,
+          "amount": 0
+        },
+        {
+          "player": "Bladework",
+          "action": "raise",
+          "round": "preflop",
+          "pot_after": 35,
+          "amount": 25
+        },
+        {
+          "player": "Player 1",
+          "action": "call",
+          "round": "preflop",
+          "pot_after": 50,
+          "amount": 0
+        },
+        {
+          "player": "Bladework",
+          "action": "bet",
+          "round": "flop",
+          "pot_after": 85
+        },
+        {
+          "player": "Player 1",
+          "action": "fold",
+          "round": "flop",
+          "pot_after": 85
+        }
+      ]
+    },
+    {
+      "timestamp": "2025-08-05T09:41:36.022116",
+      "winner": "Bladework",
+      "pot_size": 0,
+      "showdown": true,
+      "player_hand": [
+        "2h",
+        "5s"
+      ],
+      "ai_hand": [
+        "7h",
+        "Qh"
+      ],
+      "community": [
+        "Td",
+        "7c",
+        "Kd",
+        "2s",
+        "Kc"
+      ],
+      "actions": [
+        {
+          "player": "Bladework",
+          "action": "raise",
+          "round": "preflop",
+          "pot_after": 35,
+          "amount": 25
+        },
+        {
+          "player": "Player 1",
+          "action": "call",
+          "round": "preflop",
+          "pot_after": 50,
+          "amount": 0
+        },
+        {
+          "player": "Player 1",
+          "action": "check",
+          "round": "flop",
+          "pot_after": 50
+        },
+        {
+          "player": "Bladework",
+          "action": "check",
+          "round": "flop",
+          "pot_after": 50
+        },
+        {
+          "player": "Player 1",
+          "action": "check",
+          "round": "turn",
+          "pot_after": 50
+        },
+        {
+          "player": "Bladework",
+          "action": "bet",
+          "round": "turn",
+          "pot_after": 75
+        },
+        {
+          "player": "Player 1",
+          "action": "call",
+          "round": "turn",
+          "pot_after": 100,
+          "amount": 0
+        },
+        {
+          "player": "Player 1",
+          "action": "check",
+          "round": "river",
+          "pot_after": 100
+        },
+        {
+          "player": "Bladework",
+          "action": "check",
+          "round": "river",
+          "pot_after": 100
+        }
+      ]
+    },
+    {
+      "timestamp": "2025-08-05T09:41:38.724715",
+      "winner": "Bladework",
+      "pot_size": 0,
+      "showdown": false,
+      "player_hand": [
+        "Js",
+        "Td"
+      ],
+      "ai_hand": [
+        "Ac",
+        "6h"
+      ],
+      "community": [],
+      "actions": [
+        {
+          "player": "Player 1",
+          "action": "call",
+          "round": "preflop",
+          "pot_after": 20,
+          "amount": 0
+        },
+        {
+          "player": "Bladework",
+          "action": "raise",
+          "round": "preflop",
+          "pot_after": 35,
+          "amount": 25
+        },
+        {
+          "player": "Player 1",
+          "action": "fold",
+          "round": "preflop",
+          "pot_after": 35
+        }
+      ]
+    },
+    {
+      "timestamp": "2025-08-05T09:41:40.123006",
+      "winner": "Player 1",
+      "pot_size": 0,
+      "showdown": false,
+      "player_hand": [
+        "4h",
+        "Ad"
+      ],
+      "ai_hand": [
+        "5c",
+        "7d"
+      ],
+      "community": [],
+      "actions": [
+        {
+          "player": "Bladework",
+          "action": "fold",
+          "round": "preflop",
+          "pot_after": 15
+        }
+      ]
+    },
+    {
+      "timestamp": "2025-08-05T09:41:45.518062",
+      "winner": "Bladework",
+      "pot_size": 0,
+      "showdown": false,
+      "player_hand": [
+        "9h",
+        "Qh"
+      ],
+      "ai_hand": [
+        "3d",
+        "Jc"
+      ],
+      "community": [
+        "Qc",
+        "4h",
+        "Jd"
+      ],
+      "actions": [
+        {
+          "player": "Player 1",
+          "action": "call",
+          "round": "preflop",
+          "pot_after": 20,
+          "amount": 0
+        },
+        {
+          "player": "Bladework",
+          "action": "check",
+          "round": "preflop",
+          "pot_after": 20
+        },
+        {
+          "player": "Bladework",
+          "action": "bet",
+          "round": "flop",
+          "pot_after": 30
+        },
+        {
+          "player": "Player 1",
+          "action": "fold",
+          "round": "flop",
+          "pot_after": 30
+        }
+      ]
+    },
+    {
+      "timestamp": "2025-08-05T09:41:48.355442",
+      "winner": "Bladework",
+      "pot_size": 0,
+      "showdown": false,
+      "player_hand": [
+        "5s",
+        "8d"
+      ],
+      "ai_hand": [
+        "Kd",
+        "2d"
+      ],
+      "community": [],
+      "actions": [
+        {
+          "player": "Bladework",
+          "action": "raise",
+          "round": "preflop",
+          "pot_after": 35,
+          "amount": 25
+        },
+        {
+          "player": "Player 1",
+          "action": "fold",
+          "round": "preflop",
+          "pot_after": 35
+        }
+      ]
+    },
+    {
+      "timestamp": "2025-08-05T09:41:50.184958",
+      "winner": "Bladework",
+      "pot_size": 0,
+      "showdown": false,
+      "player_hand": [
+        "5d",
+        "Kc"
+      ],
+      "ai_hand": [
+        "4h",
+        "Td"
+      ],
+      "community": [],
+      "actions": [
+        {
+          "player": "Player 1",
+          "action": "fold",
+          "round": "preflop",
+          "pot_after": 15
+        }
+      ]
+    },
+    {
+      "timestamp": "2025-08-05T09:42:00.613890",
+      "winner": "Player 1",
+      "pot_size": 0,
+      "showdown": true,
+      "player_hand": [
+        "9d",
+        "Ac"
+      ],
+      "ai_hand": [
+        "Tc",
+        "Jc"
+      ],
+      "community": [
+        "As",
+        "2c",
+        "5h",
+        "6h",
+        "8h"
+      ],
+      "actions": [
+        {
+          "player": "Bladework",
+          "action": "raise",
+          "round": "preflop",
+          "pot_after": 35,
+          "amount": 25
+        },
+        {
+          "player": "Player 1",
+          "action": "call",
+          "round": "preflop",
+          "pot_after": 50,
+          "amount": 0
+        },
+        {
+          "player": "Player 1",
+          "action": "check",
+          "round": "flop",
+          "pot_after": 50
+        },
+        {
+          "player": "Bladework",
+          "action": "check",
+          "round": "flop",
+          "pot_after": 50
+        },
+        {
+          "player": "Player 1",
+          "action": "check",
+          "round": "turn",
+          "pot_after": 50
+        },
+        {
+          "player": "Bladework",
+          "action": "check",
+          "round": "turn",
+          "pot_after": 50
+        },
+        {
+          "player": "Player 1",
+          "action": "check",
+          "round": "river",
+          "pot_after": 50
+        },
+        {
+          "player": "Bladework",
+          "action": "check",
+          "round": "river",
+          "pot_after": 50
+        }
+      ]
+    },
+    {
+      "timestamp": "2025-08-05T09:42:08.840885",
+      "winner": "Player 1",
+      "pot_size": 0,
+      "showdown": true,
+      "player_hand": [
+        "Qc",
+        "6s"
+      ],
+      "ai_hand": [
+        "Tc",
+        "3d"
+      ],
+      "community": [
+        "7d",
+        "9s",
+        "Ac",
+        "6d",
+        "Js"
+      ],
+      "actions": [
+        {
+          "player": "Player 1",
+          "action": "call",
+          "round": "preflop",
+          "pot_after": 20,
+          "amount": 0
+        },
+        {
+          "player": "Bladework",
+          "action": "check",
+          "round": "preflop",
+          "pot_after": 20
+        },
+        {
+          "player": "Bladework",
+          "action": "check",
+          "round": "flop",
+          "pot_after": 20
+        },
+        {
+          "player": "Player 1",
+          "action": "check",
+          "round": "flop",
+          "pot_after": 20
+        },
+        {
+          "player": "Bladework",
+          "action": "check",
+          "round": "turn",
+          "pot_after": 20
+        },
+        {
+          "player": "Player 1",
+          "action": "check",
+          "round": "turn",
+          "pot_after": 20
+        },
+        {
+          "player": "Bladework",
+          "action": "check",
+          "round": "river",
+          "pot_after": 20
+        },
+        {
+          "player": "Player 1",
+          "action": "check",
+          "round": "river",
+          "pot_after": 20
+        }
+      ]
+    },
+    {
+      "timestamp": "2025-08-05T09:44:24.042914",
+      "winner": "Bladework",
+      "pot_size": 0,
+      "showdown": false,
+      "player_hand": [
+        "2d",
+        "6c"
+      ],
+      "ai_hand": [
+        "4h",
+        "Ac"
+      ],
+      "community": [
+        "6d",
+        "6h",
+        "Qh",
+        "Ah"
+      ],
+      "actions": [
+        {
+          "player": "Player 1",
+          "action": "call",
+          "round": "preflop",
+          "pot_after": 20,
+          "amount": 0
+        },
+        {
+          "player": "Bladework",
+          "action": "raise",
+          "round": "preflop",
+          "pot_after": 35,
+          "amount": 25
+        },
+        {
+          "player": "Player 1",
+          "action": "call",
+          "round": "preflop",
+          "pot_after": 50,
+          "amount": 0
+        },
+        {
+          "player": "Bladework",
+          "action": "check",
+          "round": "flop",
+          "pot_after": 50
+        },
+        {
+          "player": "Player 1",
+          "action": "check",
+          "round": "flop",
+          "pot_after": 50
+        },
+        {
+          "player": "Bladework",
+          "action": "bet",
+          "round": "turn",
+          "pot_after": 85
+        },
+        {
+          "player": "Player 1",
+          "action": "fold",
+          "round": "turn",
+          "pot_after": 85
+        }
+      ]
+    },
+    {
+      "timestamp": "2025-08-05T09:44:31.361871",
+      "winner": "Bladework",
+      "pot_size": 0,
+      "showdown": true,
+      "player_hand": [
+        "Kh",
+        "Ah"
+      ],
+      "ai_hand": [
+        "8h",
+        "9c"
+      ],
+      "community": [
+        "9h",
+        "2c",
+        "6d",
+        "8d",
+        "6c"
+      ],
+      "actions": [
+        {
+          "player": "Bladework",
+          "action": "raise",
+          "round": "preflop",
+          "pot_after": 35,
+          "amount": 25
+        },
+        {
+          "player": "Player 1",
+          "action": "call",
+          "round": "preflop",
+          "pot_after": 50,
+          "amount": 0
+        },
+        {
+          "player": "Player 1",
+          "action": "check",
+          "round": "flop",
+          "pot_after": 50
+        },
+        {
+          "player": "Bladework",
+          "action": "bet",
+          "round": "flop",
+          "pot_after": 75
+        },
+        {
+          "player": "Player 1",
+          "action": "call",
+          "round": "flop",
+          "pot_after": 100,
+          "amount": 0
+        },
+        {
+          "player": "Player 1",
+          "action": "check",
+          "round": "turn",
+          "pot_after": 100
+        },
+        {
+          "player": "Bladework",
+          "action": "bet",
+          "round": "turn",
+          "pot_after": 170
+        },
+        {
+          "player": "Player 1",
+          "action": "call",
+          "round": "turn",
+          "pot_after": 240,
+          "amount": 0
+        },
+        {
+          "player": "Player 1",
+          "action": "check",
+          "round": "river",
+          "pot_after": 240
+        },
+        {
+          "player": "Bladework",
+          "action": "check",
+          "round": "river",
+          "pot_after": 240
+        }
+      ]
+    },
+    {
+      "timestamp": "2025-08-05T09:50:17.339940",
+      "winner": "Player 1",
+      "pot_size": 0,
+      "showdown": true,
+      "player_hand": [
+        "8d",
+        "7d"
+      ],
+      "ai_hand": [
+        "3c",
+        "As"
+      ],
+      "community": [
+        "9c",
+        "4c",
+        "Qs",
+        "7c",
+        "8s"
+      ],
+      "actions": [
+        {
+          "player": "Player 1",
+          "action": "raise",
+          "round": "preflop",
+          "pot_after": 35,
+          "amount": 25
+        },
+        {
+          "player": "Bladework",
+          "action": "raise",
+          "round": "preflop",
+          "pot_after": 117,
+          "amount": 92
+        },
+        {
+          "player": "Player 1",
+          "action": "call",
+          "round": "preflop",
+          "pot_after": 184,
+          "amount": 0
+        },
+        {
+          "player": "Bladework",
+          "action": "check",
+          "round": "flop",
+          "pot_after": 184
+        },
+        {
+          "player": "Player 1",
+          "action": "check",
+          "round": "flop",
+          "pot_after": 184
+        },
+        {
+          "player": "Bladework",
+          "action": "check",
+          "round": "turn",
+          "pot_after": 184
+        },
+        {
+          "player": "Player 1",
+          "action": "check",
+          "round": "turn",
+          "pot_after": 184
+        },
+        {
+          "player": "Bladework",
+          "action": "check",
+          "round": "river",
+          "pot_after": 184
+        },
+        {
+          "player": "Player 1",
+          "action": "check",
+          "round": "river",
+          "pot_after": 184
+        }
+      ]
+    },
+    {
+      "timestamp": "2025-08-05T09:50:24.924645",
+      "winner": "Bladework",
+      "pot_size": 0,
+      "showdown": true,
+      "player_hand": [
+        "3h",
+        "7s"
+      ],
+      "ai_hand": [
+        "5h",
+        "8h"
+      ],
+      "community": [
+        "Qd",
+        "6c",
+        "Jh",
+        "3s",
+        "5c"
+      ],
+      "actions": [
+        {
+          "player": "Bladework",
+          "action": "raise",
+          "round": "preflop",
+          "pot_after": 35,
+          "amount": 25
+        },
+        {
+          "player": "Player 1",
+          "action": "call",
+          "round": "preflop",
+          "pot_after": 50,
+          "amount": 0
+        },
+        {
+          "player": "Player 1",
+          "action": "check",
+          "round": "flop",
+          "pot_after": 50
+        },
+        {
+          "player": "Bladework",
+          "action": "check",
+          "round": "flop",
+          "pot_after": 50
+        },
+        {
+          "player": "Player 1",
+          "action": "check",
+          "round": "turn",
+          "pot_after": 50
+        },
+        {
+          "player": "Bladework",
+          "action": "check",
+          "round": "turn",
+          "pot_after": 50
+        },
+        {
+          "player": "Player 1",
+          "action": "check",
+          "round": "river",
+          "pot_after": 50
+        },
+        {
+          "player": "Bladework",
+          "action": "check",
+          "round": "river",
+          "pot_after": 50
+        }
+      ]
+    },
+    {
+      "timestamp": "2025-08-05T09:52:40.797351",
+      "winner": "Bladework",
+      "pot_size": 0,
+      "showdown": true,
+      "player_hand": [
+        "7d",
+        "4d"
+      ],
+      "ai_hand": [
+        "Kd",
+        "Kc"
+      ],
+      "community": [
+        "Jh",
+        "3h",
+        "Tc",
+        "5h",
+        "5d"
+      ],
+      "actions": [
+        {
+          "player": "Player 1",
+          "action": "call",
+          "round": "preflop",
+          "pot_after": 20,
+          "amount": 0
+        },
+        {
+          "player": "Bladework",
+          "action": "raise",
+          "round": "preflop",
+          "pot_after": 35,
+          "amount": 25
+        },
+        {
+          "player": "Player 1",
+          "action": "call",
+          "round": "preflop",
+          "pot_after": 50,
+          "amount": 0
+        },
+        {
+          "player": "Bladework",
+          "action": "bet",
+          "round": "flop",
+          "pot_after": 75
+        },
+        {
+          "player": "Player 1",
+          "action": "call",
+          "round": "flop",
+          "pot_after": 100,
+          "amount": 0
+        },
+        {
+          "player": "Bladework",
+          "action": "bet",
+          "round": "turn",
+          "pot_after": 170
+        },
+        {
+          "player": "Player 1",
+          "action": "call",
+          "round": "turn",
+          "pot_after": 240,
+          "amount": 0
+        },
+        {
+          "player": "Bladework",
+          "action": "check",
+          "round": "river",
+          "pot_after": 240
+        },
+        {
+          "player": "Player 1",
+          "action": "check",
+          "round": "river",
+          "pot_after": 240
+        }
+      ]
+    },
+    {
+      "timestamp": "2025-08-05T09:52:48.730713",
+      "winner": "Bladework",
+      "pot_size": 0,
+      "showdown": true,
+      "player_hand": [
+        "6c",
+        "5d"
+      ],
+      "ai_hand": [
+        "8c",
+        "8s"
+      ],
+      "community": [
+        "2c",
+        "7d",
+        "Ts",
+        "6d",
+        "Jh"
+      ],
+      "actions": [
+        {
+          "player": "Bladework",
+          "action": "raise",
+          "round": "preflop",
+          "pot_after": 35,
+          "amount": 25
+        },
+        {
+          "player": "Player 1",
+          "action": "call",
+          "round": "preflop",
+          "pot_after": 50,
+          "amount": 0
+        },
+        {
+          "player": "Player 1",
+          "action": "check",
+          "round": "flop",
+          "pot_after": 50
+        },
+        {
+          "player": "Bladework",
+          "action": "bet",
+          "round": "flop",
+          "pot_after": 75
+        },
+        {
+          "player": "Player 1",
+          "action": "call",
+          "round": "flop",
+          "pot_after": 100,
+          "amount": 0
+        },
+        {
+          "player": "Player 1",
+          "action": "check",
+          "round": "turn",
+          "pot_after": 100
+        },
+        {
+          "player": "Bladework",
+          "action": "bet",
+          "round": "turn",
+          "pot_after": 170
+        },
+        {
+          "player": "Player 1",
+          "action": "call",
+          "round": "turn",
+          "pot_after": 240,
+          "amount": 0
+        },
+        {
+          "player": "Player 1",
+          "action": "check",
+          "round": "river",
+          "pot_after": 240
+        },
+        {
+          "player": "Bladework",
+          "action": "check",
+          "round": "river",
+          "pot_after": 240
+        }
+      ]
+    },
+    {
+      "timestamp": "2025-08-05T09:55:28.485445",
+      "winner": "Player 1",
+      "pot_size": 0,
+      "showdown": false,
+      "player_hand": [
+        "5s",
+        "Ks"
+      ],
+      "ai_hand": [
+        "2h",
+        "9d"
+      ],
+      "community": [],
+      "actions": [
+        {
+          "player": "Bladework",
+          "action": "fold",
+          "round": "preflop",
+          "pot_after": 15
+        }
+      ]
+    },
+    {
+      "timestamp": "2025-08-05T09:55:38.766649",
+      "winner": "Bladework",
+      "pot_size": 0,
+      "showdown": true,
+      "player_hand": [
+        "5s",
+        "6s"
+      ],
+      "ai_hand": [
+        "9d",
+        "Ks"
+      ],
+      "community": [
+        "3d",
+        "9s",
+        "4h",
+        "Qd",
+        "Ac"
+      ],
+      "actions": [
+        {
+          "player": "Player 1",
+          "action": "call",
+          "round": "preflop",
+          "pot_after": 20,
+          "amount": 0
+        },
+        {
+          "player": "Bladework",
+          "action": "raise",
+          "round": "preflop",
+          "pot_after": 35,
+          "amount": 25
+        },
+        {
+          "player": "Player 1",
+          "action": "call",
+          "round": "preflop",
+          "pot_after": 50,
+          "amount": 0
+        },
+        {
+          "player": "Bladework",
+          "action": "bet",
+          "round": "flop",
+          "pot_after": 75
+        },
+        {
+          "player": "Player 1",
+          "action": "call",
+          "round": "flop",
+          "pot_after": 100,
+          "amount": 0
+        },
+        {
+          "player": "Bladework",
+          "action": "bet",
+          "round": "turn",
+          "pot_after": 150
+        },
+        {
+          "player": "Player 1",
+          "action": "call",
+          "round": "turn",
+          "pot_after": 200,
+          "amount": 0
+        },
+        {
+          "player": "Bladework",
+          "action": "check",
+          "round": "river",
+          "pot_after": 200
+        },
+        {
+          "player": "Player 1",
+          "action": "check",
+          "round": "river",
+          "pot_after": 200
+        }
+      ]
+    },
+    {
+      "timestamp": "2025-08-05T09:57:50.793494",
+      "winner": "Player 1",
+      "pot_size": 0,
+      "showdown": false,
+      "player_hand": [
+        "9h",
+        "As"
+      ],
+      "ai_hand": [
+        "5s",
+        "2s"
+      ],
+      "community": [],
+      "actions": [
+        {
+          "player": "Bladework",
+          "action": "fold",
+          "round": "preflop",
+          "pot_after": 15
+        }
+      ]
+    },
+    {
+      "timestamp": "2025-08-05T09:57:57.718362",
+      "winner": "Bladework",
+      "pot_size": 0,
+      "showdown": false,
+      "player_hand": [
+        "6d",
+        "Ts"
+      ],
+      "ai_hand": [
+        "8d",
+        "7d"
+      ],
+      "community": [],
+      "actions": [
+        {
+          "player": "Player 1",
+          "action": "call",
+          "round": "preflop",
+          "pot_after": 20,
+          "amount": 0
+        },
+        {
+          "player": "Bladework",
+          "action": "raise",
+          "round": "preflop",
+          "pot_after": 35,
+          "amount": 25
+        },
+        {
+          "player": "Player 1",
+          "action": "fold",
+          "round": "preflop",
+          "pot_after": 35
+        }
+      ]
+    },
+    {
+      "timestamp": "2025-08-05T09:58:04.834986",
+      "winner": "Bladework",
+      "pot_size": 0,
+      "showdown": true,
+      "player_hand": [
+        "4d",
+        "Kd"
+      ],
+      "ai_hand": [
+        "As",
+        "7h"
+      ],
+      "community": [
+        "4h",
+        "Ac",
+        "Ad",
+        "Jc",
+        "Qc"
+      ],
+      "actions": [
+        {
+          "player": "Bladework",
+          "action": "raise",
+          "round": "preflop",
+          "pot_after": 35,
+          "amount": 25
+        },
+        {
+          "player": "Player 1",
+          "action": "call",
+          "round": "preflop",
+          "pot_after": 50,
+          "amount": 0
+        },
+        {
+          "player": "Player 1",
+          "action": "check",
+          "round": "flop",
+          "pot_after": 50
+        },
+        {
+          "player": "Bladework",
+          "action": "bet",
+          "round": "flop",
+          "pot_after": 85
+        },
+        {
+          "player": "Player 1",
+          "action": "call",
+          "round": "flop",
+          "pot_after": 120,
+          "amount": 0
+        },
+        {
+          "player": "Player 1",
+          "action": "check",
+          "round": "turn",
+          "pot_after": 120
+        },
+        {
+          "player": "Bladework",
+          "action": "bet",
+          "round": "turn",
+          "pot_after": 204
+        },
+        {
+          "player": "Player 1",
+          "action": "call",
+          "round": "turn",
+          "pot_after": 288,
+          "amount": 0
+        },
+        {
+          "player": "Player 1",
+          "action": "check",
+          "round": "river",
+          "pot_after": 288
+        },
+        {
+          "player": "Bladework",
+          "action": "check",
+          "round": "river",
+          "pot_after": 288
+        }
+      ]
+    },
+    {
+      "timestamp": "2025-08-05T09:58:13.066714",
+      "winner": "Player 1",
+      "pot_size": 0,
+      "showdown": true,
+      "player_hand": [
+        "6h",
+        "Qd"
+      ],
+      "ai_hand": [
+        "5h",
+        "8c"
+      ],
+      "community": [
+        "2h",
+        "Qs",
+        "8h",
+        "2c",
+        "Jh"
+      ],
+      "actions": [
+        {
+          "player": "Player 1",
+          "action": "call",
+          "round": "preflop",
+          "pot_after": 20,
+          "amount": 0
+        },
+        {
+          "player": "Bladework",
+          "action": "check",
+          "round": "preflop",
+          "pot_after": 20
+        },
+        {
+          "player": "Bladework",
+          "action": "bet",
+          "round": "flop",
+          "pot_after": 30
+        },
+        {
+          "player": "Player 1",
+          "action": "call",
+          "round": "flop",
+          "pot_after": 40,
+          "amount": 0
+        },
+        {
+          "player": "Bladework",
+          "action": "bet",
+          "round": "turn",
+          "pot_after": 68
+        },
+        {
+          "player": "Player 1",
+          "action": "call",
+          "round": "turn",
+          "pot_after": 96,
+          "amount": 0
+        },
+        {
+          "player": "Bladework",
+          "action": "check",
+          "round": "river",
+          "pot_after": 96
+        },
+        {
+          "player": "Player 1",
+          "action": "check",
+          "round": "river",
+          "pot_after": 96
+        }
+      ]
+    },
+    {
+      "timestamp": "2025-08-05T09:58:20.911735",
+      "winner": "Player 1",
+      "pot_size": 0,
+      "showdown": true,
+      "player_hand": [
+        "Th",
+        "6d"
+      ],
+      "ai_hand": [
+        "3d",
+        "9d"
+      ],
+      "community": [
+        "Qh",
+        "Qc",
+        "8d",
+        "Qd",
+        "6s"
+      ],
+      "actions": [
+        {
+          "player": "Bladework",
+          "action": "raise",
+          "round": "preflop",
+          "pot_after": 35,
+          "amount": 25
+        },
+        {
+          "player": "Player 1",
+          "action": "call",
+          "round": "preflop",
+          "pot_after": 50,
+          "amount": 0
+        },
+        {
+          "player": "Player 1",
+          "action": "check",
+          "round": "flop",
+          "pot_after": 50
+        },
+        {
+          "player": "Bladework",
+          "action": "check",
+          "round": "flop",
+          "pot_after": 50
+        },
+        {
+          "player": "Player 1",
+          "action": "check",
+          "round": "turn",
+          "pot_after": 50
+        },
+        {
+          "player": "Bladework",
+          "action": "check",
+          "round": "turn",
+          "pot_after": 50
+        },
+        {
+          "player": "Player 1",
+          "action": "check",
+          "round": "river",
+          "pot_after": 50
+        },
+        {
+          "player": "Bladework",
+          "action": "check",
+          "round": "river",
+          "pot_after": 50
+        }
+      ]
+    },
+    {
+      "timestamp": "2025-08-05T09:58:31.724567",
+      "winner": "Player 1",
+      "pot_size": 0,
+      "showdown": true,
+      "player_hand": [
+        "9d",
+        "8h"
+      ],
+      "ai_hand": [
+        "Qc",
+        "Th"
+      ],
+      "community": [
+        "Ad",
+        "Js",
+        "Ac",
+        "9c",
+        "5c"
+      ],
+      "actions": [
+        {
+          "player": "Player 1",
+          "action": "call",
+          "round": "preflop",
+          "pot_after": 20,
+          "amount": 0
+        },
+        {
+          "player": "Bladework",
+          "action": "raise",
+          "round": "preflop",
+          "pot_after": 35,
+          "amount": 25
+        },
+        {
+          "player": "Player 1",
+          "action": "call",
+          "round": "preflop",
+          "pot_after": 50,
+          "amount": 0
+        },
+        {
+          "player": "Bladework",
+          "action": "check",
+          "round": "flop",
+          "pot_after": 50
+        },
+        {
+          "player": "Player 1",
+          "action": "check",
+          "round": "flop",
+          "pot_after": 50
+        },
+        {
+          "player": "Bladework",
+          "action": "check",
+          "round": "turn",
+          "pot_after": 50
+        },
+        {
+          "player": "Player 1",
+          "action": "check",
+          "round": "turn",
+          "pot_after": 50
+        },
+        {
+          "player": "Bladework",
+          "action": "check",
+          "round": "river",
+          "pot_after": 50
+        },
+        {
+          "player": "Player 1",
+          "action": "check",
+          "round": "river",
+          "pot_after": 50
+        }
+      ]
+    },
+    {
+      "timestamp": "2025-08-05T09:59:27.528448",
+      "winner": "Bladework",
+      "pot_size": 0,
+      "showdown": true,
+      "player_hand": [
+        "6s",
+        "Js"
+      ],
+      "ai_hand": [
+        "6c",
+        "Qs"
+      ],
+      "community": [
+        "2h",
+        "8s",
+        "Th",
+        "3s",
+        "Ad"
+      ],
+      "actions": [
+        {
+          "player": "Bladework",
+          "action": "raise",
+          "round": "preflop",
+          "pot_after": 35,
+          "amount": 25
+        },
+        {
+          "player": "Player 1",
+          "action": "call",
+          "round": "preflop",
+          "pot_after": 50,
+          "amount": 0
+        },
+        {
+          "player": "Player 1",
+          "action": "check",
+          "round": "flop",
+          "pot_after": 50
+        },
+        {
+          "player": "Bladework",
+          "action": "check",
+          "round": "flop",
+          "pot_after": 50
+        },
+        {
+          "player": "Player 1",
+          "action": "check",
+          "round": "turn",
+          "pot_after": 50
+        },
+        {
+          "player": "Bladework",
+          "action": "check",
+          "round": "turn",
+          "pot_after": 50
+        },
+        {
+          "player": "Player 1",
+          "action": "check",
+          "round": "river",
+          "pot_after": 50
+        },
+        {
+          "player": "Bladework",
+          "action": "check",
+          "round": "river",
+          "pot_after": 50
+        }
+      ]
+    },
+    {
+      "timestamp": "2025-08-05T09:59:28.898813",
+      "winner": "Bladework",
+      "pot_size": 0,
+      "showdown": false,
+      "player_hand": [
+        "Js",
+        "3s"
+      ],
+      "ai_hand": [
+        "5h",
+        "7d"
+      ],
+      "community": [],
+      "actions": [
+        {
+          "player": "Player 1",
+          "action": "fold",
+          "round": "preflop",
+          "pot_after": 15
+        }
+      ]
+    },
+    {
+      "timestamp": "2025-08-05T09:59:38.610580",
+      "winner": "Bladework",
+      "pot_size": 0,
+      "showdown": true,
+      "player_hand": [
+        "6h",
+        "2c"
+      ],
+      "ai_hand": [
+        "Kd",
+        "5d"
+      ],
+      "community": [
+        "Kh",
+        "Qc",
+        "Jd",
+        "6d",
+        "7s"
+      ],
+      "actions": [
+        {
+          "player": "Bladework",
+          "action": "raise",
+          "round": "preflop",
+          "pot_after": 35,
+          "amount": 25
+        },
+        {
+          "player": "Player 1",
+          "action": "call",
+          "round": "preflop",
+          "pot_after": 50,
+          "amount": 0
+        },
+        {
+          "player": "Player 1",
+          "action": "check",
+          "round": "flop",
+          "pot_after": 50
+        },
+        {
+          "player": "Bladework",
+          "action": "bet",
+          "round": "flop",
+          "pot_after": 85
+        },
+        {
+          "player": "Player 1",
+          "action": "call",
+          "round": "flop",
+          "pot_after": 120,
+          "amount": 0
+        },
+        {
+          "player": "Player 1",
+          "action": "check",
+          "round": "turn",
+          "pot_after": 120
+        },
+        {
+          "player": "Bladework",
+          "action": "bet",
+          "round": "turn",
+          "pot_after": 204
+        },
+        {
+          "player": "Player 1",
+          "action": "call",
+          "round": "turn",
+          "pot_after": 288,
+          "amount": 0
+        },
+        {
+          "player": "Player 1",
+          "action": "check",
+          "round": "river",
+          "pot_after": 288
+        },
+        {
+          "player": "Bladework",
+          "action": "check",
+          "round": "river",
+          "pot_after": 288
+        }
+      ]
+    },
+    {
+      "timestamp": "2025-08-05T10:03:07.398031",
+      "winner": "Bladework",
+      "pot_size": 0,
+      "showdown": true,
+      "player_hand": [
+        "Ac",
+        "9s"
+      ],
+      "ai_hand": [
+        "Td",
+        "8d"
+      ],
+      "community": [
+        "2h",
+        "4h",
+        "7d",
+        "2s",
+        "Th"
+      ],
+      "actions": [
+        {
+          "player": "Bladework",
+          "action": "raise",
+          "round": "preflop",
+          "pot_after": 35,
+          "amount": 25
+        },
+        {
+          "player": "Player 1",
+          "action": "call",
+          "round": "preflop",
+          "pot_after": 50,
+          "amount": 0
+        },
+        {
+          "player": "Player 1",
+          "action": "check",
+          "round": "flop",
+          "pot_after": 50
+        },
+        {
+          "player": "Bladework",
+          "action": "check",
+          "round": "flop",
+          "pot_after": 50
+        },
+        {
+          "player": "Player 1",
+          "action": "check",
+          "round": "turn",
+          "pot_after": 50
+        },
+        {
+          "player": "Bladework",
+          "action": "check",
+          "round": "turn",
+          "pot_after": 50
+        },
+        {
+          "player": "Player 1",
+          "action": "check",
+          "round": "river",
+          "pot_after": 50
+        },
+        {
+          "player": "Bladework",
+          "action": "check",
+          "round": "river",
+          "pot_after": 50
+        }
+      ]
+    },
+    {
+      "timestamp": "2025-08-05T10:04:50.009133",
+      "winner": "Bladework",
+      "pot_size": 0,
+      "showdown": false,
+      "player_hand": [
+        "Jh",
+        "8c"
+      ],
+      "ai_hand": [
+        "6h",
+        "Td"
+      ],
+      "community": [],
+      "actions": [
+        {
+          "player": "Player 1",
+          "action": "fold",
+          "round": "preflop",
+          "pot_after": 15
+        }
+      ]
+    },
+    {
+      "timestamp": "2025-08-05T10:04:54.084834",
+      "winner": "Bladework",
+      "pot_size": 0,
+      "showdown": false,
+      "player_hand": [
+        "2c",
+        "2h"
+      ],
+      "ai_hand": [
+        "9c",
+        "8d"
+      ],
+      "community": [
+        "Td",
+        "6d",
+        "8s"
+      ],
+      "actions": [
+        {
+          "player": "Bladework",
+          "action": "raise",
+          "round": "preflop",
+          "pot_after": 35,
+          "amount": 25
+        },
+        {
+          "player": "Player 1",
+          "action": "call",
+          "round": "preflop",
+          "pot_after": 50,
+          "amount": 0
+        },
+        {
+          "player": "Player 1",
+          "action": "check",
+          "round": "flop",
+          "pot_after": 50
+        },
+        {
+          "player": "Bladework",
+          "action": "bet",
+          "round": "flop",
+          "pot_after": 85
+        },
+        {
+          "player": "Player 1",
+          "action": "fold",
+          "round": "flop",
+          "pot_after": 85
+        }
+      ]
+    },
+    {
+      "timestamp": "2025-08-05T10:04:55.361141",
+      "winner": "Bladework",
+      "pot_size": 0,
+      "showdown": false,
+      "player_hand": [
+        "9s",
+        "5c"
+      ],
+      "ai_hand": [
+        "4c",
+        "Ts"
+      ],
+      "community": [],
+      "actions": [
+        {
+          "player": "Player 1",
+          "action": "fold",
+          "round": "preflop",
+          "pot_after": 15
+        }
+      ]
+    },
+    {
+      "timestamp": "2025-08-05T10:06:09.212079",
+      "winner": "Bladework",
+      "pot_size": 0,
+      "showdown": true,
+      "player_hand": [
+        "2s",
+        "6d"
+      ],
+      "ai_hand": [
+        "7h",
+        "5d"
+      ],
+      "community": [
+        "3s",
+        "9s",
+        "4d",
+        "3h",
+        "Kd"
+      ],
+      "actions": [
+        {
+          "player": "Player 1",
+          "action": "call",
+          "round": "preflop",
+          "pot_after": 20,
+          "amount": 0
+        },
+        {
+          "player": "Bladework",
+          "action": "check",
+          "round": "preflop",
+          "pot_after": 20
+        },
+        {
+          "player": "Bladework",
+          "action": "check",
+          "round": "flop",
+          "pot_after": 20
+        },
+        {
+          "player": "Player 1",
+          "action": "check",
+          "round": "flop",
+          "pot_after": 20
+        },
+        {
+          "player": "Bladework",
+          "action": "check",
+          "round": "turn",
+          "pot_after": 20
+        },
+        {
+          "player": "Player 1",
+          "action": "check",
+          "round": "turn",
+          "pot_after": 20
+        },
+        {
+          "player": "Bladework",
+          "action": "check",
+          "round": "river",
+          "pot_after": 20
+        },
+        {
+          "player": "Player 1",
+          "action": "check",
+          "round": "river",
+          "pot_after": 20
+        }
+      ]
+    },
+    {
+      "timestamp": "2025-08-05T10:06:10.977576",
+      "winner": "Player 1",
+      "pot_size": 0,
+      "showdown": false,
+      "player_hand": [
+        "8s",
+        "9c"
+      ],
+      "ai_hand": [
+        "5h",
+        "2h"
+      ],
+      "community": [],
+      "actions": [
+        {
+          "player": "Bladework",
+          "action": "fold",
+          "round": "preflop",
+          "pot_after": 15
+        }
+      ]
+    },
+    {
+      "timestamp": "2025-08-05T10:06:13.032674",
+      "winner": "Bladework",
+      "pot_size": 0,
+      "showdown": false,
+      "player_hand": [
+        "Qh",
+        "4d"
+      ],
+      "ai_hand": [
+        "2c",
+        "Qd"
+      ],
+      "community": [],
+      "actions": [
+        {
+          "player": "Player 1",
+          "action": "fold",
+          "round": "preflop",
+          "pot_after": 15
+        }
+      ]
+    },
+    {
+      "timestamp": "2025-08-05T10:06:30.635176",
+      "winner": "Bladework",
+      "pot_size": 0,
+      "showdown": true,
+      "player_hand": [
+        "5d",
+        "8c"
+      ],
+      "ai_hand": [
+        "9h",
+        "9c"
+      ],
+      "community": [
+        "7d",
+        "Qc",
+        "Js",
+        "7s",
+        "9s"
+      ],
+      "actions": [
+        {
+          "player": "Bladework",
+          "action": "raise",
+          "round": "preflop",
+          "pot_after": 35,
+          "amount": 25
+        },
+        {
+          "player": "Player 1",
+          "action": "call",
+          "round": "preflop",
+          "pot_after": 50,
+          "amount": 0
+        },
+        {
+          "player": "Player 1",
+          "action": "check",
+          "round": "flop",
+          "pot_after": 50
+        },
+        {
+          "player": "Bladework",
+          "action": "check",
+          "round": "flop",
+          "pot_after": 50
+        },
+        {
+          "player": "Player 1",
+          "action": "check",
+          "round": "turn",
+          "pot_after": 50
+        },
+        {
+          "player": "Bladework",
+          "action": "check",
+          "round": "turn",
+          "pot_after": 50
+        },
+        {
+          "player": "Player 1",
+          "action": "check",
+          "round": "river",
+          "pot_after": 50
+        },
+        {
+          "player": "Bladework",
+          "action": "bet",
+          "round": "river",
+          "pot_after": 88
+        },
+        {
+          "player": "Player 1",
+          "action": "call",
+          "round": "river",
+          "pot_after": 126,
+          "amount": 0
+        }
+      ]
+    },
+    {
+      "timestamp": "2025-08-05T10:06:39.601576",
+      "winner": "Bladework",
+      "pot_size": 0,
+      "showdown": false,
+      "player_hand": [
+        "8h",
+        "4h"
+      ],
+      "ai_hand": [
+        "9c",
+        "2c"
+      ],
+      "community": [],
+      "actions": [
+        {
+          "player": "Player 1",
+          "action": "fold",
+          "round": "preflop",
+          "pot_after": 15
+        }
+      ]
+    },
+    {
+      "timestamp": "2025-08-05T10:06:52.106174",
+      "winner": "Player 1",
+      "pot_size": 0,
+      "showdown": true,
+      "player_hand": [
+        "Kh",
+        "2s"
+      ],
+      "ai_hand": [
+        "Qd",
+        "Td"
+      ],
+      "community": [
+        "2d",
+        "Tc",
+        "5s",
+        "8c",
+        "2c"
+      ],
+      "actions": [
+        {
+          "player": "Bladework",
+          "action": "raise",
+          "round": "preflop",
+          "pot_after": 35,
+          "amount": 25
+        },
+        {
+          "player": "Player 1",
+          "action": "call",
+          "round": "preflop",
+          "pot_after": 50,
+          "amount": 0
+        },
+        {
+          "player": "Player 1",
+          "action": "raise",
+          "round": "flop",
+          "pot_after": 75,
+          "amount": 25
+        },
+        {
+          "player": "Bladework",
+          "action": "call",
+          "round": "flop",
+          "pot_after": 100,
+          "amount": 0
+        },
+        {
+          "player": "Player 1",
+          "action": "check",
+          "round": "turn",
+          "pot_after": 100
+        },
+        {
+          "player": "Bladework",
+          "action": "bet",
+          "round": "turn",
+          "pot_after": 150
+        },
+        {
+          "player": "Player 1",
+          "action": "call",
+          "round": "turn",
+          "pot_after": 200,
+          "amount": 0
+        },
+        {
+          "player": "Player 1",
+          "action": "check",
+          "round": "river",
+          "pot_after": 200
+        },
+        {
+          "player": "Bladework",
+          "action": "check",
+          "round": "river",
+          "pot_after": 200
         }
       ]
     }

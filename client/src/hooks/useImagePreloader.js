@@ -28,7 +28,7 @@ export const useImagePreloader = () => {
       const batchSize = 10;
       const startTime = performance.now();
       
-      console.log('🎴 Starting image preload...');
+      console.log('Starting image preload');
       
       for (let i = 0; i < cardImages.length; i += batchSize) {
         const batch = cardImages.slice(i, i + batchSize);
@@ -60,7 +60,7 @@ export const useImagePreloader = () => {
       }
       
       const endTime = performance.now();
-      console.log(`✅ Image preload completed in ${Math.round(endTime - startTime)}ms`);
+      console.log(`Image preload completed in ${Math.round(endTime - startTime)}ms`);
     };
     
     // Start preloading after a short delay to not block initial render
@@ -75,7 +75,6 @@ export const useImagePreloader = () => {
  */
 export const useCardImage = (card) => {
   const getCardImageSrc = (cardCode) => {
-    console.log('useCardImage called with:', cardCode);
     
     if (!cardCode || typeof cardCode !== 'string') {
       console.warn('useCardImage: Invalid card code, using fallback:', cardCode);
@@ -84,7 +83,6 @@ export const useCardImage = (card) => {
     
     // Handle cardbacks (they start with "Cardback")
     if (cardCode.startsWith('Cardback')) {
-      console.log('useCardImage: Detected cardback:', cardCode);
       return `/IvoryCards/${cardCode}.webp`;
     }
     
@@ -107,7 +105,7 @@ export const useCardImage = (card) => {
     }
     
     const result = `/IvoryCards/${rank}${suit}.webp`;
-    console.log('useCardImage: Generated path:', result);
+
     return result;
   };
   
