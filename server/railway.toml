@@ -5,4 +5,5 @@ builder = "nixpacks"
 healthcheckPath = "/"
 healthcheckTimeout = 300
 restartPolicyType = "always"
-# Use Procfile for proper production deployment with Gunicorn
+# Use Flask-SocketIO's built-in server (better for WebSockets than Gunicorn)
+startCommand = "python wsgi.py"
