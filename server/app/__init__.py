@@ -8,6 +8,9 @@ socketio = SocketIO()
 def create_app():
     app = Flask(__name__)
     
+    # Configure static file caching for better performance
+    app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 31536000  # 1 year cache for static files
+    
     # Simple CORS configuration - allow all origins
     CORS(app, origins="*", methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"], 
          allow_headers=["Content-Type", "Authorization"])
@@ -25,9 +28,11 @@ def create_app():
                      ping_interval=25,
                      # Allow larger message sizes
                      max_http_buffer_size=1e6,
-                     # Connection settings for stability
+                     # Connection settings for stability  
                      logger=False,
-                     engineio_logger=False)
+                     engineio_logger=False,
+                     # Reduce WebSocket errors in logs
+                     always_connect=False)
     
     print(f"🔌 SocketIO initialized with async_mode: {async_mode}")
     
