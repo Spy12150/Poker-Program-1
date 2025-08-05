@@ -291,41 +291,28 @@ const PokerTable = memo(({
   );
 });
 
-// Bulletproof animation - block ALL re-renders during animation
+// Network-resilient animation - block ALL re-renders during animation
 const arePropsEqual = (prevProps, nextProps) => {
-  // CRITICAL: Completely block re-renders during animation to preserve CSS animations
-  if (prevProps.dealingCards && nextProps.dealingCards) {
-    // Animation is in progress - block ALL re-renders regardless of other changes
-    // This prevents CSS animation from restarting due to DOM updates
-    return true; // Props are "equal" - prevent re-render
+  // CRITICAL: Block ALL re-renders when either prev OR next is animating
+  // This handles slow WiFi where delayed messages arrive during animation
+  if (prevProps.dealingCards || nextProps.dealingCards) {
+    // If we're entering animation (start) or have essential changes, allow re-render
+    if (prevProps.dealingCards !== nextProps.dealingCards) {
+      return false; // Animation state changed - allow re-render for setup
+    }
+    
+    // During animation: only allow re-renders for new cards (length increase)
+    const prevCommunity = prevProps.gameState?.community || [];
+    const nextCommunity = nextProps.gameState?.community || [];
+    if (nextCommunity.length > prevCommunity.length) {
+      return false; // New cards dealt - allow re-render for DOM update
+    }
+    
+    // Block everything else during animation (delayed network updates, etc.)
+    return true; // "Equal" props - prevent re-render during animation
   }
   
-  // ALWAYS allow re-render when dealingCards state changes (start/end animation)
-  if (prevProps.dealingCards !== nextProps.dealingCards) {
-    return false; // Props are different - allow re-render
-  }
-  
-  // ALWAYS allow re-render when community cards change (new cards dealt)
-  const prevCommunity = prevProps.gameState?.community || [];
-  const nextCommunity = nextProps.gameState?.community || [];
-  if (prevCommunity.length !== nextCommunity.length) {
-    return false; // Props are different - allow re-render
-  }
-  if (!prevCommunity.every((card, i) => card === nextCommunity[i])) {
-    return false; // Props are different - allow re-render
-  }
-  
-  // ALWAYS allow re-render when newCardIndices change (animation setup)
-  const prevIndices = prevProps.newCardIndices || [];
-  const nextIndices = nextProps.newCardIndices || [];
-  if (prevIndices.length !== nextIndices.length) {
-    return false; // Props are different - allow re-render
-  }
-  if (!prevIndices.every((idx, i) => idx === nextIndices[i])) {
-    return false; // Props are different - allow re-render
-  }
-  
-  // For all other cases, use React's default behavior (allow re-renders)
+  // Outside animation: normal React behavior (allow all re-renders)
   return false;
 };
 
