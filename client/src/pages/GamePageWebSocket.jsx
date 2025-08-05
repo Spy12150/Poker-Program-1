@@ -56,7 +56,7 @@ const GamePage = () => {
   const cardbacks = useMemo(() => [
     'Cardback17', 'Cardback18', 'Cardback3', 'Cardback4', 'Cardback5',
     'Cardback6', 'Cardback7', 'Cardback8', 'Cardback9', 'Cardback10',
-    'Cardback11', 'Cardback12', 'Cardback13', 'Cardback14', 
+    'Cardback11', 'Cardback12', 'Cardback14', 
     'Cardback16', 'Cardback2', 'Cardback1', 'Cardback19'
   ], []);
 
