@@ -1,5 +1,7 @@
 import React from 'react';
 
+//Right side panel shows up when showdown or someone folds
+
 const HandOverPanel = ({ handOver, showdown, winners, newHand, newRound, loading, gameState }) => {
   if (!handOver) return null;
 

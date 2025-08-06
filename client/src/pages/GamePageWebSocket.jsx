@@ -99,7 +99,7 @@ const GamePage = () => {
     let minRaise;
     
     if (currentBet === 0) {
-      // First bet of the round - minimum is big blind
+      // first bet has to be at least bb for postflop
       minRaise = bigBlind;
     } else {
       // Must raise by at least the size of the last bet/raise
@@ -302,8 +302,8 @@ const GamePage = () => {
     
     // Only animate if:
     // 1. Cards were actually added
-    // 2. Not currently dealing (checked above)
-    // 3. This is a new community state (prevent same cards from re-animating)
+    // 2. not currently dealing 
+    // 3. This is a new community state 
     if (currentLength > previousCommunityLength && 
         currentLength > 0 &&
         window.lastCommunityHash !== communityHash) {
@@ -379,7 +379,7 @@ const GamePage = () => {
   const makeAction = useCallback((action, amount = 0) => {
     if (!gameId || handOver || loading) return;
     
-    // Don't block actions for brief disconnections - let socket.io handle reconnection
+    // Don't block actions for brief disconnections 
     if (socket.connectionError) {
       setMessage('Connection error. Please try again.');
       return;
@@ -432,7 +432,6 @@ const GamePage = () => {
     socket.startNewRound(gameId);
   }, [gameId, loading, socket.connectionError, socket.startNewRound]);
 
-  // Action helper functions - memoized to prevent unnecessary re-renders
   const handleFold = useCallback(() => makeAction('fold'), [makeAction]);
   const handleCheck = useCallback(() => makeAction('check'), [makeAction]);
   const handleCall = useCallback(() => makeAction('call'), [makeAction]);
@@ -453,7 +452,7 @@ const GamePage = () => {
     makeAction('raise', betSliderValue);
   }, [betSliderValue, minBet, maxBet, makeAction]);
 
-  // Keyboard shortcuts - moved after makeAction and handleSliderRaise are defined
+  // Keyboard shortcuts 
   useEffect(() => {
     const handleKeyPress = (event) => {
       if (!gameState || handOver || gameState.current_player !== 0 || loading) return;
@@ -486,7 +485,7 @@ const GamePage = () => {
     return () => document.removeEventListener('keypress', handleKeyPress);
   }, [gameState, handOver, loading, makeAction, canCheckWrapper, canCallWrapper, canRaiseWrapper, handleSliderRaise]);
 
-  // Main menu handler - resets all game state
+  // Reset game states for main menu
   const handleMenuClick = useCallback(() => {
     // Reset all game state to return to start menu
     setGameState(null);
@@ -505,7 +504,7 @@ const GamePage = () => {
     setNewCardIndices([]);
   }, []);
 
-  // Bet slider functions - memoized for performance
+  // Bet slider functions 
   const handleSliderChange = useCallback((e) => {
     const position = parseInt(e.target.value);
     setBetSliderValue(position);
@@ -557,7 +556,7 @@ const GamePage = () => {
     updateSliderFromAmount(amount);
   }, [gameState, minBet, updateSliderFromAmount]);
 
-  // Connection status display - improved for Railway deployment
+  // Connection status display 
   const connectionStatus = useCallback(() => {
     if (socket.connectionError) {
       // Show different messages based on connection state
@@ -637,12 +636,12 @@ const GamePage = () => {
       <GameHeader gameState={gameState} />
       {connectionStatus()}
       
-      {/* Main Menu Button - only show when game is active */}
+      {/* Main Menu Button, only show when game is active */}
       {gameState && <button className="menu-button" onClick={handleMenuClick}>MAIN MENU</button>}
       
       {message && <GameMessage message={message} />}
       
-      {/* Always show poker table - active game or background for start screen */}
+      {/* Always show poker table, active game or background for start screen */}
       <PokerTable {...pokerTableProps} />
       
       {gameState && (
@@ -661,7 +660,7 @@ const GamePage = () => {
           
           <HandHistory gameState={gameState} />
 
-          {/* Cardback Selector Button - only show during active game */}
+          {/* Cardback Selector Button, only show during active game */}
           <button 
             className="cardback-selector-btn"
             onClick={cycleCardback}

@@ -1,5 +1,7 @@
 import React from 'react';
 
+// Left side panel for hand history
+
 const HandHistory = ({ gameState }) => {
   const formatActionHistory = () => {
     if (!gameState?.action_history) return [];
