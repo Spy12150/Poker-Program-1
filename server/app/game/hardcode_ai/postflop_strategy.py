@@ -1,12 +1,9 @@
 """
-Advanced Postflop Strategy Module
+Postflop strategy module to support the hard_coded bots
 
-Implements sophisticated postflop play including:
-- Hand equity calculations
-- Draw analysis
-- Opponent range estimation
-- Optimal betting strategies
-- Bluff selection
+This file includes the monte carlo simulation with account for opponent range
+
+also checks for draw analysis and blockers
 """
 
 import random

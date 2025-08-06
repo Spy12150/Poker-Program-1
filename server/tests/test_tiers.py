@@ -1,6 +1,10 @@
 #!/usr/bin/env python3
 """
-Test file to display all hand tiers from tier_config.py
+Display all hand tiers from tier_config.py
+
+Use to adjust logic for whatever hands u want to put in each tier
+
+You can run this file directly
 """
 import sys
 import os
@@ -9,11 +13,11 @@ sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'app', 'game'))
 from hardcode_ai.tier_config import TIERS, INT_TO_RANK
 
 def tuple_to_hand_string(hand_tuple):
-    """Convert hand tuple to readable string like 'AA', 'AKs', 'AKo'"""
+    """Convert hand tuple to readable string like AA， AKs, AKo"""
     if len(hand_tuple) == 2:  # Pair
         rank = INT_TO_RANK[hand_tuple[0]]
         return f"{rank}{rank}"
-    else:  # Non-pair
+    else:  # Not pair
         hi, lo, suited = hand_tuple
         hi_rank = INT_TO_RANK[hi]
         lo_rank = INT_TO_RANK[lo]
@@ -29,7 +33,6 @@ def print_all_tiers():
         hand_strings = [tuple_to_hand_string(hand_tuple) for hand_tuple in tier_hands]
         hand_strings.sort()
         
-        # Print in format: [T0]: AA, KK, QQ, ...
         hands_str = ", ".join(hand_strings)
         print(f"[T{tier_num}]: {hands_str}")
 

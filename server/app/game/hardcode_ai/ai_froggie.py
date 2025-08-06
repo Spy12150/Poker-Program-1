@@ -1,3 +1,10 @@
+"""
+AI that just does random actions no matter the hand
+
+For testing
+Also might win against noobs
+"""
+
 import random
 
 def decide_action(game_state):

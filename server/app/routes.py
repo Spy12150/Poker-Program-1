@@ -3,7 +3,6 @@ from app.services.analytics_service import AnalyticsService
 
 bp = Blueprint('api', __name__)
 
-# Initialize minimal services for WebSocket-only app
 try:
     analytics_service = AnalyticsService()
 except Exception as e:
@@ -30,9 +29,6 @@ def health_check():
         }
     }
     return jsonify(status)
-
-# All game functionality now handled via WebSocket
-# HTTP endpoints removed - WebSocket only!
 
 @bp.route('/analytics', methods=['GET'])
 def get_analytics():

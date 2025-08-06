@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Test script for the fixed preflop charts
+Test script for the fixed preflop charts (I'm not using those anymore)
 """
 
 import random
@@ -112,7 +112,7 @@ def test_preflop_charts():
         except Exception as e:
             print(f"✗ {description}: ERROR - {e}")
     
-    print(f"\n✅ {success_count}/{len(bb_tests)} tests passed!")
+    print(f"\n{success_count}/{len(bb_tests)} tests passed!")
     
     # Test hand conversion
     print("\nTesting hand tuple conversion:")
@@ -139,9 +139,9 @@ if __name__ == "__main__":
     success = test_preflop_charts()
     print("\n" + "="*50)
     print("SUMMARY: Fixed preflop charts should now:")
-    print("1. ✅ Return consistent action strings ('call', '3bet', 'fold')")
-    print("2. ✅ Handle short stack situations properly")
-    print("3. ✅ Adjust ranges based on raise sizes")
-    print("4. ✅ Implement stack-aware strategy")
-    print("5. ✅ Provide proper BB defense ranges")
+    print("1. Return consistent action strings ('call', '3bet', 'fold')")
+    print("2. Handle short stack situations properly")
+    print("3. Adjust ranges based on raise sizes")
+    print("4. Implement stack-aware strategy")
+    print("5. Provide proper BB defense ranges")
     print("="*50)

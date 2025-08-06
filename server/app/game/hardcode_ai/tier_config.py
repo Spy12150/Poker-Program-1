@@ -8,7 +8,7 @@ However there is flaws, different cards are different strength in diff scnearios
 So there is still flaw and this might be exploitable
 
 but apart from me going in and individually copying gto wizard charts for each pre flop scenario,
-This is a more efficient way
+This is a more efficient way to do it
 
 Current config:
 [T0]: AA, AKo, AKs, AQs, JJ, KK, QQ

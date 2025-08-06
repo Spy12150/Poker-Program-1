@@ -1,5 +1,11 @@
 """
-Comprehensive Preflop Charts using 11-tier system from tier_config.py
+Comprehensive Preflop Charts using 11-tier/bucket system from tier_config.py
+
+I hard coded the preflop ranges, SB RFI is roughly 80% no limp, follow standard HU charts
+
+I was going to import full poker charts from GTOWizard
+but GTO wiz doesnt have limping as SB which people do, and not enough bet sizes
+so I did tier system to hard code every possibility
 
 This system provides complete coverage of all heads-up preflop scenarios:
 - SB first action (RFI) with stack depth adjustments
@@ -9,14 +15,10 @@ This system provides complete coverage of all heads-up preflop scenarios:
 - BB vs SB 4-bet (fold/call/5-bet decisions)
 - SB vs BB 5-bet (fold/call decisions, usually all-in)
 
-The tier system (0-10) allows fine-grained control:
-- Tier 0: Premium hands (AA, KK, QQ, JJ, AKo, AKs, AQs)
-- Tier 1-10: Decreasing hand strength (~10% of combos each)
+Check for the tiers in tier_config.py
 
-Each scenario accounts for:
-- Opponent bet sizing (minraise/standard/overbet)
-- Effective stack depth (short/medium/deep)
-- Position-specific adjustments
+Now granted this is pretty explotable if you play enough
+Could be improved by adding different percentages for each action for tiers to improve
 """
 from typing import List, Tuple, Dict, Optional
 from .tier_config import TIERS, class_lookup
@@ -31,7 +33,7 @@ INT_TO_RANK = {v: k for k, v in RANK_TO_INT.items()}
 # ---------------------------------------------------------------------------
 
 def hand_to_tuple(hand: List[str]) -> Tuple[int, int, bool]:
-    """Convert ['Ah','Kd'] → (14, 13, False). Pair → (rank, rank)."""
+    """Convert ['Ah','Kd'] to (14, 13, False)"""
     c1, c2 = hand
     r1, s1 = c1[0], c1[1]
     r2, s2 = c2[0], c2[1]
@@ -67,19 +69,19 @@ def categorize_bet_size(bet_size_bb: float, previous_bet_bb: float = 1.0) -> str
         else:
             return "overbet"
     
-    # For 3-bets, 4-bets, etc., use multiple of previous bet
+    # use multiple to group the bet sizes for actions
     multiple = bet_size_bb / previous_bet_bb
     
     if multiple <= 2.5:
-        return "minraise"  # Small 3-bet (e.g., 3bb -> 7.5bb)
+        return "minraise" 
     elif multiple <= 3.8:
         return "standard_low"  
     elif multiple <= 6:
-        return "standard"  # Standard 3-bet (e.g., 3bb -> 9-10.5bb)
+        return "standard"  
     elif multiple <= 12:
-        return "large"     # Large 3-bet (e.g., 3bb -> 15bb)
+        return "large"    
     else:
-        return "overbet"   # Huge 3-bet (e.g., 3bb -> 18bb+)
+        return "overbet"  
 
 def categorize_stack_depth(stack_bb: int) -> str:
     """Categorize effective stack depth"""
@@ -96,16 +98,14 @@ def categorize_stack_depth(stack_bb: int) -> str:
 
 class PreflopCharts:
     def __init__(self):
-        """Initialize comprehensive preflop strategy charts"""
         self._build_strategy_tables()
 
     def _build_strategy_tables(self):
-        """Build all strategy lookup tables"""
         # SB RFI ranges by stack depth
         self.sb_rfi_ranges = {
-            "short": 7,    # tiers 0-7 (top ~80%)
-            "medium": 8,   # tiers 0-8 (top ~90%)
-            "deep": 8      # tiers 0-8 (top ~90%)
+            "short": 7,    # RFI less hands when short stacked
+            "medium": 8,   
+            "deep": 8     
         }
         
         # BB vs SB limp: which hands to raise
@@ -114,85 +114,85 @@ class PreflopCharts:
         # BB defense vs SB raise - more granular based on raise size
         self.bb_defense_ranges = {
             "minraise": {
-                "call": 7,     # tiers 0-8
-                "3bet": 3      # tiers 0-2 (strongest for value)
+                "call": 7,    # 7 means tiers 4-7
+                "3bet": 3     # 3 means 0-3
             },
             "standard_low": {
-                "call": 6,     # tiers 0-6  
-                "3bet": 3      # tiers 0-1 (very strong)
+                "call": 6,   
+                "3bet": 3     
             },
             "standard": {
-                "call": 5,     # tiers 0-6  
-                "3bet": 2      # tiers 0-1 (very strong)
+                "call": 5,     
+                "3bet": 2      
             },
             "large": {
-                "call": 3,     # tiers 0-4
-                "3bet": 2      # tier 0 only (nuts)
+                "call": 3,     
+                "3bet": 2     
             },
             "overbet": {
-                "call": 1,     # tiers 0-2
-                "3bet": 0      # tier 0 only
+                "call": 1,   
+                "3bet": 0      # Nuts only
             }
         }
         
         # SB vs BB 3-bet responses
         self.sb_vs_3bet_ranges = {
             "minraise": {  # BB 3-bet is small
-                "call": 6,     # tiers 0-5
-                "4bet": 3      # tiers 0-1
+                "call": 6,     
+                "4bet": 3     
             },
             "standard_low": {
-                "call": 4,     # tiers 0-6  
-                "3bet": 1      # tiers 0-1 (very strong)
+                "call": 4,    
+                "3bet": 1     
             },
-            "standard": {  # BB 3-bet is standard size
-                "call": 3,     # tiers 0-3  
-                "4bet": 0      # tier 0 only
+            "standard": {  
+                "call": 3,    
+                "4bet": 0     
             },
-            "large": {     # BB 3-bet is large
-                "call": 1,     # tiers 0-2
-                "4bet": 0      # tier 0 only (nuts)
+            "large": {  
+                "call": 1,    
+                "4bet": 0      
             },
-            "overbet": {   # BB 3-bet is huge
-                "call": 1,     # tiers 0-1
-                "4bet": 0      # tier 0 only
+            "overbet": {  
+                "call": 1,     
+                "4bet": 0    
             }
         }
         
         # BB vs SB 4-bet responses  
         self.bb_vs_4bet_ranges = {
             "standard_low": {
-                "call": 1,     # tiers 0-1
-                "5bet": 0      # tier 0 only (usually all-in)
+                "call": 1,    
+                "5bet": 0      
             },
             "standard": {
-                "call": 1,     # tiers 0-1
-                "5bet": 0      # tier 0 only (usually all-in)
+                "call": 1,   
+                "5bet": 0    
             },
             "large": {
-                "5bet": 0      # tier 0 only
+                "5bet": 0    
             },
             "overbet": {
-                "5bet": 0      # fold everything except absolute nuts
+                "5bet": 0    
             }
         }
         
         # SB vs BB 5-bet responses - sizing dependent
         self.sb_vs_5bet_ranges = {
-            "minraise": {     # Small 5-bet (2-2.5x)
-                "call": 2     # tiers 0-2 (includes 88, 99, TT)
+            "minraise": {   
+                "call": 2  
             },
-            "standard_low": { # Medium 5-bet (2.6-3.8x)
-                "call": 1     # tiers 0-1 (very strong only)
+            "standard_low": { 
+                "call": 1     
             },
-            "standard": {     # Standard 5-bet (3.9-6x)
-                "call": 1     # tiers 0-1 (very strong only)
+            "standard": {    
+                "call": 1    
             },
-            "large": {        # Large 5-bet (6.1-12x)
-                "call": 0     # tier 0 only (nuts)
+            "large": {       
+                "call": 0    
             },
-            "overbet": {      # Massive 5-bet (>12x, usually all-in)
-                "call": 0     # tier 0 only (nuts)
+            "overbet": {      
+                "call": 0     
             }
         }
 
@@ -218,7 +218,7 @@ class PreflopCharts:
 
     def sb_first_action(self, hand: List[str], stack_bb: int = 100) -> str:
         """
-        SB first action (Raise First In)
+        SB first action
         
         Args:
             hand: Two-card hand

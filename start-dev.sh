@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Poker App Development Startup Script
+# Run ./start-dev.sh in root directory to run my project locally!
 
 echo "Starting Poker App Development Environment..."
 
@@ -59,5 +59,5 @@ echo "Ready to play poker!"
 echo ""
 echo "Press Ctrl+C to stop both servers"
 
-# Wait for user to stop
+# Run til users kills script
 wait

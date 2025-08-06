@@ -6,6 +6,7 @@ const StartGameButton = ({ gameState, startGame, loading }) => {
 
   if (gameState) return null;
 
+  // Names of all AI for start page and debugpaenl
   const aiOptionsList = [
     {
       id: 'froggie',

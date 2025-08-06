@@ -1,8 +1,9 @@
 """
-GTO-Enhanced Poker AI
+This is bladework_v1
 
-This module combines Game Theory Optimal concepts with opponent modeling
-to create a more sophisticated and adaptive poker AI.
+No longer used, it didn't calculate bet to pot ratio
+so it would treat small bet same as big bet
+so you could minbet every time and you would make it fold 90% of hands
 """
 
 import random

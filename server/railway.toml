@@ -5,5 +5,5 @@ builder = "nixpacks"
 healthcheckPath = "/"
 healthcheckTimeout = 300
 restartPolicyType = "always"
-# Use Flask-SocketIO's built-in server (better for WebSockets than Gunicorn)
+# Flask-SocketIO built-in server 
 startCommand = "python wsgi.py"

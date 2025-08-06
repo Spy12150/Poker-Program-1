@@ -1,4 +1,5 @@
-#!/bin/bash
+# Runs the image conversion script
+# I intially had only PNG but it was loading too slowly
 
 # Image Conversion Script - Convert PNG to WebP
 echo "🎴 Converting poker card images from PNG to WebP..."
@@ -52,8 +53,8 @@ for file in *.png; do
 done
 
 echo ""
-echo "✅ Conversion complete!"
-echo "📊 Converted $converted out of $total_files files"
+echo "Conversion complete!"
+echo "Converted $converted out of $total_files files"
 echo ""
 echo "Next steps:"
 echo "1. Update your React components to use .webp extensions"
@@ -67,8 +68,8 @@ if [ $converted -gt 0 ]; then
     total_savings=$((100 - (total_webp_size * 100 / total_png_size)))
     
     echo ""
-    echo "💾 Total space savings: ${total_savings}%"
-    echo "📦 Original size: $(($total_png_size / 1024)) KB"
-    echo "📦 WebP size: $(($total_webp_size / 1024)) KB"
-    echo "🚀 Savings: $(( (total_png_size - total_webp_size) / 1024 )) KB"
+    echo "Total space savings: ${total_savings}%"
+    echo "Original size: $(($total_png_size / 1024)) KB"
+    echo "WebP size: $(($total_webp_size / 1024)) KB"
+    echo "Savings: $(( (total_png_size - total_webp_size) / 1024 )) KB"
 fi

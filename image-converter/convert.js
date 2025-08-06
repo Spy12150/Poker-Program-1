@@ -40,7 +40,7 @@ async function convertPngToWebP() {
         totalWebPSize += webpStats.size;
         
         const savings = Math.round((1 - webpStats.size / originalStats.size) * 100);
-        console.log(`✅ ${file} -> ${file.replace('.png', '.webp')} (${savings}% smaller)`);
+        console.log(`${file} -> ${file.replace('.png', '.webp')} (${savings}% smaller)`);
         converted++;
         
       } catch (error) {
@@ -49,14 +49,14 @@ async function convertPngToWebP() {
     }
     
     const totalSavings = Math.round((1 - totalWebPSize / totalOriginalSize) * 100);
-    console.log(`\n📊 Conversion Summary:`);
+    console.log(`\nConversion Summary:`);
     console.log(`   Converted: ${converted}/${pngFiles.length} files`);
     console.log(`   Original size: ${Math.round(totalOriginalSize / 1024)} KB`);
     console.log(`   WebP size: ${Math.round(totalWebPSize / 1024)} KB`);
     console.log(`   Total savings: ${totalSavings}% (${Math.round((totalOriginalSize - totalWebPSize) / 1024)} KB)`);
     
   } catch (error) {
-    console.error('❌ Error:', error.message);
+    console.error('Error:', error.message);
   }
 }
 

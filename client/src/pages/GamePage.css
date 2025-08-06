@@ -1,4 +1,3 @@
-/* Connection Status Indicator */
 .connection-status {
   position: fixed;
   top: 10px;
@@ -33,7 +32,6 @@
   box-shadow: 0 4px 12px rgba(244, 67, 54, 0.4);
 }
 
-/* AI Thinking Indicator */
 .ai-thinking-indicator {
   position: fixed;
   top: 80px;
@@ -77,7 +75,6 @@
   }
 }
 
-/* Error Boundary Styling */
 .error-boundary {
   position: fixed;
   top: 50%;
@@ -385,7 +382,6 @@
   box-sizing: border-box;
 }
 
-/* Card dealing animations */
 .dealing-animation {
   position: relative;
 }
@@ -398,7 +394,7 @@
   transform: translate3d(0, 0, 0); /* GPU acceleration */
 }
 
-/* Staggered animation for multiple cards */
+/* stagger the animation for multiple cards */
 .community-card.new-card:nth-child(2) {
   animation-delay: 0.1s;
   animation-fill-mode: backwards;
@@ -459,7 +455,7 @@
   font-size: 20px;
   color: #6c757d;
   box-shadow: inset 0 2px 5px rgba(0,0,0,0.1);
-  flex-shrink: 0; /* Prevent shrinking */
+  flex-shrink: 0; 
   box-sizing: border-box;
 }
 
@@ -956,7 +952,6 @@
   font-weight: 600;
 }
 
-/* Modern Action Panel Styles */
 .modern-action-panel {
   position: fixed;
   bottom: 20px;
@@ -1192,7 +1187,6 @@
   border-color: #666;
 }
 
-/* Turn Indicators */
 .turn-indicator {
   position: absolute;
   padding: 8px 16px;
@@ -1223,7 +1217,6 @@
   50% { opacity: 0.8; transform: scale(1.02); }
 }
 
-/* Current Bet Containers */
 .current-bet-container {
   position: absolute;
   padding: 6px 12px;
@@ -1250,7 +1243,8 @@
     left: 50%;
     transform: translate(88px, -50%);
     box-shadow: 0 2px 8px rgba(52, 152, 219, 0.4);
-  }/* Position Indicators */
+  }
+
 .position-indicators {
   position: absolute;
   bottom: 8px;
@@ -1295,7 +1289,6 @@
   color: black;
 }
 
-/* Hand Evaluation Display */
 .hand-evaluation {
   position: absolute;
   top: 100%;
@@ -1318,7 +1311,6 @@
   line-height: 1.3;
 }
 
-/* Cardback Selector Button */
 .cardback-selector-btn {
   position: fixed;
   bottom: 20px;
@@ -1352,7 +1344,6 @@
   transform: scale(0.95);
 }
 
-/* Debug Panel */
 .debug-panel {
   position: fixed;
   bottom: 10px;
@@ -1388,7 +1379,7 @@
   font-size: 11px;
 }
 
-/* Mobile Responsive Design */
+/* Mobile Design!!!!!!!!!  This barely works  */
 @media (max-width: 768px) {
   /* Disable transform/scale effects on specific buttons to prevent movement */
   .ai-button:hover,
@@ -1410,7 +1401,6 @@
     display: none !important;
   }
 
-  /* Mobile menu button - positioned in top left */
   .menu-button {
     position: fixed !important;
     top: 10px !important;
@@ -1449,7 +1439,6 @@
     letter-spacing: 0.5px;
   }
 
-  /* Game container adjustments - fixed height, no scrolling */
   .game-container {
     height: 100vh;
     padding: 0;
@@ -1460,7 +1449,6 @@
     background: #6c757d;
   }
 
-  /* Show poker table as full background on mobile */
   .table-container {
     position: fixed !important;
     top: 10px !important;
@@ -1498,7 +1486,7 @@
     
   }
 
-  /* Mobile layout structure - override absolute positioning */
+  /* override absolute positioning */
   .opponent-area {
     position: absolute !important;
     top: 0vh !important;
@@ -1599,7 +1587,7 @@
     border-radius: 15px;
   }
 
-  /* Mobile cardback selector button - positioned above action panel */
+  /* cardback selector button - bottom left of gameplay field; */
   .cardback-selector-btn {
     position: fixed !important;
     bottom: 185px !important;
@@ -1624,7 +1612,6 @@
     outline: none !important;
   }
 
-  /* Modern action panel for mobile */
   .modern-action-panel {
     position: fixed !important;
     bottom: 0 !important;
@@ -1744,7 +1731,6 @@
     display: none;
   }
 
-  /* Compact action buttons */
   .primary-actions {
     flex-wrap: wrap;
     gap: 6px;
@@ -1760,7 +1746,6 @@
     border-radius: 15px;
   }
 
-  /* Compact betting section */
   .betting-section {
     padding-top: 10px;
     margin-top: 8px;
@@ -1827,7 +1812,6 @@
     border-radius: 15px;
   }
 
-  /* Compact start game container */
   .start-game-container {
     position: fixed;
     top: 39%;
@@ -1880,7 +1864,6 @@
     border-radius: 20px;
   }
 
-  /* Mobile turn indicators - positioned relative to player frames */
   .turn-indicator {
     position: absolute;
     left: 0;
@@ -1930,7 +1913,6 @@
     box-shadow: 0 2px 8px rgba(52, 152, 219, 0.4);
   }
 
-  /* Mobile hand evaluation - positioned below player frame */
   .hand-evaluation {
     position: absolute;
     top: 100%;
@@ -1942,7 +1924,6 @@
     max-width: 150px;
   }
 
-  /* Mobile position indicators - match desktop positioning */
   .position-indicators {
     position: absolute;
     bottom: 8px;
@@ -1959,7 +1940,6 @@
     font-size: 9px;
   }
 
-  /* Mobile hand-over-panel - centered at bottom with margins and border */
   .hand-over-panel {
     position: fixed !important;
     top: auto !important;

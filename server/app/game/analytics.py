@@ -1,5 +1,7 @@
 """
 Game analytics and statistics tracking for poker sessions
+
+I disabled it cus it was making 30000 line json files, the AIs track stats per session individually
 """
 
 import json

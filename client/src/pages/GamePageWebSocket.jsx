@@ -46,10 +46,10 @@ const GamePage = () => {
   const [newCardIndices, setNewCardIndices] = useState([]);
   const [selectedCardback, setSelectedCardback] = useState('Cardback17');
   
-  // Use ref to track animation state synchronously (prevents React batching issues)
+  // This is to protect card animation getting interrupted 
   const isAnimatingRef = useRef(false);
 
-  // WebSocket connection - connect to local server for development
+  // Local development connection
   const socket = useSocket(import.meta.env.VITE_API_URL || 'http://localhost:5001');
 
   // Memoize cardbacks array to prevent recreation on every render

@@ -3,63 +3,43 @@ from .hand_eval_lib import evaluate_hand
 from .config import NUM_PLAYERS, STARTING_STACK, SMALL_BLIND, BIG_BLIND, ANTE
 
 """
-Poker Game Flow (Basic Logic)
+Main file for core poker game engine and logic
 
-1. Initialize hand:
-    - Shuffle deck and assign dealer/button position.
-    - Deal two hole cards to each player.
-    - Post blinds (small and big blind).
+Standard poker game flow from preflop, flop, turn, river, to showdown
+Handles all-in and side pot disribution
 
-2. Preflop betting round:
-    - Begin with player left of big blind.
-    - In turn, each active player can fold, call, or raise.
-    - Betting continues until all bets are matched or only one player remains.
+Only suitable for heads up for now, will improve for 6 handed
 
-3. Flop:
-    - Deal three community cards face up.
-    - Start new betting round with first active player left of dealer.
+Logs hands to the hand_history folder if cloned on local machine
+hand logging format is very similra to the variant used on pokerstars
+Might work if you plug it into gtowizard for analysis, not 100% sure
+Does nt log when hosted on railway
 
-4. Turn:
-    - Deal one community card (the turn).
-    - Start new betting round.
+Supports ante if added in ./config.py
 
-5. River:
-    - Deal final community card (the river).
-    - Start last betting round.
-
-6. Showdown:
-    - If more than one player remains after final betting:
-        - Reveal all active players' hole cards.
-        - Evaluate each player's best 5-card hand using their two hole cards plus five community cards.
-        - Player(s) with the strongest hand(s) win the pot (split if tied).
-
-7. Cleanup and prepare for next hand:
-    - Award chips from pot to winner(s).
-    - Rotate dealer/button and blinds.
-    - Reset player statuses, bets, and game state.
-    - Start next hand.
-
-Note:
-- If at any point all but one player folds, last remaining player wins the pot immediately.
-- Side pots may be created if players go all-in for different amounts (optional in initial implementation).
+Built for real-time multiplayer poker games with WebSocketcommunication
 """
 
 
 def create_deck():
+    """Creates a standard 52-card deck with suits (s,h,d,c) and ranks (2-A)."""
     suits = ['s', 'h', 'd', 'c']
     ranks = ['2', '3', '4', '5', '6', '7', '8', '9', 'T', 'J', 'Q', 'K', 'A']
     return [r + s for r in ranks for s in suits]
 
 def deal_cards(deck, num_players=NUM_PLAYERS):
+    """Deals 2 hole cards to each player from the deck."""
     return [[deck.pop(), deck.pop()] for _ in range(num_players)]
 
 def init_players(num_players=NUM_PLAYERS, stack=STARTING_STACK):
+    """Initializes player objects with starting stacks and active status."""
     return [
         {"name": f"Player {i+1}", "hand": [], "stack": stack, "current_bet": 0, "status": "active"}
         for i in range(num_players)
     ]
 
 def start_new_game():
+    """Initializes a complete new poker game with deck, players, blinds, and hand history."""
     import os
     from datetime import datetime
     deck = create_deck()
@@ -123,6 +103,7 @@ def start_new_game():
     return game_state
 
 def apply_antes(game_state):
+    """Collects ante from all active players before dealing cards."""
     if ANTE > 0:
         for player in game_state['players']:
             if player['status'] == "active" and player['stack'] >= ANTE:
@@ -132,6 +113,7 @@ def apply_antes(game_state):
                 player['status'] = 'out'
 
 def deal_community_cards(game_state):
+    """Deals community cards for next street (flop: 3 cards, turn/river: 1 card each)."""
     # progress the game to the next betting round
     deck = game_state['deck']
     community = game_state['community']
@@ -150,6 +132,7 @@ def deal_community_cards(game_state):
     return game_state
 
 def next_player(game_state):
+    """Advances to the next active player in turn order."""
     num_players = len(game_state['players'])
     i = game_state['current_player']
     print(f"DEBUG: next_player called, current: {i}")
@@ -163,7 +146,7 @@ def next_player(game_state):
     print(f"DEBUG: next_player found no active players!")
 
 def log_to_hand_history(game_state, message):
-    """Appends a message to the hand history file."""
+    """Appends a message to the hand history file for game analysis and replay."""
     if game_state.get('hand_history_path'):
         try:
             with open(game_state['hand_history_path'], 'a') as f:
@@ -173,10 +156,7 @@ def log_to_hand_history(game_state, message):
             pass
 
 def apply_action(game_state, action, amount=0):
-    """
-    action: 'fold', 'call', 'raise', 'check'
-    amount: only used for 'raise'
-    """
+    """Processes player actions (fold/call/raise/check/bet) and updates game state accordingly."""
     player = game_state['players'][game_state['current_player']]
     to_call = game_state.get('current_bet', 0) - player['current_bet']
     log_message = ""
@@ -242,14 +222,7 @@ def apply_action(game_state, action, amount=0):
     # Move to next player (handled outside in your round controller)
 
 def betting_round_over(game_state):
-    """
-    Betting round is over if:
-    - All players but one are folded
-    - All active players have matched the current bet or are all-in
-    - All remaining players are all-in (no one can act)
-    - No more betting actions are possible (e.g., one player all-in, other called)
-    - AND the player who needs to act next has already had their turn this round
-    """
+    """Determines if the current betting round is complete based on player actions and bet matching."""
     # Include both active and all-in players in the count
     players_in_hand = [p for p in game_state['players'] if p['status'] in ['active', 'all-in']]
     active_players = [p for p in game_state['players'] if p['status'] == 'active']
@@ -352,10 +325,7 @@ def betting_round_over(game_state):
     return True
 
 def run_betting_round(game_state, action_sequence):
-    """
-    action_sequence: list of tuples (action, amount)
-    For actual play, you'll step this as each player acts.
-    """
+    """Executes a sequence of betting actions for automated testing and simulation."""
     for action, amount in action_sequence:
         apply_action(game_state, action, amount)
         if betting_round_over(game_state):
@@ -367,6 +337,7 @@ def run_betting_round(game_state, action_sequence):
 # Note: determine_winner function removed as it's redundant with showdown()
 
 def reset_bets(game_state):
+    """Resets all player bets and current_bet for the next betting round."""
     for player in game_state['players']:
         player['current_bet'] = 0
         # Reset player status to active if they have chips and aren't folded
@@ -379,9 +350,7 @@ def reset_bets(game_state):
         game_state['action_history'] = []
 
 def advance_round(game_state):
-    """
-    Progresses to next street: flop, turn, river, or showdown.
-    """
+    """Progresses to next street: flop, turn, river, or showdown with community cards."""
     round = game_state['betting_round']
     if round == 'preflop':
         flop = [game_state['deck'].pop() for _ in range(3)]
@@ -407,10 +376,7 @@ def advance_round(game_state):
     reset_bets(game_state)
 
 def deal_remaining_cards(game_state):
-    """
-    Deal all remaining community cards when all players are all-in.
-    This skips betting rounds and goes straight to showdown.
-    """
+    """Deals all remaining community cards when all players are all-in (run-out)."""
     round = game_state['betting_round']
     
     if round == 'preflop':
@@ -434,7 +400,7 @@ def deal_remaining_cards(game_state):
     # reset_bets(game_state)  # REMOVED: This was wiping out investment info needed for showdown
 
 def log_hand_start_header(game_state):
-    """Logs the header for a new hand."""
+    """Logs the PokerStars-style header with hand number, stakes, and player positions."""
     from datetime import datetime
     hand_history_path = game_state['hand_history_path']
     hand_count = game_state['hand_count']
@@ -458,6 +424,7 @@ def log_hand_start_header(game_state):
 
 
 def prepare_next_hand(game_state):
+    """Sets up the next hand with new cards, rotated dealer, and preserved opponent stats."""
     # Preserve opponent model across hands and increment hand counter
     opponent_model = game_state.get('opponent_model', {
         'hands_played': 0,
@@ -504,17 +471,7 @@ def prepare_next_hand(game_state):
 
 
 def distribute_side_pots(players_in_hand, winner_data, game_state):
-    """
-    Properly distribute side pots when players have different investment amounts.
-    
-    Args:
-        players_in_hand: List of players still in the hand
-        winner_data: List of (score, hand_class, player) tuples for winners
-        game_state: Current game state
-    
-    Returns:
-        Dictionary of {player_name: amount_won}
-    """
+    """Calculates and distributes side pots for all-in scenarios with unequal investments."""
     winnings = {p['name']: 0 for p in game_state['players']}
     
     # Get investment amounts (current_bet) for each player in hand
@@ -607,6 +564,7 @@ def distribute_side_pots(players_in_hand, winner_data, game_state):
     return winnings
 
 def showdown(game_state):
+    """Evaluates all hands, determines winners, distributes pots, and logs complete results."""
     community = game_state['community']
     players_in_hand = [p for p in game_state['players'] if p['status'] in ['active', 'all-in']]
     all_players = game_state['players']
@@ -711,6 +669,7 @@ def showdown(game_state):
 
 
 def post_blinds(game_state, small_blind=SMALL_BLIND, big_blind=BIG_BLIND):
+    """Posts small and big blinds with proper heads-up and multi-player positioning rules."""
     num_players = len(game_state['players'])
     
     if num_players == 2:  # Heads-up poker rules
@@ -754,4 +713,3 @@ def post_blinds(game_state, small_blind=SMALL_BLIND, big_blind=BIG_BLIND):
 
 
 
-# More functions needed for: betting logic, showdown, winner determination, etc.

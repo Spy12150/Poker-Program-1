@@ -19,3 +19,7 @@ node_modules/
 dist/
 build/
 .vite/
+
+# logs
+backend.log
+frontend.log

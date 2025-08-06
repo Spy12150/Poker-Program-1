@@ -1,7 +1,7 @@
 from collections import Counter
 
 """
-Not used as logic for project, alternate approach
+Not used as logic for project, alternate approach not using poker libraries
 """
 def hand_rank(cards):
     """

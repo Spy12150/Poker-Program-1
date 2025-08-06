@@ -3,7 +3,9 @@ Bladework v2
 
 My second version of my hard coded AI
 This version includes calculation of opponent ranges, and using Monte Carlo to simulate runs.
-It also tracks opponent behaviour through statistics like VPIP or PFR rate.
+It also tracks opponent behaviour through statistics like VPIP or PFR rate (per session)
+
+Good enough to beat my dad, myself, and most novice/intermediate players
 """
 
 import random
@@ -648,14 +650,13 @@ class GTOEnhancedAI:
         return min(stack, round(pot * 0.67))
 
     def calculate_value_raise_size(self, hand_strength, bet_to_call, pot, stack, street):
-        """Legacy method - redirects to calculate_optimal_raise_size"""
         return self.calculate_optimal_raise_size(hand_strength, bet_to_call, pot, stack, street, {}, 'value')
 
     def calculate_hand_strength_normalized(self, hand, community):
         if not community: return self.get_simple_hand_strength(hand)
         try:
             score, _ = evaluate_hand(hand, community)
-            # More conservative hand strength scaling
+            # Hand score scaling, for rough strength estimat 
             if score <= 10: return 0.99      # Royal flush, straight flush
             elif score <= 166: return 0.94   # Four of a kind  
             elif score <= 322: return 0.88   # Full house
@@ -673,9 +674,9 @@ class GTOEnhancedAI:
         if bet_to_call <= 0: return float('inf')
         return pot_size / bet_to_call
 
-    # ----- Advanced board texture analysis system -----
+    # board texture analysis
     def analyze_board_comprehensive(self, community, street):
-        """Advanced comprehensive board analysis for strategic decisions."""
+        """Advanced comprehensive board analysis for strategic decisions"""
         if len(community) < 3:
             return {'type': 'preflop', 'texture_type': 'preflop', 'static': True, 'draw_heavy': False}
 
@@ -748,10 +749,10 @@ class GTOEnhancedAI:
         
         flush_draws = 0
         for count in suit_counts.values():
-            if count == 3:  # 3 of same suit = flush draw
+            if count == 3:  # flush draw
                 flush_draws += 1
-            elif count >= 4:  # 4+ of same suit = made flush
-                flush_draws += 2  # Strong draw potential
+            elif count >= 4:  # flush
+                flush_draws += 2  
         return flush_draws
 
     def count_straight_draws(self, community):
