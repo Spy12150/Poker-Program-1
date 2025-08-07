@@ -24,6 +24,9 @@ export const useImagePreloader = () => {
         cardImages.push(`/IvoryCards/Cardback${i}.webp`);
       }
 
+      // Add background image
+      cardImages.push('/IvoryCards/background.webp');
+
       // Preload images in larger batches for faster loading
       const batchSize = 20;
       const startTime = performance.now();
