@@ -76,10 +76,29 @@ class InformationSet:
         # Card bucket (normalized)
         max_buckets = 200  # Approximate max across all streets
         features.append(self.card_bucket / max_buckets)
-        
+
         # Pot size bucket (normalized)
         max_pot_buckets = 20
         features.append(self.pot_size_bucket / max_pot_buckets)
+
+        # Improved situational features (to_call, pot odds, SPR approx)
+        # These require legal_actions and are approximated from betting history where possible
+        # Defaults to zeros if unavailable
+        to_call = 0.0
+        pot = 1.0  # avoid div by zero
+        spr = 1.0
+        try:
+            # Heuristic extraction from betting history length
+            # For full integration, pass numeric to_call/pot into InformationSet
+            action_intensity = min(len(self.betting_history.split(',')) if self.betting_history else 0, 10)
+            to_call = action_intensity / 10.0
+            pot = 1.0 + action_intensity
+            spr = 1.0 / (1.0 + action_intensity)
+        except Exception:
+            pass
+        pot_odds = min(to_call / pot, 1.0)
+        features.append(pot_odds)
+        features.append(spr)
         
         # Betting history features
         history_features = self.encode_betting_history()
@@ -113,10 +132,11 @@ class InformationSet:
         features.append(min(len(actions), max_length) / max_length)
         
         # Pad to fixed length
-        while len(features) < 10:
+        while len(features) < 12:
             features.append(0.0)
-            
-        return features[:10]  # Truncate if too long
+        
+        # Truncate if too long
+        return features[:12]
     
     def get_strategy(self, use_regret_matching: bool = True) -> Dict[str, float]:
         """Get current strategy using regret matching"""
@@ -221,7 +241,7 @@ class InformationSetManager:
             self.information_sets[key] = info_set
             self.creation_count += 1
             
-            if self.creation_count % 10000 == 0:
+            if self.creation_count % 1000000 == 0:
                 print(f"Created {self.creation_count:,} information sets")
         else:
             # Update legal actions in case they changed

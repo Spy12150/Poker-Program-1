@@ -13,12 +13,15 @@ from typing import List, Dict, Tuple, Optional, Any, Set
 from collections import defaultdict, deque
 import time
 import os
+import json
+import datetime
 
 from .config import get_config
 from .game_abstraction import create_game_abstraction
 from .information_set import create_information_set_manager, GameState, InformationSet
 from .neural_networks import create_networks
 from .cfr_trainer import NeuralCFRTrainer
+from .action_space import ACTION_MAP, ACTION_LIST
 
 class ReservoirBuffer:
     """
@@ -77,6 +80,20 @@ class DeepCFRTrainer(NeuralCFRTrainer):
         print(f"Initialized Deep CFR Trainer")
         print(f"Advantage memory: {self.config.ADVANTAGE_MEMORY_SIZE:,}")
         print(f"Strategy memory: {self.config.STRATEGY_MEMORY_SIZE:,}")
+        # Override trainer label in results meta
+        try:
+            # Recreate meta with correct trainer type
+            base = getattr(self.config, 'RESULTS_BASE_PATH', 'server/app/game/cfr_ai/results')
+            # Reuse existing directory created by parent
+            meta = {
+                'run_started_at': os.path.basename(self._results_dir).replace('run_', ''),
+                'config': self.config.to_dict(),
+                'trainer': 'DeepCFRTrainer'
+            }
+            with open(os.path.join(self._results_dir, 'meta.json'), 'w') as f:
+                json.dump(meta, f)
+        except Exception:
+            pass
     
     def train(self, iterations: int = None):
         """Enhanced training loop for Deep CFR"""
@@ -89,7 +106,8 @@ class DeepCFRTrainer(NeuralCFRTrainer):
             self.iteration += 1
             
             # Run CFR iteration with neural network approximation
-            self.deep_cfr_iteration()
+            shared_budget = [getattr(self.config, 'MAX_NODES_PER_ITERATION', 50000)]
+            self.deep_cfr_iteration(shared_budget)
             
             # Train neural networks on schedule
             if self.iteration % self.train_advantage_every == 0:
@@ -99,11 +117,27 @@ class DeepCFRTrainer(NeuralCFRTrainer):
                 self.train_strategy_memory()
             
             # Periodic logging
-            if self.iteration % 1000 == 0:
-                elapsed = time.time() - start_time
+            if self.iteration % self.config.PRINT_FREQUENCY == 0:
+                elapsed = max(1e-6, time.time() - start_time)
                 its_per_sec = self.iteration / elapsed
-                print(f"Iteration {self.iteration:,} ({its_per_sec:.1f} it/s) - "
-                      f"Adv: {len(self.advantage_memories):,}, Strat: {len(self.strategy_memories):,}")
+                print(
+                    f"Iter {self.iteration:,} | {its_per_sec:.0f} it/s | "
+                    f"InfoSets: {len(self.info_set_manager.information_sets):,} | "
+                    f"AdvMem: {len(self.advantage_memories):,} | StratMem: {len(self.strategy_memories):,}"
+                )
+            # Optional per-iteration print (testing only)
+            if getattr(self.config, 'VERBOSE_EACH_ITERATION', False):
+                print(
+                    f"[Iter {self.iteration}] InfoSets: {len(self.info_set_manager.information_sets):,} | "
+                    f"AdvMem: {len(self.advantage_memories):,} | StratMem: {len(self.strategy_memories):,}"
+                )
+            # Per-iteration results
+            self._write_iteration_result({
+                'iteration': self.iteration,
+                'info_sets': len(self.info_set_manager.information_sets),
+                'adv_mem': len(self.advantage_memories),
+                'strat_mem': len(self.strategy_memories)
+            })
             
             # Checkpoints and evaluation
             if self.iteration % self.config.SAVE_FREQUENCY == 0:
@@ -114,8 +148,9 @@ class DeepCFRTrainer(NeuralCFRTrainer):
         
         print(f"Deep CFR training completed in {time.time() - start_time:.1f} seconds")
         self.save_final_strategy()
+        self._close_results_writer()
     
-    def deep_cfr_iteration(self):
+    def deep_cfr_iteration(self, node_budget: list):
         """Run one iteration of Deep CFR"""
         # Create random game states for training
         for _ in range(2):  # Multiple states per iteration
@@ -123,14 +158,25 @@ class DeepCFRTrainer(NeuralCFRTrainer):
             
             # Traverse for both players
             for player in [0, 1]:
-                self.deep_cfr_recursive(game_state, player, 1.0, 1.0)
+                self.deep_cfr_recursive(game_state, player, 1.0, 1.0, 0, node_budget)
     
     def deep_cfr_recursive(self, game_state: GameState, traversing_player: int,
-                          reach_prob_0: float, reach_prob_1: float) -> float:
+                          reach_prob_0: float, reach_prob_1: float,
+                          depth: int = 0, node_budget: list = None) -> float:
         """
         Deep CFR recursive algorithm using neural network approximation
         """
         
+        # Initialize and check traversal budgets
+        if node_budget is None:
+            node_budget = [getattr(self.config, 'MAX_NODES_PER_ITERATION', 50000)]
+        node_budget[0] -= 1
+        if node_budget[0] <= 0:
+            return 0.0
+        # Depth guard to prevent runaway recursion
+        if depth >= 200:
+            return 0.0
+
         # Terminal node
         if self.is_terminal(game_state):
             return self.get_terminal_utility(game_state, traversing_player)
@@ -149,17 +195,15 @@ class DeepCFRTrainer(NeuralCFRTrainer):
         action_utilities = {}
         for action in info_set.legal_actions:
             new_game_state = self.apply_action(game_state, action)
-            
             # Update reach probabilities
             if current_player == 0:
                 new_reach_0 = reach_prob_0 * strategy[action]
                 new_reach_1 = reach_prob_1
             else:
-                new_reach_0 = reach_prob_0  
+                new_reach_0 = reach_prob_0
                 new_reach_1 = reach_prob_1 * strategy[action]
-            
             action_utilities[action] = self.deep_cfr_recursive(
-                new_game_state, traversing_player, new_reach_0, new_reach_1
+                new_game_state, traversing_player, new_reach_0, new_reach_1, depth + 1, node_budget
             )
         
         # Store training data for neural networks
@@ -168,8 +212,14 @@ class DeepCFRTrainer(NeuralCFRTrainer):
             self.store_deep_cfr_data(info_set, action_utilities, strategy, opponent_reach)
         
         # Return expected utility
-        return sum(strategy[action] * action_utilities[action] 
-                  for action in info_set.legal_actions)
+        # Safe expected utility
+        probs = np.array([max(strategy.get(a, 0.0), 0.0) for a in info_set.legal_actions], dtype=np.float64)
+        s = probs.sum()
+        if s <= 0:
+            probs = np.ones_like(probs) / len(probs)
+        else:
+            probs = probs / s
+        return float(sum(probs[i] * action_utilities[a] for i, a in enumerate(info_set.legal_actions)))
     
     def get_neural_strategy(self, info_set: InformationSet) -> Dict[str, float]:
         """Get strategy using neural network prediction"""
@@ -193,27 +243,23 @@ class DeepCFRTrainer(NeuralCFRTrainer):
                 action_probs = self.networks.predict_policy(features, action_mask)
                 action_probs = action_probs.cpu().numpy()[0]
             
-            # Convert to strategy dictionary
-            strategy = {}
-            total_prob = 0
-            
-            for action in info_set.legal_actions:
-                if action in action_map:
-                    prob = action_probs[action_map[action]]
-                    strategy[action] = max(prob, 1e-6)  # Ensure positive
-                    total_prob += strategy[action]
-                else:
-                    strategy[action] = 1e-6
-                    total_prob += 1e-6
-            
-            # Normalize
-            if total_prob > 0:
-                for action in strategy:
-                    strategy[action] /= total_prob
+            # Convert to strategy dictionary with strict normalization (zeros below threshold)
+            raw = [float(action_probs[action_map[a]]) if a in action_map else 0.0 for a in info_set.legal_actions]
+            raw = np.array([max(v, 0.0) for v in raw], dtype=np.float64)
+            s = raw.sum()
+            if s <= 0 or not np.isfinite(s):
+                prob = 1.0 / max(1, len(info_set.legal_actions))
+                strategy = {a: prob for a in info_set.legal_actions}
             else:
-                # Fallback to uniform
-                prob = 1.0 / len(info_set.legal_actions)
-                strategy = {action: prob for action in info_set.legal_actions}
+                norm = raw / s
+                norm = np.where(norm < 1e-8, 0.0, norm)
+                s2 = norm.sum()
+                if s2 == 0:
+                    prob = 1.0 / max(1, len(info_set.legal_actions))
+                    strategy = {a: prob for a in info_set.legal_actions}
+                else:
+                    norm = norm / s2
+                    strategy = {a: float(norm[i]) for i, a in enumerate(info_set.legal_actions)}
             
             return strategy
             
@@ -223,15 +269,8 @@ class DeepCFRTrainer(NeuralCFRTrainer):
     
     def get_action_mapping(self) -> Dict[str, int]:
         """Get mapping from action strings to indices"""
-        return {
-            'fold': 0,
-            'check': 1, 
-            'call': 2,
-            'bet_0.5': 3,
-            'bet_1.0': 4,
-            'raise_2.5': 5,
-            'allin': 6
-        }
+        from .action_space import ACTION_MAP
+        return ACTION_MAP
     
     def store_deep_cfr_data(self, info_set: InformationSet, action_utilities: Dict[str, float],
                            strategy: Dict[str, float], reach_probability: float):
@@ -286,6 +325,9 @@ class DeepCFRTrainer(NeuralCFRTrainer):
         features = torch.stack([torch.tensor(item['features']) for item in batch]).to(self.device)
         action_indices = torch.tensor([item['action_index'] for item in batch]).to(self.device)
         advantages = torch.tensor([item['advantage'] for item in batch], dtype=torch.float32).to(self.device)
+        # Normalize advantages for stability
+        std = advantages.std().clamp(min=1e-6)
+        advantages = advantages / std
         
         # Train network
         loss = self.networks.train_advantage_network(features, action_indices, advantages)
@@ -349,12 +391,12 @@ class DeepCFRTrainer(NeuralCFRTrainer):
                 test_batch = self.advantage_memories.sample(min(100, len(self.advantage_memories)))
                 features = torch.stack([torch.tensor(item['features']) for item in test_batch]).to(self.device)
                 action_indices = torch.tensor([item['action_index'] for item in test_batch]).to(self.device)
-                
+
                 with torch.no_grad():
                     predictions = self.networks.advantage_network(features, action_indices)
                     pred_mean = predictions.mean().item()
                     pred_std = predictions.std().item()
-                    
+
                 print(f"Advantage predictions: mean={pred_mean:.6f}, std={pred_std:.6f}")
             
             # Memory usage estimate
@@ -362,6 +404,16 @@ class DeepCFRTrainer(NeuralCFRTrainer):
             model_memory_mb = total_params * 4 / 1024 / 1024  # Assuming float32
             buffer_memory_mb = (len(self.advantage_memories) + len(self.strategy_memories)) * 0.001
             print(f"Memory usage: Models={model_memory_mb:.1f}MB, Buffers={buffer_memory_mb:.1f}MB")
+        # Persist evaluation snapshot
+        self._write_iteration_result({
+            'iteration': self.iteration,
+            'phase': 'deep_eval',
+            'info_sets': num_info_sets,
+            'advantages_trained': self.advantages_trained,
+            'strategies_trained': self.strategies_trained,
+            'model_memory_mb': float(model_memory_mb),
+            'buffer_memory_mb': float(buffer_memory_mb),
+        })
         
         print("=" * 60)
     

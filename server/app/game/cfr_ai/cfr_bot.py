@@ -14,7 +14,12 @@ import os
 from .config import get_config
 from .game_abstraction import create_game_abstraction
 from .information_set import create_information_set_manager, GameState, InformationSet
-from .neural_networks import create_networks
+try:
+    from .neural_networks import create_networks
+except Exception as _e:
+    # Allow running without torch/neural deps; will use tabular strategies if available
+    create_networks = None  # type: ignore[assignment]
+from .action_space import ACTION_MAP, ACTION_LIST
 
 class CFRBot:
     """
@@ -32,11 +37,12 @@ class CFRBot:
         # Initialize neural networks
         self.networks = None
         try:
-            self.networks = create_networks(self.config, str(self.device))
+            if create_networks is not None:
+                self.networks = create_networks(self.config, str(self.device))
             if model_path and os.path.exists(model_path):
                 self.load_model(model_path)
             else:
-                print("Warning: No model loaded - using random strategy")
+                print("Warning: No model loaded - using random strategy or tabular if available")
         except Exception as e:
             print(f"Warning: Could not initialize neural networks: {e}")
         
@@ -141,27 +147,23 @@ class CFRBot:
                 action_probs = self.networks.predict_policy(features, action_mask)
                 action_probs = action_probs.cpu().numpy()[0]
             
-            # Convert to strategy
-            strategy = {}
-            total_prob = 0
-            
-            for action in info_set.legal_actions:
-                if action in action_map:
-                    prob = action_probs[action_map[action]]
-                    strategy[action] = max(prob, 1e-6)
-                    total_prob += strategy[action]
-                else:
-                    strategy[action] = 1e-6
-                    total_prob += 1e-6
-            
-            # Normalize
-            if total_prob > 0:
-                for action in strategy:
-                    strategy[action] /= total_prob
+            # Convert to strategy with strict normalization (set near-zero to 0)
+            raw = [float(action_probs[action_map[a]]) if a in action_map else 0.0 for a in info_set.legal_actions]
+            raw = np.array([max(v, 0.0) for v in raw], dtype=np.float64)
+            s = raw.sum()
+            if s <= 0 or not np.isfinite(s):
+                prob = 1.0 / max(1, len(info_set.legal_actions))
+                strategy = {a: prob for a in info_set.legal_actions}
             else:
-                # Uniform fallback
-                prob = 1.0 / len(info_set.legal_actions)
-                strategy = {action: prob for action in info_set.legal_actions}
+                norm = raw / s
+                norm = np.where(norm < 1e-8, 0.0, norm)
+                s2 = norm.sum()
+                if s2 == 0:
+                    prob = 1.0 / max(1, len(info_set.legal_actions))
+                    strategy = {a: prob for a in info_set.legal_actions}
+                else:
+                    norm = norm / s2
+                    strategy = {a: float(norm[i]) for i, a in enumerate(info_set.legal_actions)}
             
             return strategy
             
@@ -186,36 +188,39 @@ class CFRBot:
     
     def get_action_mapping(self) -> Dict[str, int]:
         """Get action mapping for neural networks"""
-        return {
-            'fold': 0,
-            'check': 1,
-            'call': 2,
-            'bet_0.5': 3,
-            'bet_1.0': 4,
-            'raise_2.5': 5,
-            'allin': 6
-        }
+        return ACTION_MAP
     
     def sample_action(self, strategy: Dict[str, float]) -> str:
         """Sample action from strategy"""
         if not strategy:
             return 'fold'
-        
+
         # Add exploration if enabled
-        if self.exploration_rate > 0:
-            if random.random() < self.exploration_rate:
-                return random.choice(list(strategy.keys()))
-        
-        # Weighted random selection
+        if self.exploration_rate > 0 and random.random() < self.exploration_rate:
+            return random.choice(list(strategy.keys()))
+
+        # Robust weighted random selection (no tiny epsilons)
         actions = list(strategy.keys())
-        weights = list(strategy.values())
-        
-        # Ensure weights are positive and sum to 1
-        weights = [max(w, 1e-6) for w in weights]
-        total_weight = sum(weights)
-        weights = [w / total_weight for w in weights]
-        
-        return np.random.choice(actions, p=weights)
+        probs = np.array([max(float(strategy.get(a, 0.0)), 0.0) for a in actions], dtype=np.float64)
+
+        # Sanitize probabilities
+        probs = np.nan_to_num(probs, nan=0.0, posinf=0.0, neginf=0.0)
+        probs[probs < 0] = 0.0
+        s = probs.sum()
+        if s <= 0 or not np.isfinite(s):
+            probs = np.ones_like(probs, dtype=np.float64) / len(probs)
+        else:
+            probs = probs / s
+        # Final renormalization with clipping to avoid tiny nonzeros
+        probs = probs / probs.sum()
+        probs = np.where(probs < 1e-8, 0.0, probs)
+        s2 = probs.sum()
+        if s2 == 0:
+            probs = np.ones_like(probs, dtype=np.float64) / len(probs)
+        else:
+            probs = probs / s2
+
+        return np.random.choice(actions, p=probs)
     
     def convert_to_game_action(self, cfr_action: str, game_state: Dict[str, Any]) -> Tuple[str, int]:
         """Convert CFR action to game engine format"""

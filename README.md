@@ -170,6 +170,8 @@ To run both servers with one command from root directory:
 ./start-dev.sh
 ```
 
+Start CFR AI virtual environment: source server/app/game/cfr_ai/cfr_venv/bin/activate
+
 ## Future Plans
 
 - Support for 6-player games

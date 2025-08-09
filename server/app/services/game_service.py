@@ -9,6 +9,8 @@ from app.game.poker import (
     start_new_game, apply_action, betting_round_over, advance_round, 
     next_player, showdown, prepare_next_hand, deal_remaining_cards
 )
+from app.game.cfr_ai.cfr_bot import create_trained_cfr_bot
+import glob
 
 # Debug system information
 print("🔍 DEBUG: Python executable:", sys.executable)
@@ -137,6 +139,39 @@ except Exception as e:
 print("🔍 DEBUG: AI module import process completed.")
 
 
+# CFR bot integration -------------------------------------------------------
+_cfr_bot_server_instance = None
+
+def decide_action_cfr_server(game_state: Dict[str, Any]) -> Tuple[str, int]:
+    """Decide action using a trained CFR bot.
+
+    Lazily creates a single CFR bot instance per server process and reuses it.
+    Model directory can be overridden via CFR_MODEL_DIR env var; falls back to
+    default cfr_ai models directory.
+    """
+    global _cfr_bot_server_instance
+    if _cfr_bot_server_instance is None:
+        try:
+            base_dir = os.environ.get('CFR_MODEL_DIR', 'server/app/game/cfr_ai/models/')
+            # If base_dir contains run subfolders, pick latest by name
+            if os.path.isdir(base_dir):
+                run_dirs = sorted([d for d in glob.glob(os.path.join(base_dir, 'run_*')) if os.path.isdir(d)])
+                model_dir = run_dirs[-1] if run_dirs else base_dir
+            else:
+                model_dir = base_dir
+            _cfr_bot_server_instance = create_trained_cfr_bot(model_dir, simplified=True)
+            print(f"✅ CFR bot initialized from {model_dir}")
+        except Exception as e:
+            print(f"❌ Failed to initialize CFR bot: {e}")
+            # Fallback behavior: check/call
+            return ("check", 0)
+    try:
+        return _cfr_bot_server_instance.decide_action(game_state)
+    except Exception as e:
+        print(f"❌ CFR bot decision error: {e}")
+        return ("fold", 0)
+
+
 class GameService:
     """Service class for managing poker game logic and state"""
     
@@ -158,7 +193,8 @@ class GameService:
         
         ai_functions = {
             'bladework_v2': decide_action_bladeworkv2,
-            'froggie': decide_action_froggie
+            'froggie': decide_action_froggie,
+            'cfr': decide_action_cfr_server
         }
         
         print(f"🔍 DEBUG: Available AI functions: {list(ai_functions.keys())}")
@@ -196,6 +232,10 @@ class GameService:
             'bladework_v2': {
                 'name': 'Bladework',
                 'logic': 'Hard Coded'
+            },
+            'cfr': {
+                'name': 'CFR Bot',
+                'logic': 'Trained CFR'
             }
         }
         

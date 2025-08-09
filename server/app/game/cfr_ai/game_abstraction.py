@@ -12,6 +12,26 @@ from typing import List, Dict, Tuple, Set, Optional
 from collections import defaultdict
 from dataclasses import dataclass
 
+# Utility: always-available generator for 169 starting-hand classes
+def _generate_all_169_tiers() -> list:
+    """Generate 169 distinct starting-hand buckets.
+    Each bucket is a list with a single tuple representing one canonical hand.
+    Tuple format: (rank_high, rank_low, is_suited) or (pair_rank, pair_rank).
+    """
+    tiers: list = []
+    ranks = list(range(14, 1, -1))  # 14..2
+    for i, r1 in enumerate(ranks):
+        for j, r2 in enumerate(ranks):
+            if r1 == r2:
+                # Pair
+                tiers.append([(r1, r2)])
+            elif i < j:
+                # r1 > r2: suited and offsuit distinct
+                tiers.append([(r1, r2, True)])
+                tiers.append([(r1, r2, False)])
+    # This produces 13 pairs + 156 suited/offsuit = 169
+    return tiers
+
 # Import from parent poker game
 try:
     from ..hand_eval_lib import evaluate_hand
@@ -22,28 +42,9 @@ except ImportError:
         return random.randint(1000, 7462), "Unknown"
     
     # Fallback TIERS for standalone testing
-    TIERS = [
-        # Top tier - Premium pairs and AK
-        [(14, 14), (13, 13), (12, 12), (11, 11), (10, 10), (14, 13, True), (14, 13, False)],
-        # High pairs and strong suited connectors
-        [(9, 9), (8, 8), (14, 12, True), (14, 11, True), (13, 12, True), (13, 11, True)],
-        # Medium pairs and Broadway cards
-        [(7, 7), (6, 6), (14, 10, True), (13, 10, True), (12, 11, True), (12, 10, True)],
-        # Small pairs and suited aces
-        [(5, 5), (4, 4), (3, 3), (2, 2), (14, 9, True), (14, 8, True), (14, 7, True)],
-        # More suited connectors and offsuit broadways
-        [(14, 12, False), (14, 11, False), (13, 12, False), (11, 10, True), (10, 9, True)],
-        # Suited connectors and weak aces
-        [(14, 6, True), (14, 5, True), (14, 4, True), (14, 3, True), (14, 2, True)],
-        # More connectors
-        [(9, 8, True), (8, 7, True), (7, 6, True), (6, 5, True), (5, 4, True)],
-        # Offsuit connectors and weak holdings
-        [(13, 10, False), (12, 11, False), (11, 10, False), (10, 9, False)],
-        # Gappers and weak suited
-        [(13, 9, True), (12, 9, True), (11, 9, True), (10, 8, True), (9, 7, True)],
-        # Remaining hands (simplified)
-        [(8, 6, True), (7, 5, True), (6, 4, True), (9, 8, False), (8, 7, False)]
-    ]
+    TIERS = []  # will be populated by generator below if needed
+
+    # _generate_all_169_tiers defined above for universal availability
 
 @dataclass
 class CardAbstraction:
@@ -78,10 +79,19 @@ class BetAbstraction:
                 if stack_size > 0:
                     actions.append('allin')
             else:
+                # Use raise_ tokens for both initiating and facing bet contexts
                 bet_amount = pot_size * size if street != 'preflop' else size * 20  # 20 = big blind
                 if bet_amount <= stack_size:
-                    actions.append(f'bet_{size}' if not facing_bet else f'raise_{size}')
-                    
+                    actions.append(f'raise_{size}')
+
+        # Filter actions to the unified action space
+        try:
+            from .action_space import ACTION_MAP
+            allowed = set(ACTION_MAP.keys())
+            actions = [a for a in actions if a in allowed]
+        except Exception:
+            pass
+
         return actions
 
 class GameAbstraction:
@@ -102,7 +112,7 @@ class GameAbstraction:
         """Build card abstractions for each street"""
         print("Building card abstractions...")
         
-        # Preflop abstraction using existing tier system
+        # Preflop abstraction using requested bucket count
         self.card_abstractions['preflop'] = self._build_preflop_abstraction()
         
         # Postflop abstractions - start with simplified clustering
@@ -117,17 +127,25 @@ class GameAbstraction:
     def _build_preflop_abstraction(self) -> CardAbstraction:
         """Build preflop abstraction using tier system"""
         bucket_mapping = {}
-        
-        # Use existing tier system - each tier becomes a bucket
-        for tier_idx, tier_hands in enumerate(TIERS[:self.config.PREFLOP_BUCKETS]):
+
+        # If 169 buckets requested, force 169-bucket mapping regardless of TIERS scheme
+        if self.config.PREFLOP_BUCKETS >= 169:
+            local_tiers = _generate_all_169_tiers()
+        else:
+            # Use 11-tier scheme (or provided TIERS) when requesting fewer buckets
+            local_tiers = TIERS if TIERS else _generate_all_169_tiers()
+
+        # Use tier system - each tier becomes a bucket
+        for tier_idx, tier_hands in enumerate(local_tiers[:self.config.PREFLOP_BUCKETS]):
             for hand_tuple in tier_hands:
-                # Convert tuple back to string representation
                 hand_str = self._tuple_to_hand_string(hand_tuple)
                 bucket_mapping[hand_str] = tier_idx
                 
+        # Determine bucket count actually constructed
+        constructed_buckets = min(len(local_tiers), self.config.PREFLOP_BUCKETS)
         return CardAbstraction(
             street='preflop',
-            num_buckets=min(len(TIERS), self.config.PREFLOP_BUCKETS),
+            num_buckets=constructed_buckets,
             bucket_mapping=bucket_mapping
         )
     
@@ -157,7 +175,8 @@ class GameAbstraction:
         
         # Simple hash-based bucketing for initial implementation
         for i, board in enumerate(sample_boards[:1000]):  # Limit for initial implementation
-            board_str = ''.join(board)
+            # Sort board to ensure consistent keys across creation and lookup
+            board_str = ''.join(sorted(board))
             bucket_id = hash(board_str) % num_buckets
             bucket_mapping[board_str] = bucket_id
             
@@ -187,9 +206,20 @@ class GameAbstraction:
     def get_card_bucket(self, street: str, cards: List[str], board: List[str] = None) -> int:
         """Get card bucket for given cards and board"""
         if street == 'preflop':
-            # Convert cards to hand string
-            hand_str = self._cards_to_hand_string(cards)
-            return self.card_abstractions['preflop'].bucket_mapping.get(hand_str, 0)
+            # Safeguards against malformed inputs to avoid recursion issues
+            try:
+                if not isinstance(cards, (list, tuple)):
+                    return 0
+                cards_list = list(cards)
+                if len(cards_list) != 2:
+                    return 0
+                if not all(isinstance(c, str) and len(c) >= 2 for c in cards_list):
+                    return 0
+                # Convert cards to hand string
+                hand_str = self._cards_to_hand_string(cards_list)
+                return self.card_abstractions['preflop'].bucket_mapping.get(hand_str, 0)
+            except Exception:
+                return 0
         else:
             # For postflop, use board
             board_str = ''.join(sorted(board)) if board else ''
@@ -197,12 +227,17 @@ class GameAbstraction:
     
     def _cards_to_hand_string(self, cards: List[str]) -> str:
         """Convert two cards to hand string representation"""
+        if not isinstance(cards, (list, tuple)):
+            return 'XX'
         if len(cards) != 2:
             return 'XX'
             
         # Extract ranks and suits
-        rank1, suit1 = cards[0][0], cards[0][1]
-        rank2, suit2 = cards[1][0], cards[1][1]
+        try:
+            rank1, suit1 = cards[0][0], cards[0][1]
+            rank2, suit2 = cards[1][0], cards[1][1]
+        except Exception:
+            return 'XX'
         
         # Convert to standard format
         rank_values = {'2': 2, '3': 3, '4': 4, '5': 5, '6': 6, '7': 7, '8': 8, 

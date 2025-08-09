@@ -13,6 +13,7 @@ import torch.nn.functional as F
 import numpy as np
 from typing import List, Dict, Tuple, Optional
 from collections import OrderedDict
+from .action_space import ACTION_LIST
 
 class ValueNetwork(nn.Module):
     """
@@ -30,22 +31,22 @@ class ValueNetwork(nn.Module):
         self.hidden_size = hidden_size
         self.num_layers = num_layers
         
-        # Build network layers
+        # Build network layers (use LayerNorm instead of BatchNorm for small batches)
         layers = []
-        
+
         # Input layer
         layers.append(('input', nn.Linear(input_size, hidden_size)))
-        layers.append(('input_bn', nn.BatchNorm1d(hidden_size)))
+        layers.append(('input_ln', nn.LayerNorm(hidden_size)))
         layers.append(('input_relu', nn.ReLU()))
         layers.append(('input_dropout', nn.Dropout(dropout_rate)))
-        
+
         # Hidden layers
         for i in range(num_layers - 1):
             layers.append((f'hidden_{i}', nn.Linear(hidden_size, hidden_size)))
-            layers.append((f'hidden_{i}_bn', nn.BatchNorm1d(hidden_size)))
+            layers.append((f'hidden_{i}_ln', nn.LayerNorm(hidden_size)))
             layers.append((f'hidden_{i}_relu', nn.ReLU()))
             layers.append((f'hidden_{i}_dropout', nn.Dropout(dropout_rate)))
-        
+
         # Output layer
         layers.append(('output', nn.Linear(hidden_size, 1)))
         
@@ -86,22 +87,22 @@ class AdvantageNetwork(nn.Module):
         # Combined input size
         combined_input_size = input_size + 32
         
-        # Build network
+        # Build network (LayerNorm)
         layers = []
-        
+
         # Input layer
         layers.append(('input', nn.Linear(combined_input_size, hidden_size)))
-        layers.append(('input_bn', nn.BatchNorm1d(hidden_size)))
+        layers.append(('input_ln', nn.LayerNorm(hidden_size)))
         layers.append(('input_relu', nn.ReLU()))
         layers.append(('input_dropout', nn.Dropout(dropout_rate)))
-        
+
         # Hidden layers
         for i in range(num_layers - 1):
             layers.append((f'hidden_{i}', nn.Linear(hidden_size, hidden_size)))
-            layers.append((f'hidden_{i}_bn', nn.BatchNorm1d(hidden_size)))
+            layers.append((f'hidden_{i}_ln', nn.LayerNorm(hidden_size)))
             layers.append((f'hidden_{i}_relu', nn.ReLU()))
             layers.append((f'hidden_{i}_dropout', nn.Dropout(dropout_rate)))
-        
+
         # Output layer
         layers.append(('output', nn.Linear(hidden_size, 1)))
         
@@ -144,22 +145,22 @@ class PolicyNetwork(nn.Module):
         self.max_actions = max_actions
         self.hidden_size = hidden_size
         
-        # Build network
+        # Build network (LayerNorm)
         layers = []
-        
+
         # Input layer
         layers.append(('input', nn.Linear(input_size, hidden_size)))
-        layers.append(('input_bn', nn.BatchNorm1d(hidden_size)))
+        layers.append(('input_ln', nn.LayerNorm(hidden_size)))
         layers.append(('input_relu', nn.ReLU()))
         layers.append(('input_dropout', nn.Dropout(dropout_rate)))
-        
+
         # Hidden layers
         for i in range(num_layers - 1):
             layers.append((f'hidden_{i}', nn.Linear(hidden_size, hidden_size)))
-            layers.append((f'hidden_{i}_bn', nn.BatchNorm1d(hidden_size)))
+            layers.append((f'hidden_{i}_ln', nn.LayerNorm(hidden_size)))
             layers.append((f'hidden_{i}_relu', nn.ReLU()))
             layers.append((f'hidden_{i}_dropout', nn.Dropout(dropout_rate)))
-        
+
         # Output layer (no activation - will apply softmax later)
         layers.append(('output', nn.Linear(hidden_size, max_actions)))
         
@@ -202,7 +203,7 @@ class DeepCFRNetworks:
         
         # Determine input size based on information set features
         self.input_size = self._calculate_input_size()
-        self.max_actions = 10  # Maximum number of actions in abstraction
+        self.max_actions = len(ACTION_LIST)
         
         # Initialize networks
         self.value_network = ValueNetwork(
@@ -268,8 +269,9 @@ class DeepCFRNetworks:
         feature_size = (
             4 +      # Street encoding (one-hot)
             1 +      # Card bucket (normalized)
-            1 +      # Pot size bucket (normalized)  
-            10 +     # Betting history features
+            1 +      # Pot size bucket (normalized)
+            2 +      # Pot odds, SPR approx
+            12 +     # Betting history features (expanded)
             1        # Player position
         )
         return feature_size
