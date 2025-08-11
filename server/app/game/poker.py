@@ -160,10 +160,16 @@ def apply_action(game_state, action, amount=0):
     player = game_state['players'][game_state['current_player']]
     to_call = game_state.get('current_bet', 0) - player['current_bet']
     log_message = ""
+    round_name = game_state.get('betting_round', 'preflop')
+    # Ensure action_history exists
+    if 'action_history' not in game_state:
+        game_state['action_history'] = []
 
     if action == 'fold':
         player['status'] = 'folded'
         log_message = f"{player['name']}: folds"
+        # Record action
+        game_state['action_history'].append({'player': player['name'], 'action': 'fold', 'amount': 0, 'round': round_name})
     elif action == 'call':
         call_amt = min(to_call, player['stack'])
         player['stack'] -= call_amt
@@ -173,6 +179,8 @@ def apply_action(game_state, action, amount=0):
         if player['stack'] == 0:
             player['status'] = 'all-in'
             log_message += " and is all-in"
+        # Record action
+        game_state['action_history'].append({'player': player['name'], 'action': 'call', 'amount': call_amt, 'round': round_name})
     elif action == 'raise':
         # amount is the total bet amount
         total_bet = amount
@@ -197,10 +205,14 @@ def apply_action(game_state, action, amount=0):
         if player['stack'] == 0:
             player['status'] = 'all-in'
             log_message += " and is all-in"
+        # Record action as 'raise' with total target
+        game_state['action_history'].append({'player': player['name'], 'action': 'raise', 'amount': total_bet, 'round': round_name})
     elif action == 'check':
         if to_call != 0:
             raise ValueError("Cannot check when facing a bet")
         log_message = f"{player['name']}: checks"
+        # Record action
+        game_state['action_history'].append({'player': player['name'], 'action': 'check', 'amount': 0, 'round': round_name})
     elif action == 'bet':
         # This action is for when the first action in a post-flop round is a bet
         bet_amount = min(amount, player['stack'])
@@ -213,6 +225,8 @@ def apply_action(game_state, action, amount=0):
         if player['stack'] == 0:
             player['status'] = 'all-in'
             log_message += " and is all-in"
+        # Record action
+        game_state['action_history'].append({'player': player['name'], 'action': 'bet', 'amount': bet_amount, 'round': round_name})
     else:
         raise ValueError("Invalid action")
 
@@ -470,7 +484,7 @@ def prepare_next_hand(game_state):
 
 
 
-def distribute_side_pots(players_in_hand, winner_data, game_state):
+def distribute_side_pots(players_in_hand, player_scores, game_state):
     """Calculates and distributes side pots for all-in scenarios with unequal investments."""
     winnings = {p['name']: 0 for p in game_state['players']}
     
@@ -487,7 +501,10 @@ def distribute_side_pots(players_in_hand, winner_data, game_state):
     if len(set(investment_amounts)) == 1:
         # All players invested the same - simple distribution
         total_pot = game_state['pot']
-        winners = [w[2] for w in winner_data]  # Extract player objects
+        # Determine winners among all players in hand
+        # player_scores: name -> (score, hand_class, player)
+        best_score = min(player_scores[name][0] for name in investments.keys())
+        winners = [player_scores[name][2] for name in investments.keys() if player_scores[name][0] == best_score]
         pot_share = total_pot / len(winners)
         
         for winner_player in winners:
@@ -535,17 +552,12 @@ def distribute_side_pots(players_in_hand, winner_data, game_state):
     for pot in side_pots:
         print(f"DEBUG: Processing side pot of ${pot['size']:.0f} for players: {pot['eligible_players']}")
         
-        # Find the best hand among eligible players
-        eligible_winners = []
-        best_score = float('inf')
-        
-        for score, hand_class, player in winner_data:
-            if player['name'] in pot['eligible_players']:
-                if score < best_score:
-                    best_score = score
-                    eligible_winners = [(score, hand_class, player)]
-                elif score == best_score:
-                    eligible_winners.append((score, hand_class, player))
+        # Find the best hand among eligible players using full player_scores
+        eligible_names = [name for name in pot['eligible_players'] if name in player_scores]
+        if not eligible_names:
+            continue
+        best_score = min(player_scores[name][0] for name in eligible_names)
+        eligible_winners = [player_scores[name] for name in eligible_names if player_scores[name][0] == best_score]
         
         if eligible_winners:
             # Split this side pot among eligible winners with the best hand
@@ -594,7 +606,7 @@ def showdown(game_state):
         winner['stack'] += winnings
         log_to_hand_history(game_state, f"{winner['name']} collected ${winnings:.0f} from pot")
         log_to_hand_history(game_state, f"{winner['name']}: doesn't show hand")
-        winners = [{'name': winner['name'], 'hand': winner['hand'], 'hand_class': 'Wins by Fold'}]
+        winners = [{'name': winner['name'], 'hand': winner['hand'], 'hand_class': 'by fold'}]
         
     # --- Showdown with 2+ Players ---
     else:
@@ -609,7 +621,19 @@ def showdown(game_state):
         winners = [{'name': w[2]['name'], 'hand': w[2]['hand'], 'hand_class': w[1]} for w in winner_data]
 
         # Proper side pot calculation
-        winnings_distributed = distribute_side_pots(players_in_hand, winner_data, game_state)
+        winnings_distributed = distribute_side_pots(players_in_hand, player_scores, game_state)
+        # Ensure full pot is distributed (include previous-round contributions not tracked per-player)
+        total_distributed = sum(winnings_distributed.values())
+        remaining = game_state['pot'] - total_distributed
+        if remaining > 1e-9:
+            # Split remaining among main-pot winners
+            if len(winners) > 0:
+                share = remaining / len(winners)
+                for w in winners:
+                    player_obj = next((p for p in all_players if p['name'] == w['name']), None)
+                    if player_obj is not None:
+                        player_obj['stack'] += share
+                        winnings_distributed[player_obj['name']] = winnings_distributed.get(player_obj['name'], 0) + share
         
         print(f"DEBUG SHOWDOWN: After side pot distribution:")
         for p in all_players:

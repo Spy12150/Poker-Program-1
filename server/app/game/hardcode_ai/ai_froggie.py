@@ -1,4 +1,6 @@
 """
+Sabre/froggie
+
 AI that just does random actions no matter the hand
 
 For testing

@@ -80,7 +80,12 @@ class BetAbstraction:
                     actions.append('allin')
             else:
                 # Use raise_ tokens for both initiating and facing bet contexts
-                bet_amount = pot_size * size if street != 'preflop' else size * 20  # 20 = big blind
+                # Preflop: interpret sizes as pot multiples
+                if street == 'preflop':
+                    # Pot size preflop includes blinds; size * pot
+                    bet_amount = pot_size * size
+                else:
+                    bet_amount = pot_size * size
                 if bet_amount <= stack_size:
                     actions.append(f'raise_{size}')
 

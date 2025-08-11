@@ -29,13 +29,13 @@ class CFRConfig:
     # CFR training parameters
     CFR_ITERATIONS: int = 1000000
     BATCH_SIZE: int = 1024
-    MEMORY_SIZE: int = 1000000
+    MEMORY_SIZE: int = 500000
     UPDATE_FREQUENCY: int = 1000
     
     # Deep CFR specific
-    RESERVOIR_BUFFER_SIZE: int = 2000000
-    ADVANTAGE_MEMORY_SIZE: int = 10000000
-    STRATEGY_MEMORY_SIZE: int = 10000000
+    RESERVOIR_BUFFER_SIZE: int = 300000
+    ADVANTAGE_MEMORY_SIZE: int = 17500000
+    STRATEGY_MEMORY_SIZE: int = 7500000
     
     # Training settings
     DEVICE: str = "cpu"  # Will auto-detect GPU if available
@@ -60,8 +60,8 @@ class CFRConfig:
     def __post_init__(self):
         """Initialize default values and create directories"""
         if self.BET_SIZES_PREFLOP is None:
-            # Only allow shove as a raise option preflop for CFR bot simplicity
-            self.BET_SIZES_PREFLOP = [float('inf')]  # All-in only
+            # Use pot-multiple raises preflop (will be translated to amounts in BetAbstraction)
+            self.BET_SIZES_PREFLOP = [1.0, 3.0, 5.0, float('inf')]  # 1x, 3x, 5x pot, all-in
             
         if self.BET_SIZES_POSTFLOP is None:
             # Restrict to the requested sizes only
@@ -142,7 +142,8 @@ class SimplifiedConfig:
     
     def __post_init__(self):
         if self.BET_SIZES_PREFLOP is None:
-            self.BET_SIZES_PREFLOP = [2.5, 5.0, float('inf')]  # Simplified
+            # Preflop: 1x, 3x, 5x pot; no all-in for now
+            self.BET_SIZES_PREFLOP = [1.0, 3.0, 5.0]
             
         if self.BET_SIZES_POSTFLOP is None:
             self.BET_SIZES_POSTFLOP = [0.35, 0.7, 1.1, float('inf')]  # Simplified
@@ -161,8 +162,8 @@ def get_config(simplified: bool = True) -> CFRConfig:
         config.FLOP_BUCKETS = simple.FLOP_BUCKETS
         config.TURN_BUCKETS = simple.TURN_BUCKETS
         config.RIVER_BUCKETS = simple.RIVER_BUCKETS
-        config.BET_SIZES_PREFLOP = simple.BET_SIZES_PREFLOP or [2.5, 5.0, float('inf')]
-        config.BET_SIZES_POSTFLOP = simple.BET_SIZES_POSTFLOP or [0.5, 1.0, float('inf')]
+        config.BET_SIZES_PREFLOP = simple.BET_SIZES_PREFLOP or [1.0, 3.0, 5.0]
+        config.BET_SIZES_POSTFLOP = simple.BET_SIZES_POSTFLOP or [0.35, 0.7, 1.1, float('inf')]
         config.HIDDEN_SIZE = simple.HIDDEN_SIZE
         config.NUM_LAYERS = simple.NUM_LAYERS
         config.LEARNING_RATE = simple.LEARNING_RATE

@@ -52,13 +52,19 @@ class ValueNetwork(nn.Module):
         
         self.network = nn.Sequential(OrderedDict(layers))
         
-        # Initialize weights
+        # Initialize weights: He/Kaiming for ReLU layers, Xavier for output
         self.apply(self._init_weights)
     
     def _init_weights(self, module):
-        """Initialize network weights"""
+        """Initialize network weights.
+        - Use He/Kaiming for layers followed by ReLU to preserve variance
+        - Keep Xavier for the final output layer (out_features == 1)
+        """
         if isinstance(module, nn.Linear):
-            nn.init.xavier_uniform_(module.weight)
+            if getattr(module, 'out_features', None) == 1:
+                nn.init.xavier_uniform_(module.weight)
+            else:
+                nn.init.kaiming_uniform_(module.weight, nonlinearity='relu')
             nn.init.constant_(module.bias, 0)
     
     def forward(self, x: torch.Tensor) -> torch.Tensor:
@@ -108,13 +114,20 @@ class AdvantageNetwork(nn.Module):
         
         self.network = nn.Sequential(OrderedDict(layers))
         
-        # Initialize weights
+        # Initialize weights: He/Kaiming for ReLU layers, Xavier for output
         self.apply(self._init_weights)
     
     def _init_weights(self, module):
-        """Initialize network weights"""
+        """Initialize network weights.
+        - Use He/Kaiming for layers followed by ReLU
+        - Keep Xavier for the final output layer (out_features == 1)
+        - Initialize embeddings with small normal noise
+        """
         if isinstance(module, nn.Linear):
-            nn.init.xavier_uniform_(module.weight)
+            if getattr(module, 'out_features', None) == 1:
+                nn.init.xavier_uniform_(module.weight)
+            else:
+                nn.init.kaiming_uniform_(module.weight, nonlinearity='relu')
             nn.init.constant_(module.bias, 0)
         elif isinstance(module, nn.Embedding):
             nn.init.normal_(module.weight, std=0.1)
@@ -166,13 +179,20 @@ class PolicyNetwork(nn.Module):
         
         self.network = nn.Sequential(OrderedDict(layers))
         
-        # Initialize weights
+        # Initialize weights: He/Kaiming for ReLU layers, Xavier for output (logits)
         self.apply(self._init_weights)
     
     def _init_weights(self, module):
-        """Initialize network weights"""
+        """Initialize network weights.
+        - Use He/Kaiming for layers followed by ReLU
+        - Keep Xavier for the final logits layer (out_features == self.max_actions)
+        """
         if isinstance(module, nn.Linear):
-            nn.init.xavier_uniform_(module.weight)
+            out_features = getattr(module, 'out_features', None)
+            if out_features is not None and out_features == getattr(self, 'max_actions', None):
+                nn.init.xavier_uniform_(module.weight)
+            else:
+                nn.init.kaiming_uniform_(module.weight, nonlinearity='relu')
             nn.init.constant_(module.bias, 0)
     
     def forward(self, x: torch.Tensor, action_mask: Optional[torch.Tensor] = None) -> torch.Tensor:

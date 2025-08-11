@@ -252,13 +252,8 @@ class CFRBot:
                 size_str = cfr_action.split('_')[1]
                 size = float(size_str)
                 
-                if game_state.get('betting_round') == 'preflop':
-                    # Preflop: size is in big blinds
-                    bb = 20  # Assuming BB = 20
-                    bet_amount = int(size * bb)
-                else:
-                    # Postflop: size is pot fraction
-                    bet_amount = int(size * pot)
+                # Interpret sizes as pot multiples on all streets
+                bet_amount = int(size * max(pot, 1))
                 
                 # Ensure we have enough chips
                 bet_amount = min(bet_amount, stack)

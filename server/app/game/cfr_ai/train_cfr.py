@@ -337,6 +337,26 @@ def _legalize_for_apply(state: dict, idx: int, action: str, amount: int):
         return 'check', 0
     return action, amount
 
+def _apply_with_fallback(state: dict, idx: int, action: str, amount: int):
+    """Apply action with robust legality fallback based on to_call."""
+    action, amount = _legalize_for_apply(state, idx, action, amount)
+    try:
+        apply_action(state, action, amount)
+        return
+    except Exception:
+        pass
+    # Compute to_call and choose sensible fallback order
+    to_call = max(0, state.get('current_bet', 0) - state['players'][idx].get('current_bet', 0))
+    fallback_seq = [('call', 0), ('check', 0)] if to_call > 0 else [('check', 0), ('call', 0)]
+    for fa, fm in fallback_seq:
+        try:
+            apply_action(state, fa, fm)
+            return
+        except Exception:
+            continue
+    # Last resort
+    apply_action(state, 'fold', 0)
+
 def match(bot1: str, bot2: str, model1: Optional[str], model2: Optional[str], hands: int = 1000, reset_each_hand: bool = False):
     """Run a full engine match between two bots over N hands.
 
@@ -352,6 +372,11 @@ def match(bot1: str, bot2: str, model1: Optional[str], model2: Optional[str], ha
 
     # Start game
     gs = start_new_game()
+    # Disable hand-history file writes to avoid I/O stalls
+    try:
+        gs['hand_history_path'] = os.devnull
+    except Exception:
+        pass
     # Rename players for clarity
     gs['players'][0]['name'] = 'Bot1'
     gs['players'][1]['name'] = 'Bot2'
@@ -362,6 +387,7 @@ def match(bot1: str, bot2: str, model1: Optional[str], model2: Optional[str], ha
 
     for hand in range(1, hands + 1):
         # Play hand to completion
+        steps = 0
         while True:
             # Terminal check: one active player or showdown marker via engine conditions
             players_active = [p for p in gs['players'] if p['status'] in ['active', 'all-in']]
@@ -389,8 +415,16 @@ def match(bot1: str, bot2: str, model1: Optional[str], model2: Optional[str], ha
                 action, amount = _decide_with_bot(b1, bot1, gs, 0)
             else:
                 action, amount = _decide_with_bot(b2, bot2, gs, 1)
-            apply_action(gs, action, amount)
+            _apply_with_fallback(gs, idx, action, amount)
             next_player(gs)
+            steps += 1
+            if steps >= 300:
+                try:
+                    deal_remaining_cards(gs)
+                except Exception:
+                    pass
+                showdown(gs)
+                break
 
         # Compute hand result: track stack deltas relative to start of hand
         # For simplicity, compare to starting stack marker kept on first hand
@@ -459,8 +493,7 @@ def match_series(bot1: str, bot2: str, model1: Optional[str], model2: Optional[s
                     action, amount = _decide_with_bot(b1, bot1, gs, 0)
                 else:
                     action, amount = _decide_with_bot(b2, bot2, gs, 1)
-                action, amount = _legalize_for_apply(gs, idx, action, amount)
-                apply_action(gs, action, amount)
+                _apply_with_fallback(gs, idx, action, amount)
                 next_player(gs)
             prepare_next_hand(gs)
             hands_played += 1

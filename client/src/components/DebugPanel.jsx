@@ -1,19 +1,13 @@
 import React from 'react';
+import { AI_OPTIONS } from './aiOptions';
 
 const DebugPanel = ({ gameState, handOver, isCheckAllowed, isCallAllowed, isRaiseAllowed, processAITurn, selectedAIType }) => {
   if (!gameState) return null;
 
-  // Define AI info based on selectedAIType
-  const aiInfoMap = {
-    'bladework_v2': {
-      name: 'Bladework',
-      logic: 'Hard Coded'
-    },
-    'froggie': {
-      name: 'Froggie',
-      logic: 'Random'
-    }
-  };
+  // Define AI info based on selectedAIType using shared options list
+  const aiInfoMap = Object.fromEntries(
+    AI_OPTIONS.map(({ id, name, logic }) => [id, { name, logic }])
+  );
 
   const aiInfo = aiInfoMap[selectedAIType] || aiInfoMap['bladework_v2'];
   const aiName = aiInfo.name;

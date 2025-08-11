@@ -13,6 +13,11 @@ ACTION_LIST: List[str] = [
     'fold',
     'check',
     'call',
+    # Preflop raise sizes 
+    'raise_1.0',
+    'raise_3.0',
+    'raise_5.0',
+    # postflop raise sizes
     'raise_0.35',
     'raise_0.7',
     'raise_1.1',

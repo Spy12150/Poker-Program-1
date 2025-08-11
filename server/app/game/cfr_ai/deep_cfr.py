@@ -294,14 +294,14 @@ class DeepCFRTrainer(NeuralCFRTrainer):
                     'iteration': self.iteration
                 })
         
-        # Store strategy data
-        strategy_vector = np.zeros(len(action_map))
+        # Store strategy data (use float32 to reduce RAM footprint)
+        strategy_vector = np.zeros(len(action_map), dtype=np.float32)
         for action, prob in strategy.items():
             if action in action_map:
                 strategy_vector[action_map[action]] = prob
         
-        # Create action mask
-        action_mask = np.zeros(len(action_map))
+        # Create action mask (use float32 to reduce RAM footprint)
+        action_mask = np.zeros(len(action_map), dtype=np.float32)
         for action in info_set.legal_actions:
             if action in action_map:
                 action_mask[action_map[action]] = 1

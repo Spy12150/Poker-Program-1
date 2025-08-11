@@ -1,11 +1,15 @@
 """
-Bladework v2
+Foil/bladework_v2
 
 My second version of my hard coded AI
 This version includes calculation of opponent ranges, and using Monte Carlo to simulate runs.
 It also tracks opponent behaviour through statistics like VPIP or PFR rate (per session)
 
 Good enough to beat my dad, myself, and most novice/intermediate players
+
+TODO:
+I had 180 chips left, AI bet to 160, I reraised to all in (180) and AI folded
+AI should never fold here
 """
 
 import random

@@ -8,13 +8,13 @@ I built this project because I got addicted to online poker and wanted to challe
 
 This is a heads-up (1v1) Texas Hold'em poker website where you play against AIs that I've developed. 
 
-So far there are 2 AIs, and 1 in development:
-- Froggie - The first AI I made to test the game logic, does random action on each action
-- Bladework - My hard-coded AI that I used my own poker knowledge to program. Includes a bucket system where hands are divided into 11 tiers for preflop decisionmaking. The AI can adjust play based on your vpip/pfr. It has a lot of features, including range calculations, board analysis, multi-street analysis, draw-analysis, and uses Monte Carlo simulations to solve spots. 
+So far there are 3 AIs:
+- Sabre - The first AI I made to test the game logic, does random action on each action
+- Foil - My hard-coded AI that I used my own poker knowledge to program. Includes a bucket system where hands are divided into 11 tiers for preflop decisionmaking. The AI can adjust play based on your vpip/pfr. It has a lot of features, including range calculations, board analysis, multi-street analysis, draw-analysis, and uses Monte Carlo simulations to solve spots. 
 
   - This bot was able to beat all the poker players I asked to test the program.
 
-- Grand Challenger (In development) - This bot uses CFR (Counterfactual Regret Optimaztion) to split the vast poker game tree into information-sets. At each decision, it calculates how much a player or the AI "regrets" not doing a decision in past simulated hands. Through each run of self play it aims to reduce the average regret, eventually reaching the Nash Equilibrium (hopefully). 
+- Épée - This bot uses CFR (Counterfactual Regret Optimaztion) to split the vast poker game tree into information-sets. At each decision, it calculates how much a player or the AI "regrets" not doing a decision in past simulated hands. Through each run of self play it aims to reduce the average regret, eventually reaching the Nash Equilibrium (hopefully). 
 
   - This is all based on a 2007 paper by Martin Zinkevich, I recommend a read if you want to learn more. After implementing this I plan on taking it to the next step by implementing Deep CFR, which combines neutral networks with CFR optimization by introducing: 
     - an advantage network that learns to predict counterfactual regrets for pairs
@@ -175,6 +175,6 @@ Start CFR AI virtual environment: source server/app/game/cfr_ai/cfr_venv/bin/act
 ## Future Plans
 
 - Support for 6-player games
-- Finish CFR AI
+- Further improve CFR AI with better training algorithm/more training
 - Tournament mode for human and AI with increasing blinds
 - Saving game stats into a database

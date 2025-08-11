@@ -1,4 +1,5 @@
 import React, { memo, useMemo } from 'react';
+import { AI_OPTIONS } from './aiOptions';
 import { useCardImage } from '../hooks/useImagePreloader';
 
 // Card image component moved outside to prevent recreation and fix hook calls
@@ -87,6 +88,11 @@ const PokerTable = memo(({
 
   if (!gameState) return null;
 
+  // Derive opponent display name from shared AI options by ai_type
+  const aiNameMap = useMemo(() => Object.fromEntries(AI_OPTIONS.map(o => [o.id, o.name])), []);
+  const aiType = gameState?.ai_info?.type || 'bladework_v2';
+  const opponentDisplayName = aiNameMap[aiType] || gameState.players[1]?.name || 'AI';
+
   return (
     <div className="table-container">
       <div className="poker-table">
@@ -95,7 +101,7 @@ const PokerTable = memo(({
           {/* AI Player (Opponent) */}
           <div className="opponent-area">
             <div className="player-card">
-              <div className="player-name">{gameState.players[1]?.name} (AI)</div>
+              <div className="player-name">{opponentDisplayName} (AI)</div>
               <div className="player-stats">
                 <span>Stack: ${gameState.players[1]?.stack}</span>
               </div>

@@ -9,7 +9,9 @@ from app.game.poker import (
     start_new_game, apply_action, betting_round_over, advance_round, 
     next_player, showdown, prepare_next_hand, deal_remaining_cards
 )
-from app.game.cfr_ai.cfr_bot import create_trained_cfr_bot
+# Note: Do not import CFR bot at module import time to avoid requiring PyTorch
+# for users who are not using the CFR AI. We'll import lazily inside the
+# decide_action_cfr_server function.
 import glob
 
 # Debug system information
@@ -152,15 +154,41 @@ def decide_action_cfr_server(game_state: Dict[str, Any]) -> Tuple[str, int]:
     global _cfr_bot_server_instance
     if _cfr_bot_server_instance is None:
         try:
-            base_dir = os.environ.get('CFR_MODEL_DIR', 'server/app/game/cfr_ai/models/')
-            # If base_dir contains run subfolders, pick latest by name
-            if os.path.isdir(base_dir):
-                run_dirs = sorted([d for d in glob.glob(os.path.join(base_dir, 'run_*')) if os.path.isdir(d)])
-                model_dir = run_dirs[-1] if run_dirs else base_dir
-            else:
+            # Lazy import here so the backend can start without torch installed
+            from app.game.cfr_ai.cfr_bot import create_trained_cfr_bot
+            # Resolve default paths relative to this file for robustness
+            here = os.path.dirname(__file__)
+            game_dir = os.path.abspath(os.path.join(here, '..', 'game'))
+            models_default = os.path.join(game_dir, 'cfr_ai', 'models')
+            in_use_dir = os.path.join(game_dir, 'cfr_model_in_use')
+
+            # 1) If env var set, use it directly
+            base_dir = os.environ.get('CFR_MODEL_DIR')
+            if base_dir:
                 model_dir = base_dir
+            else:
+                # 2) If cfr_model_in_use exists and has a model, prefer it
+                has_in_use_model = any(
+                    os.path.exists(os.path.join(in_use_dir, fname))
+                    for fname in ('final_networks.pth', 'final_strategy.pkl')
+                )
+                if has_in_use_model:
+                    model_dir = in_use_dir
+                else:
+                    # 3) Fallback to latest run under models/
+                    base_dir = models_default
+                    if os.path.isdir(base_dir):
+                        run_dirs = sorted([d for d in glob.glob(os.path.join(base_dir, 'run_*')) if os.path.isdir(d)])
+                        model_dir = run_dirs[-1] if run_dirs else base_dir
+                    else:
+                        model_dir = base_dir
             _cfr_bot_server_instance = create_trained_cfr_bot(model_dir, simplified=True)
             print(f"✅ CFR bot initialized from {model_dir}")
+        except ModuleNotFoundError as e:
+            print(f"❌ PyTorch not installed (required for CFR bot): {e}")
+            print("👉 Install with: pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu")
+            # Fallback: play safe action so server still runs
+            return ("check", 0)
         except Exception as e:
             print(f"❌ Failed to initialize CFR bot: {e}")
             # Fallback behavior: check/call
@@ -325,9 +353,8 @@ class GameService:
             if amount > max_raise:
                 raise ValueError(f'Maximum bet is ${max_raise} (all-in)')
         
-        # Apply player action
+        # Apply player action (engine logs to action_history internally)
         apply_action(game_state, action, amount)
-        self._log_action(game_state, 0, action, amount)
         
         # Process game flow after player action
         return self._process_game_flow(game_state)
@@ -432,8 +459,8 @@ class GameService:
         if ai_amount > 0:
             console_logs.append(f"AI Amount: ${ai_amount}")
         
+        # Apply AI action (engine logs to action_history internally)
         apply_action(game_state, ai_action, ai_amount)
-        self._log_action(game_state, 1, ai_action, ai_amount)
         
         # Process game flow after AI action
         result = self._process_game_flow(game_state)

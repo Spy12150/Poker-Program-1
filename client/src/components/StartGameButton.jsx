@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { AI_OPTIONS } from './aiOptions';
 
 const StartGameButton = ({ gameState, startGame, loading }) => {
   const [selectedAI, setSelectedAI] = useState('bladework_v2');
@@ -6,19 +7,8 @@ const StartGameButton = ({ gameState, startGame, loading }) => {
 
   if (gameState) return null;
 
-  // Names of all AI for start page and debugpaenl
-  const aiOptionsList = [
-    {
-      id: 'froggie',
-      name: 'Froggie',
-      description: 'A bot that performs random actions at every hand'
-    },
-    {
-      id: 'bladework_v2',
-      name: 'Bladework',
-      description: 'A hard-coded bot with defined ranges that can beat intermediate heads up players'
-    }
-  ];
+  // Names of all AI for start page and debug panel
+  const aiOptionsList = AI_OPTIONS;
 
   const handleStartGame = () => {
     startGame(selectedAI);
@@ -36,7 +26,7 @@ const StartGameButton = ({ gameState, startGame, loading }) => {
                 className={selectedAI === aiOption.id ? 'ai-button selected' : 'ai-button'}
                 disabled={loading}
               >
-                {aiOption.name}
+                <span className="notranslate" translate="no">{aiOption.name}</span>
               </button>
               <div 
                 className="info-icon"
@@ -46,7 +36,7 @@ const StartGameButton = ({ gameState, startGame, loading }) => {
                 <img src="/infoicon.webp" alt="Info" className="info-icon-img" />
                 {hoveredAI === aiOption.id && (
                   <div className="custom-tooltip">
-                    {aiOption.description}
+                    {aiOption.description} ({aiOption.logic})
                   </div>
                 )}
               </div>
