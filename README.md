@@ -178,3 +178,19 @@ Start CFR AI virtual environment: source server/app/game/cfr_ai/cfr_venv/bin/act
 - Further improve CFR AI with better training algorithm/more training
 - Tournament mode for human and AI with increasing blinds
 - Saving game stats into a database
+
+
+## Commands to train AI using cfr (Copy paste these in terminal from root of repo)
+
+Test run inside cfr_bot_in_use with beadwork:
+
+source "/Users/ivorylove/Documents/Code/PERSONAL PROJECTS/Poker-Program-1/server/venv/bin/activate" && MODEL1="server/app/game/cfr_model_in_use/final_networks.pth" && [ -f "$MODEL1" ] || MODEL1="server/app/game/cfr_model_in_use/final_strategy.pkl" && python -m server.app.game.cfr_ai.train_cfr match_series --bot1 cfr --bot2 bladework --model1 "$MODEL1" --matches 100 --max_hands 2000 | cat
+
+Train: 
+
+source "server/app/game/cfr_ai/cfr_venv/bin/activate"
+PYTHONPATH="." python -m server.app.game.cfr_ai.train_cfr train --type deep --iterations 1296000
+
+Continue train:
+
+source "/Users/ivorylove/Documents/Code/PERSONAL PROJECTS/Poker-Program-1/server/venv/bin/activate" && CKPT=$(ls -dt "server/app/game/cfr_ai/models/run_"*/checkpoints/deep_cfr_networks_500000.pth 2>/dev/null | head -1) && python -c 'import os; from app.game.cfr_ai.config import get_config; from app.game.cfr_ai.deep_cfr import create_deep_cfr_trainer; t=create_deep_cfr_trainer(get_config(simplified=True), simplified=True); t.load_checkpoint(os.environ["CKPT"]); t.train(iterations=300000)'
