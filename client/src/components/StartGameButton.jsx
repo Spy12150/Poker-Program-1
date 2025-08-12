@@ -36,7 +36,7 @@ const StartGameButton = ({ gameState, startGame, loading }) => {
                 <img src="/infoicon.webp" alt="Info" className="info-icon-img" />
                 {hoveredAI === aiOption.id && (
                   <div className="custom-tooltip">
-                    {aiOption.description} ({aiOption.logic})
+                    {aiOption.description} 
                   </div>
                 )}
               </div>

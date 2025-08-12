@@ -2,19 +2,19 @@ export const AI_OPTIONS = [
   {
     id: 'froggie',
     name: 'Sabre',
-    description: 'A bot that performs random actions at every hand',
+    description: 'Sabre performs a random action at each decision',
     logic: 'Random',
   },
   {
     id: 'bladework_v2',
     name: 'Foil',
-    description: 'A hard-coded bot with defined ranges that can beat intermediate heads up players',
+    description: 'Foil is hard-coded with defined ranges and strong enough to beat non-professional heads-up players',
     logic: 'Hard Coded',
   },
   {
     id: 'cfr',
     name: 'Épée',
-    description: 'A trained CFR (Counterfactual Regret Minimization) bot',
+    description: 'Épée is trained through self play using CFR optimization and neural networks to reach the Nash Equilibrium',
     logic: 'CFR Optimized',
   },
 ];

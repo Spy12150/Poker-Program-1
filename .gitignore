@@ -23,3 +23,7 @@ build/
 # logs
 backend.log
 frontend.log
+
+# trained cfr binary files
+server/app/game/cfr_ai/models/
+server/app/game/cfr_ai/results/

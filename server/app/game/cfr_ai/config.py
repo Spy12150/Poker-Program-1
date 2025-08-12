@@ -34,8 +34,8 @@ class CFRConfig:
     
     # Deep CFR specific
     RESERVOIR_BUFFER_SIZE: int = 300000
-    ADVANTAGE_MEMORY_SIZE: int = 17500000
-    STRATEGY_MEMORY_SIZE: int = 7500000
+    ADVANTAGE_MEMORY_SIZE: int = 20000000
+    STRATEGY_MEMORY_SIZE: int = 7000000
     
     # Training settings
     DEVICE: str = "cpu"  # Will auto-detect GPU if available
@@ -45,8 +45,9 @@ class CFRConfig:
     
     # File paths
     MODEL_SAVE_PATH: str = "server/app/game/cfr_ai/models/"
-    TRAINING_DATA_PATH: str = "server/app/game/cfr_ai/data/"
-    LOG_PATH: str = "server/app/game/cfr_ai/logs/"
+    # Remove unused directories to avoid creating empty folders during training
+    TRAINING_DATA_PATH: str = ""
+    LOG_PATH: str = ""
     RESULTS_BASE_PATH: str = "server/app/game/cfr_ai/results/"
     
     # Runtime/printing
@@ -67,8 +68,8 @@ class CFRConfig:
             # Restrict to the requested sizes only
             self.BET_SIZES_POSTFLOP = [0.35, 0.7, 1.1, float('inf')]  # All-in
         
-        # Create directories
-        for path in [self.MODEL_SAVE_PATH, self.TRAINING_DATA_PATH, self.LOG_PATH, self.RESULTS_BASE_PATH]:
+        # Create only required directories
+        for path in [self.MODEL_SAVE_PATH, self.RESULTS_BASE_PATH]:
             os.makedirs(path, exist_ok=True)
     
     def to_dict(self) -> Dict[str, Any]:

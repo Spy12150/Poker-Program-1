@@ -15,6 +15,7 @@ import time
 import os
 import json
 import datetime
+import math
 
 from .config import get_config
 from .game_abstraction import create_game_abstraction
@@ -22,6 +23,28 @@ from .information_set import create_information_set_manager, GameState, Informat
 from .neural_networks import create_networks
 from .cfr_trainer import NeuralCFRTrainer
 from .action_space import ACTION_MAP, ACTION_LIST
+
+def format_duration(seconds: float) -> str:
+    """Format duration in seconds to a human-readable string with days, hours, minutes, and seconds"""
+    if seconds < 60:
+        return f"{seconds:.1f} seconds"
+    
+    minutes = int(seconds // 60)
+    seconds_remaining = seconds % 60
+    
+    if minutes < 60:
+        return f"{minutes} minutes, {seconds_remaining:.1f} seconds"
+    
+    hours = int(minutes // 60)
+    minutes_remaining = minutes % 60
+    
+    if hours < 24:
+        return f"{hours} hours, {minutes_remaining} minutes, {seconds_remaining:.1f} seconds"
+    
+    days = int(hours // 24)
+    hours_remaining = hours % 24
+    
+    return f"{days} days, {hours_remaining} hours, {minutes_remaining} minutes, {seconds_remaining:.1f} seconds"
 
 class ReservoirBuffer:
     """
@@ -146,7 +169,7 @@ class DeepCFRTrainer(NeuralCFRTrainer):
             if self.iteration % self.config.EVAL_FREQUENCY == 0:
                 self.evaluate()
         
-        print(f"Deep CFR training completed in {time.time() - start_time:.1f} seconds")
+        print(f"Deep CFR training completed in {format_duration(time.time() - start_time)}")
         self.save_final_strategy()
         self._close_results_writer()
     
@@ -419,7 +442,9 @@ class DeepCFRTrainer(NeuralCFRTrainer):
     
     def save_checkpoint(self):
         """Enhanced checkpoint saving for Deep CFR"""
-        checkpoint_dir = self.config.MODEL_SAVE_PATH
+        # Save checkpoints under a dedicated per-run checkpoints directory
+        base_dir = getattr(self, '_models_dir', self.config.MODEL_SAVE_PATH)
+        checkpoint_dir = os.path.join(base_dir, 'checkpoints')
         os.makedirs(checkpoint_dir, exist_ok=True)
         
         # Save neural networks

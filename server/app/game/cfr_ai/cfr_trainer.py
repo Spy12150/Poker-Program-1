@@ -607,9 +607,10 @@ class NeuralCFRTrainer:
     
     def save_checkpoint(self):
         """Save training checkpoint"""
-        checkpoint_dir = getattr(self, '_models_dir', self.config.MODEL_SAVE_PATH)
+        # Save checkpoints under a dedicated per-run checkpoints directory
+        base_dir = getattr(self, '_models_dir', self.config.MODEL_SAVE_PATH)
+        checkpoint_dir = os.path.join(base_dir, 'checkpoints')
         os.makedirs(checkpoint_dir, exist_ok=True)
-        
         checkpoint_path = os.path.join(checkpoint_dir, f"checkpoint_{self.iteration}.pkl")
         
         # Save information sets

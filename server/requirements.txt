@@ -1,3 +1,4 @@
+--extra-index-url https://download.pytorch.org/whl/cpu
 Flask==2.3.3
 Flask-CORS==4.0.0
 Flask-SocketIO==5.3.6
@@ -6,3 +7,6 @@ pytest==7.4.3
 gunicorn==21.2.0
 eventlet==0.33.3
 setuptools>=65.0.0
+torch==2.3.1+cpu
+torchvision==0.18.1+cpu
+torchaudio==2.3.1+cpu
