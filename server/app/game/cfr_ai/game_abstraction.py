@@ -69,25 +69,37 @@ class BetAbstraction:
             actions.append('fold')
             actions.append('call')
         else:
-            actions.append('check')
+            # Preflop first action (SB) cannot check; allow fold/call
+            if street == 'preflop':
+                actions.append('fold')
+                actions.append('call')
+            else:
+                actions.append('check')
             
         # Add bet/raise actions
-        bet_sizes = self.bet_sizes_preflop if street == 'preflop' else self.bet_sizes_postflop
-        
-        for size in bet_sizes:
-            if size == float('inf'):
-                if stack_size > 0:
-                    actions.append('allin')
+        # Build action list by context and street
+        if street == 'preflop':
+            if facing_bet:
+                # Preflop vs raise: 3x or 5x opponent bet (use tokens raise_3.0, raise_5.0)
+                candidate = ['raise_3.0', 'raise_5.0']
             else:
-                # Use raise_ tokens for both initiating and facing bet contexts
-                # Preflop: interpret sizes as pot multiples
-                if street == 'preflop':
-                    # Pot size preflop includes blinds; size * pot
-                    bet_amount = pot_size * size
-                else:
-                    bet_amount = pot_size * size
-                if bet_amount <= stack_size:
-                    actions.append(f'raise_{size}')
+                # Preflop first-in: 2.5x BB
+                candidate = ['raise_2.5']
+        else:
+            if facing_bet:
+                # Postflop vs raise: raise to 2.3x or 3.5x of opponent bet
+                candidate = ['raise_2.3', 'raise_3.5']
+            else:
+                # Postflop first-in: 35%, 70%, 110% pot
+                candidate = ['raise_0.35', 'raise_0.7', 'raise_1.1']
+
+        # Add the candidate raise tokens. Amount legality is enforced later.
+        for token in candidate:
+            try:
+                # Keep token; amount is computed later by conversion layer
+                actions.append(token)
+            except Exception:
+                continue
 
         # Filter actions to the unified action space
         try:

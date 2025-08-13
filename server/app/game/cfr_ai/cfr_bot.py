@@ -252,16 +252,39 @@ class CFRBot:
                 size_str = cfr_action.split('_')[1]
                 size = float(size_str)
                 
-                # Interpret sizes as pot multiples on all streets
-                bet_amount = int(size * max(pot, 1))
+                # Preflop first-in: size is BB multiples (2.5x)
+                # Preflop facing raise: size indicates raise-to x of opponent bet
+                # Postflop first-in: size is pot fraction
+                # Postflop facing bet: size indicates raise-to x of opponent bet
+                street = game_state.get('betting_round', 'preflop')
+                to_call_local = max(0, current_bet - ai_player.get('current_bet', 0))
+                facing_bet_local = to_call_local > 0
                 
-                # Ensure we have enough chips
-                bet_amount = min(bet_amount, stack)
-                
-                # Calculate total amount including current bet
-                total_amount = ai_player.get('current_bet', 0) + bet_amount
-                
-                return ('raise', total_amount)
+                if street == 'preflop':
+                    bb = game_state.get('big_blind', 20)
+                    if not facing_bet_local:
+                        # first-in preflop: raise size in BBs
+                        bet_amount = int(size * max(bb, 1))
+                        total_amount = ai_player.get('current_bet', 0) + min(bet_amount, stack)
+                        return ('raise', total_amount)
+                    else:
+                        # facing preflop raise: raise-to multiple of opponent bet (total)
+                        opp_bet_total = to_call_local + ai_player.get('current_bet', 0)
+                        target_total = int(size * opp_bet_total)
+                        raise_to = min(target_total, ai_player.get('current_bet', 0) + stack)
+                        return ('raise', raise_to)
+                else:
+                    if not facing_bet_local:
+                        # first-in postflop: pot fraction
+                        bet_amount = int(size * max(pot, 1))
+                        total_amount = ai_player.get('current_bet', 0) + min(bet_amount, stack)
+                        return ('raise', total_amount)
+                    else:
+                        # facing bet postflop: raise-to multiple of opponent bet (total)
+                        opp_bet_total = to_call_local + ai_player.get('current_bet', 0)
+                        target_total = int(size * opp_bet_total)
+                        raise_to = min(target_total, ai_player.get('current_bet', 0) + stack)
+                        return ('raise', raise_to)
                 
             except (IndexError, ValueError):
                 # Fallback for malformed action

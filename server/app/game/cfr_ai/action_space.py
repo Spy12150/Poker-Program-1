@@ -9,19 +9,23 @@ Unified action space and mappings used across CFR modules
 from typing import Dict, List
 
 # Canonical ordered action list used by neural networks and trainers
+# Note: Legality/availability depends on street and whether facing a bet
 ACTION_LIST: List[str] = [
     'fold',
     'check',
     'call',
-    # Preflop raise sizes 
-    'raise_1.0',
+    # Preflop first-in (SB): raise 2.5x BB
+    'raise_2.5',
+    # Preflop vs raise: raise to 3x or 5x opponent bet
     'raise_3.0',
     'raise_5.0',
-    # postflop raise sizes
+    # Postflop first-in: 35%, 70%, 110% pot
     'raise_0.35',
     'raise_0.7',
     'raise_1.1',
-    'allin',
+    # Postflop vs raise: raise to 2.3x or 3.5x opponent bet
+    'raise_2.3',
+    'raise_3.5',
 ]
 
 # Mapping from action string to index

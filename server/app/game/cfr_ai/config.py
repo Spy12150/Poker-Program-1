@@ -35,7 +35,7 @@ class CFRConfig:
     # Deep CFR specific
     RESERVOIR_BUFFER_SIZE: int = 300000
     ADVANTAGE_MEMORY_SIZE: int = 20000000
-    STRATEGY_MEMORY_SIZE: int = 7000000
+    STRATEGY_MEMORY_SIZE: int = 7500000
     
     # Training settings
     DEVICE: str = "cpu"  # Will auto-detect GPU if available
