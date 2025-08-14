@@ -291,6 +291,35 @@ class GameAbstraction:
         current_bet = game_state.get('current_bet', 0)
         player_bet = current_player.get('current_bet', 0)
         facing_bet = current_bet > player_bet
+        dealer_pos = game_state.get('dealer_pos', 0)
+        heads_up = len(game_state.get('players', [])) == 2
+
+        # Special-case preflop heads-up flow per requested sizing
+        if heads_up and street == 'preflop':
+            # SB acts first preflop in HU (dealer)
+            is_sb_first = current_player_idx == dealer_pos
+            # BB acting after SB limp (to_call == 0)
+            is_bb_vs_limp = (current_player_idx != dealer_pos) and not facing_bet
+
+            # SB first decision: fold/call/raise 2.5x BB
+            if is_sb_first:
+                actions = ['fold', 'call', 'raise_2.5']
+                try:
+                    from .action_space import ACTION_MAP
+                    allowed = set(ACTION_MAP.keys())
+                    return [a for a in actions if a in allowed]
+                except Exception:
+                    return actions
+
+            # BB vs SB limp: check or iso-raise to 3x/5x
+            if is_bb_vs_limp:
+                actions = ['check', 'raise_3.0', 'raise_5.0']
+                try:
+                    from .action_space import ACTION_MAP
+                    allowed = set(ACTION_MAP.keys())
+                    return [a for a in actions if a in allowed]
+                except Exception:
+                    return actions
         
         return self.bet_abstraction.get_legal_actions(street, pot, stack, facing_bet)
     

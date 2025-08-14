@@ -122,7 +122,9 @@ class CFRBot:
             players=players,
             current_player=current_player,
             betting_history=betting_history,
-            hand_history=[]
+            hand_history=[],
+            dealer_pos=game_state.get('dealer_pos', 0),
+            big_blind=game_state.get('big_blind', 20)
         )
     
     def get_neural_strategy(self, info_set: InformationSet) -> Dict[str, float]:
@@ -262,17 +264,31 @@ class CFRBot:
                 
                 if street == 'preflop':
                     bb = game_state.get('big_blind', 20)
-                    if not facing_bet_local:
-                        # first-in preflop: raise size in BBs
-                        bet_amount = int(size * max(bb, 1))
-                        total_amount = ai_player.get('current_bet', 0) + min(bet_amount, stack)
-                        return ('raise', total_amount)
-                    else:
-                        # facing preflop raise: raise-to multiple of opponent bet (total)
-                        opp_bet_total = to_call_local + ai_player.get('current_bet', 0)
-                        target_total = int(size * opp_bet_total)
+                    is_ai_sb = (game_state.get('dealer_pos', 0) == 1)
+                    if is_ai_sb:
+                        # SB first decision: allow 2.5x even though to_call > 0 (due to blinds)
+                        if abs(size - 2.5) > 1e-6:
+                            return ('call', 0)
+                        target_total = int(size * max(bb, 1))  # raise-to 2.5x BB total
                         raise_to = min(target_total, ai_player.get('current_bet', 0) + stack)
                         return ('raise', raise_to)
+                    else:
+                        if not facing_bet_local:
+                            # BB vs limp: only allow 3x/5x iso-raise tokens; if other, check
+                            if abs(size - 3.0) <= 1e-6 or abs(size - 5.0) <= 1e-6:
+                                opp_bet_total = to_call_local + ai_player.get('current_bet', 0)  # likely 0 here
+                                target_total = int(size * max(bb, 1))  # iso to 3x/5x BB
+                                raise_to = min(target_total, ai_player.get('current_bet', 0) + stack)
+                                return ('raise', raise_to)
+                            return ('check', 0)
+                        else:
+                            # Facing preflop raise: only 3x/5x raise-to
+                            if abs(size - 3.0) > 1e-6 and abs(size - 5.0) > 1e-6:
+                                return ('call', 0)
+                            opp_bet_total = to_call_local + ai_player.get('current_bet', 0)
+                            target_total = int(size * opp_bet_total)
+                            raise_to = min(target_total, ai_player.get('current_bet', 0) + stack)
+                            return ('raise', raise_to)
                 else:
                     if not facing_bet_local:
                         # first-in postflop: pot fraction

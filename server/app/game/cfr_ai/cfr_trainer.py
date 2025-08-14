@@ -237,9 +237,9 @@ class NeuralCFRTrainer:
             if self.networks:
                 self.store_training_data(info_set, action_utilities, opponent_reach_prob)
         
-        # Update strategy sum
+        # Update strategy sum with iteration weighting (CFR+ averaging)
         reach_prob = reach_prob_0 if current_player == 0 else reach_prob_1
-        info_set.update_strategy_sum(reach_prob)
+        info_set.update_strategy_sum(reach_prob, iteration=self.iteration)
         
         # Return expected utility
         # Safe expected utility with strategy sanitization
@@ -563,18 +563,24 @@ class NeuralCFRTrainer:
         """Train policy network on batch of data"""
         features = torch.stack([torch.tensor(item['features']) for item in batch]).to(self.device)
         
-        # Convert strategies to probability vectors
+        # Convert strategies to probability vectors and build strict masks
         from .action_space import ACTION_MAP
         max_actions = len(ACTION_MAP)
         action_probs = torch.zeros(len(batch), max_actions).to(self.device)
+        action_masks = torch.zeros(len(batch), max_actions, dtype=torch.float32).to(self.device)
         
         for i, item in enumerate(batch):
             strategy = item['strategy']
-            for action, prob in strategy.items():
+            legal_actions = item.get('legal_actions') or list(strategy.keys())
+            for action in legal_actions:
                 if action in ACTION_MAP:
+                    action_masks[i, ACTION_MAP[action]] = 1.0
+            # Fill probabilities only on legal actions
+            for action, prob in strategy.items():
+                if action in ACTION_MAP and action_masks[i, ACTION_MAP[action]] == 1.0:
                     action_probs[i, ACTION_MAP[action]] = prob
         
-        loss = self.networks.train_policy_network(features, action_probs)
+        loss = self.networks.train_policy_network(features, action_probs, action_masks)
         
         if self.iteration % 10000 == 0:
             print(f"Policy network loss: {loss:.6f}")

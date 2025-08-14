@@ -22,6 +22,9 @@ class GameState:
     current_player: int
     betting_history: List[str]  # Sequence of actions
     hand_history: List[List[str]]  # All actions taken this hand
+    # Optional extras passed through from engine for better legality handling
+    dealer_pos: int = 0
+    big_blind: int = 20
 
 @dataclass 
 class InformationSet:
@@ -173,23 +176,28 @@ class InformationSet:
         return strategy
     
     def update_regrets(self, action_utilities: Dict[str, float], reach_probability: float):
-        """Update regret sums for all actions"""
+        """Update regret sums for all actions (CFR+)"""
         # Calculate counterfactual value
-        strategy_utilities = sum(prob * action_utilities.get(action, 0) 
-                               for action, prob in self.get_strategy().items())
+        strategy_utilities = sum(prob * action_utilities.get(action, 0)
+                                 for action, prob in self.get_strategy().items())
         
-        # Update regrets
+        # Update cumulative regrets and apply CFR+ clipping (regret matching plus)
         for action in self.legal_actions:
             action_utility = action_utilities.get(action, 0)
-            regret = action_utility - strategy_utilities
-            self.regret_sum[action] += reach_probability * regret
+            regret_increment = action_utility - strategy_utilities
+            self.regret_sum[action] += reach_probability * regret_increment
+            # CFR+: clip cumulative regrets at zero
+            if self.regret_sum[action] < 0:
+                self.regret_sum[action] = 0.0
     
-    def update_strategy_sum(self, reach_probability: float):
-        """Update cumulative strategy sum"""
+    def update_strategy_sum(self, reach_probability: float, iteration: int = 1):
+        """Update cumulative strategy sum with iteration weighting (linear)."""
+        # Weight later iterations more (linear weighting by iteration number)
+        weight = max(1, int(iteration))
         current_strategy = self.get_strategy()
         
         for action in self.legal_actions:
-            self.strategy_sum[action] += reach_probability * current_strategy[action]
+            self.strategy_sum[action] += weight * reach_probability * current_strategy[action]
     
     def get_average_strategy(self) -> Dict[str, float]:
         """Get average strategy over all iterations"""
@@ -294,10 +302,35 @@ class InformationSetManager:
             'pot': game_state.pot,
             'current_player': game_state.current_player,
             'players': game_state.players,
-            'current_bet': game_state.current_bet
+            'current_bet': game_state.current_bet,
+            # Pass through dealer_pos and big_blind when available for preflop logic
+            'dealer_pos': getattr(game_state, 'dealer_pos', 0),
+            'big_blind': getattr(game_state, 'big_blind', 20),
         }
-        
-        return self.game_abstraction.get_legal_actions(game_dict)
+        actions = self.game_abstraction.get_legal_actions(game_dict)
+
+        # Safety post-filter: enforce requested preflop action sets (HU)
+        try:
+            if game_state.street == 'preflop' and len(game_state.players) == 2:
+                cp = game_state.current_player
+                dealer_pos = getattr(game_state, 'dealer_pos', 0)
+                facing_bet = game_state.current_bet > game_state.players[cp].get('current_bet', 0)
+                is_sb = (cp == dealer_pos)
+                if is_sb:
+                    # SB first decision (even though to_call > 0 due to BB): allow 2.5x
+                    allowed = {'fold', 'call', 'raise_2.5'}
+                else:
+                    if facing_bet:
+                        # BB facing a raise: 3x/5x
+                        allowed = {'fold', 'call', 'raise_3.0', 'raise_5.0'}
+                    else:
+                        # BB vs limp: check or iso-raise 3x/5x
+                        allowed = {'check', 'raise_3.0', 'raise_5.0'}
+                actions = [a for a in actions if a in allowed]
+        except Exception:
+            pass
+
+        return actions
     
     def get_stats(self) -> Dict[str, Any]:
         """Get statistics about information sets"""

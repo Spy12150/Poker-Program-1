@@ -25,6 +25,9 @@ class CFRConfig:
     NUM_LAYERS: int = 3
     LEARNING_RATE: float = 1e-4
     DROPOUT_RATE: float = 0.1
+    # Regularization/training stability
+    POLICY_ENTROPY_BETA: float = 0.001  # entropy bonus weight for policy net
+    GRAD_CLIP_NORM: float = 1.0         # gradient clipping norm for all nets
     
     # CFR training parameters
     CFR_ITERATIONS: int = 1000000
@@ -61,12 +64,13 @@ class CFRConfig:
     def __post_init__(self):
         """Initialize default values and create directories"""
         if self.BET_SIZES_PREFLOP is None:
-            # Use pot-multiple raises preflop (will be translated to amounts in BetAbstraction)
-            self.BET_SIZES_PREFLOP = [1.0, 3.0, 5.0, float('inf')]  # 1x, 3x, 5x pot, all-in
+            # Preflop: 2.5x BB first-in; 3x/5x raise-to when facing a raise
+            # Note: semantics differ by context; values are kept for logging only
+            self.BET_SIZES_PREFLOP = [2.5, 3.0, 5.0]
             
         if self.BET_SIZES_POSTFLOP is None:
-            # Restrict to the requested sizes only
-            self.BET_SIZES_POSTFLOP = [0.35, 0.7, 1.1, float('inf')]  # All-in
+            # Postflop first-in: 35%, 70%, 110% pot; vs-raise handled separately (2.3x/3.5x)
+            self.BET_SIZES_POSTFLOP = [0.35, 0.7, 1.1]
         
         # Create only required directories
         for path in [self.MODEL_SAVE_PATH, self.RESULTS_BASE_PATH]:
@@ -143,11 +147,11 @@ class SimplifiedConfig:
     
     def __post_init__(self):
         if self.BET_SIZES_PREFLOP is None:
-            # Preflop: 1x, 3x, 5x pot; no all-in for now
-            self.BET_SIZES_PREFLOP = [1.0, 3.0, 5.0]
+            # Preflop: 2.5x BB first-in; 3x/5x raise-to when facing a raise
+            self.BET_SIZES_PREFLOP = [2.5, 3.0, 5.0]
             
         if self.BET_SIZES_POSTFLOP is None:
-            self.BET_SIZES_POSTFLOP = [0.35, 0.7, 1.1, float('inf')]  # Simplified
+            self.BET_SIZES_POSTFLOP = [0.35, 0.7, 1.1]
 
 # Use simplified config for initial development
 SIMPLIFIED_CONFIG = SimplifiedConfig()

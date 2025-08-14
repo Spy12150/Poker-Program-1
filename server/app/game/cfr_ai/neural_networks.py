@@ -323,7 +323,7 @@ class DeepCFRNetworks:
         loss = F.mse_loss(predictions.squeeze(), targets)
         
         loss.backward()
-        torch.nn.utils.clip_grad_norm_(self.value_network.parameters(), max_norm=1.0)
+        torch.nn.utils.clip_grad_norm_(self.value_network.parameters(), max_norm=self.config.GRAD_CLIP_NORM)
         self.value_optimizer.step()
         
         return loss.item()
@@ -338,7 +338,7 @@ class DeepCFRNetworks:
         loss = F.mse_loss(predictions.squeeze(), targets)
         
         loss.backward()
-        torch.nn.utils.clip_grad_norm_(self.advantage_network.parameters(), max_norm=1.0)
+        torch.nn.utils.clip_grad_norm_(self.advantage_network.parameters(), max_norm=self.config.GRAD_CLIP_NORM)
         self.advantage_optimizer.step()
         
         return loss.item()
@@ -351,15 +351,17 @@ class DeepCFRNetworks:
         
         predictions = self.policy_network(features, action_mask)
         
-        # Use KL divergence loss to match target probabilities
-        loss = F.kl_div(
+        # KL divergence loss to match target probabilities + entropy regularization
+        kl = F.kl_div(
             torch.log(predictions + 1e-8), 
             action_probs, 
             reduction='batchmean'
         )
+        entropy = -(predictions * torch.log(predictions + 1e-8)).sum(dim=1).mean()
+        loss = kl - self.config.POLICY_ENTROPY_BETA * entropy
         
         loss.backward()
-        torch.nn.utils.clip_grad_norm_(self.policy_network.parameters(), max_norm=1.0)
+        torch.nn.utils.clip_grad_norm_(self.policy_network.parameters(), max_norm=self.config.GRAD_CLIP_NORM)
         self.policy_optimizer.step()
         
         return loss.item()

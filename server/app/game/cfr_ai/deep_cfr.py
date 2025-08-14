@@ -229,7 +229,7 @@ class DeepCFRTrainer(NeuralCFRTrainer):
                 new_game_state, traversing_player, new_reach_0, new_reach_1, depth + 1, node_budget
             )
         
-        # Store training data for neural networks
+        # Store training data for neural networks (include strict legal action mask)
         if current_player == traversing_player:
             opponent_reach = reach_prob_1 if current_player == 0 else reach_prob_0
             self.store_deep_cfr_data(info_set, action_utilities, strategy, opponent_reach)
@@ -242,6 +242,15 @@ class DeepCFRTrainer(NeuralCFRTrainer):
             probs = np.ones_like(probs) / len(probs)
         else:
             probs = probs / s
+
+        # CFR+ weighted averaging for Deep CFR as well
+        reach_prob = reach_prob_0 if current_player == 0 else reach_prob_1
+        try:
+            info_set.update_strategy_sum(reach_prob, iteration=self.iteration)
+        except TypeError:
+            # Backward compatibility if signature differs
+            info_set.update_strategy_sum(reach_prob)
+
         return float(sum(probs[i] * action_utilities[a] for i, a in enumerate(info_set.legal_actions)))
     
     def get_neural_strategy(self, info_set: InformationSet) -> Dict[str, float]:
