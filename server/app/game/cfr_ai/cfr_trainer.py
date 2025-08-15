@@ -556,7 +556,7 @@ class NeuralCFRTrainer:
 
         loss = self.networks.train_advantage_network(features, action_indices, advantages)
         
-        if self.iteration % 10000 == 0:
+        if self.iteration % 1000 == 0:
             print(f"Advantage network loss: {loss:.6f}")
     
     def train_policy_network(self, batch: List[Dict]):
@@ -582,7 +582,7 @@ class NeuralCFRTrainer:
         
         loss = self.networks.train_policy_network(features, action_probs, action_masks)
         
-        if self.iteration % 10000 == 0:
+        if self.iteration % 1000 == 0:
             print(f"Policy network loss: {loss:.6f}")
     
     def evaluate(self):

@@ -365,7 +365,7 @@ class DeepCFRTrainer(NeuralCFRTrainer):
         loss = self.networks.train_advantage_network(features, action_indices, advantages)
         self.advantages_trained += len(batch)
         
-        if self.iteration % 10000 == 0:
+        if self.iteration % 1000 == 0:
             print(f"Advantage network: Loss={loss:.6f}, Trained={self.advantages_trained:,}")
     
     def train_strategy_memory(self):
@@ -385,7 +385,7 @@ class DeepCFRTrainer(NeuralCFRTrainer):
         loss = self.networks.train_policy_network(features, strategies, action_masks)
         self.strategies_trained += len(batch)
         
-        if self.iteration % 10000 == 0:
+        if self.iteration % 1000 == 0:
             print(f"Strategy network: Loss={loss:.6f}, Trained={self.strategies_trained:,}")
     
     def get_neural_value(self, info_set: InformationSet) -> float:
